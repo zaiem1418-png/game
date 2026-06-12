@@ -1,0 +1,14 @@
+# إعداد نشر السيرفر على Render تلقائياً (Blueprint)
+# اربط مستودع GitHub بـ Render واختر "New Blueprint" فيقرأ هذا الملف.
+services:
+  - type: web
+    name: voice-room-server
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
