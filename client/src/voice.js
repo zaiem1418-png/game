@@ -29,12 +29,13 @@ export class VoiceManager {
     this.selfId = null;
     this.ready = false;
     this._pendingIds = [];
+    this._signalQueue = []; // إشارات وصلت قبل جهوزية المايك
     this.onSpeakingChange = null; // callback(boolean) لحالة تحدّث المستخدم نفسه
     this.onMicError = null; // callback عند رفض إذن المايك
     this._bindSignaling();
   }
 
-  // طلب إذن المايك وتهيئة كشف التحدّث
+  // طلب إذن المايك وتهيئة كشف التحدّث ثم بدء الاتصالات
   async init(selfId) {
     this.selfId = selfId;
     try {
@@ -50,7 +51,15 @@ export class VoiceManager {
       this.localStream = null;
       this.onMicError?.(err);
     }
+
     this.ready = true;
+
+    // مهم: عالج الإشارات المؤجّلة أولاً (تنشئ اتصالات الاستقبال مع المايك جاهز)
+    const queued = this._signalQueue;
+    this._signalQueue = [];
+    for (const sig of queued) await this._handleSignal(sig);
+
+    // ثم أنشئ اتصالات بقية الأعضاء (كبادئ)
     if (this._pendingIds.length) this.syncPeers(this._pendingIds);
   }
 
@@ -65,7 +74,6 @@ export class VoiceManager {
     this._pendingIds = memberIds;
     if (!this.ready) return;
 
-    // أنشئ اتصالات للأعضاء الجدد
     for (const id of memberIds) {
       if (id === this.selfId) continue;
       if (!this.peers.has(id)) {
@@ -73,7 +81,6 @@ export class VoiceManager {
         this._createPeer(id, this.selfId < id);
       }
     }
-    // أغلق اتصالات الأعضاء الذين غادروا
     for (const id of [...this.peers.keys()]) {
       if (!memberIds.includes(id)) this._closePeer(id);
     }
@@ -82,6 +89,7 @@ export class VoiceManager {
   async _createPeer(id, isInitiator) {
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
     pc._pendingCandidates = [];
+    pc._makingOffer = false;
     this.peers.set(id, pc);
 
     // أضف مسار المايك (أو استقبال فقط إن لم يتوفر مايك)
@@ -100,19 +108,30 @@ export class VoiceManager {
     pc.ontrack = (e) => this._attachAudio(id, e.streams[0]);
 
     pc.onconnectionstatechange = () => {
-      if (["failed", "closed", "disconnected"].includes(pc.connectionState)) {
-        // إعادة محاولة بسيطة عند الفشل
-        if (pc.connectionState === "failed") this._closePeer(id);
+      const st = pc.connectionState;
+      if (st === "failed") {
+        // أعد المحاولة: البادئ فقط (الأصغر) يعيد الإنشاء لتفادي التضارب
+        this._closePeer(id);
+        if (this.selfId < id && this._pendingIds.includes(id)) {
+          setTimeout(() => {
+            if (!this.peers.has(id) && this._pendingIds.includes(id)) {
+              this._createPeer(id, true);
+            }
+          }, 800);
+        }
       }
     };
 
     if (isInitiator) {
       try {
+        pc._makingOffer = true;
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         this.socket.emit("voice:signal", { to: id, data: { sdp: pc.localDescription } });
       } catch (e) {
         console.warn("فشل إنشاء العرض:", e);
+      } finally {
+        pc._makingOffer = false;
       }
     }
     return pc;
@@ -129,7 +148,16 @@ export class VoiceManager {
       this.audioEls.set(id, el);
     }
     el.srcObject = stream;
-    el.play().catch(() => {});
+    el.play().catch(() => {
+      // قد يُحظر التشغيل التلقائي حتى أول تفاعل — نعيد المحاولة عند أي نقرة
+      const retry = () => {
+        el.play().catch(() => {});
+        document.removeEventListener("click", retry);
+        document.removeEventListener("touchstart", retry);
+      };
+      document.addEventListener("click", retry);
+      document.addEventListener("touchstart", retry);
+    });
   }
 
   _closePeer(id) {
@@ -137,6 +165,7 @@ export class VoiceManager {
     if (pc) {
       pc.onicecandidate = null;
       pc.ontrack = null;
+      pc.onconnectionstatechange = null;
       try { pc.close(); } catch {}
       this.peers.delete(id);
     }
@@ -149,37 +178,45 @@ export class VoiceManager {
   }
 
   _bindSignaling() {
-    this.socket.on("voice:signal", async ({ from, data }) => {
-      let pc = this.peers.get(from);
-      if (!pc) {
-        // وصلنا عرض من طرف لم ننشئ له اتصالاً بعد → ننشئه كمستقبِل
-        pc = await this._createPeer(from, false);
+    this.socket.on("voice:signal", (msg) => {
+      // أجّل الإشارات حتى يجهز المايك لتفادي إنشاء اتصال بلا صوت
+      if (!this.ready) {
+        this._signalQueue.push(msg);
+        return;
       }
-      try {
-        if (data.sdp) {
-          await pc.setRemoteDescription(data.sdp);
-          // أفرغ مرشحات ICE المؤجلة
-          for (const c of pc._pendingCandidates) {
-            try { await pc.addIceCandidate(c); } catch {}
-          }
-          pc._pendingCandidates = [];
-
-          if (data.sdp.type === "offer") {
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            this.socket.emit("voice:signal", { to: from, data: { sdp: pc.localDescription } });
-          }
-        } else if (data.candidate) {
-          if (pc.remoteDescription && pc.remoteDescription.type) {
-            await pc.addIceCandidate(data.candidate);
-          } else {
-            pc._pendingCandidates.push(data.candidate);
-          }
-        }
-      } catch (e) {
-        console.warn("خطأ في معالجة الإشارة:", e);
-      }
+      this._handleSignal(msg);
     });
+  }
+
+  async _handleSignal({ from, data }) {
+    let pc = this.peers.get(from);
+    if (!pc) {
+      // وصلنا عرض من طرف لم ننشئ له اتصالاً بعد → ننشئه كمستقبِل
+      pc = await this._createPeer(from, false);
+    }
+    try {
+      if (data.sdp) {
+        await pc.setRemoteDescription(data.sdp);
+        for (const c of pc._pendingCandidates) {
+          try { await pc.addIceCandidate(c); } catch {}
+        }
+        pc._pendingCandidates = [];
+
+        if (data.sdp.type === "offer") {
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          this.socket.emit("voice:signal", { to: from, data: { sdp: pc.localDescription } });
+        }
+      } else if (data.candidate) {
+        if (pc.remoteDescription && pc.remoteDescription.type) {
+          await pc.addIceCandidate(data.candidate);
+        } else {
+          pc._pendingCandidates.push(data.candidate);
+        }
+      }
+    } catch (e) {
+      console.warn("خطأ في معالجة الإشارة:", e);
+    }
   }
 
   // كشف التحدّث الحقيقي من مستوى صوت المايك
