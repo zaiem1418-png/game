@@ -9,7 +9,6 @@ export default function BottomBar({
   onToggleMute,
   onSendChat,
   onOpenGifts,
-  onSpeak,
 }) {
   const [text, setText] = useState("");
 
@@ -50,16 +49,6 @@ export default function BottomBar({
             title={muted ? "فتح المايك" : "كتم المايك"}
           >
             {muted ? "🔇" : "🎙️"}
-          </button>
-          <button
-            type="button"
-            className="bb-icon speak"
-            onMouseDown={onSpeak}
-            onTouchStart={onSpeak}
-            title="اضغط لإظهار موجة التحدث"
-            disabled={muted}
-          >
-            📢
           </button>
           <button type="button" className="bb-icon leave" onClick={onLeaveMic} title="نزول عن المايك">
             ⬇

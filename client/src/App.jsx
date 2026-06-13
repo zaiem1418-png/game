@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { socket } from "./socket.js";
+import { VoiceManager } from "./voice.js";
 import JoinScreen from "./components/JoinScreen.jsx";
 import RoomHeader from "./components/RoomHeader.jsx";
 import SeatGrid from "./components/SeatGrid.jsx";
@@ -15,17 +16,36 @@ export default function App() {
   const [giftPickerOpen, setGiftPickerOpen] = useState(false);
   const [gifts, setGifts] = useState([]);
   const [flyingGifts, setFlyingGifts] = useState([]); // أنيميشن الهدايا
-  const speakingTimer = useRef(null);
+  const [micError, setMicError] = useState(false); // رُفض إذن المايك؟
+  const voiceRef = useRef(null);
 
-  // إعداد مستمعات السوكِت مرة واحدة
+  // إعداد مستمعات السوكِت + الصوت مرة واحدة
   useEffect(() => {
+    let mySelfId = null;
+    const voice = new VoiceManager(socket);
+    voiceRef.current = voice;
+
+    // كشف التحدّث الحقيقي → أبلغ السيرفر ليُظهر الموجة للجميع
+    voice.onSpeakingChange = (speaking) => {
+      socket.emit("seat:speaking", { speaking });
+    };
+    voice.onMicError = () => setMicError(true);
+
     socket.on("room:joined", ({ selfId, room }) => {
+      mySelfId = selfId;
       setSelfId(selfId);
       setRoom(room);
       setJoined(true);
+      // ابدأ الصوت: اطلب المايك ثم اربط الأعضاء
+      voice.init(selfId).then(() => {
+        voice.syncPeers(room.members.map((m) => m.id));
+      });
     });
 
-    socket.on("room:update", (room) => setRoom(room));
+    socket.on("room:update", (room) => {
+      setRoom(room);
+      voice.syncPeers(room.members.map((m) => m.id));
+    });
 
     socket.on("chat:new", (msg) => {
       setRoom((r) => (r ? { ...r, messages: [...r.messages, msg].slice(-50) } : r));
@@ -42,7 +62,6 @@ export default function App() {
     });
 
     socket.on("gift:new", (payload) => {
-      // أضف رسالة الهدية + شغّل أنيميشن طائر
       setRoom((r) =>
         r
           ? {
@@ -76,18 +95,25 @@ export default function App() {
       socket.off("seat:speaking");
       socket.off("gift:new");
       socket.off("gift:list");
+      voice.destroy();
     };
   }, []);
+
+  const mySeatIndex = room?.seats.findIndex((s) => s.user?.id === selfId) ?? -1;
+  const onMic = mySeatIndex !== -1;
+  const mySeat = onMic ? room.seats[mySeatIndex] : null;
+  const muted = mySeat?.muted;
+
+  // فعّل/أوقف إرسال المايك فعلياً حسب الجلوس والكتم
+  useEffect(() => {
+    voiceRef.current?.setMicEnabled(onMic && !muted);
+  }, [onMic, muted]);
 
   function handleJoin(user) {
     socket.connect();
     socket.emit("room:join", { roomId: "130096", user });
     socket.emit("gift:list");
   }
-
-  const mySeatIndex = room?.seats.findIndex((s) => s.user?.id === selfId) ?? -1;
-  const onMic = mySeatIndex !== -1;
-  const mySeat = onMic ? room.seats[mySeatIndex] : null;
 
   function takeSeat(index) {
     socket.emit("seat:take", { index });
@@ -106,16 +132,6 @@ export default function App() {
     setGiftPickerOpen(false);
   }
 
-  // محاكاة "التحدث": ضغطة على المايك ترسل موجة لثوانٍ
-  function pulseSpeaking() {
-    if (!onMic || mySeat?.muted) return;
-    socket.emit("seat:speaking", { speaking: true });
-    clearTimeout(speakingTimer.current);
-    speakingTimer.current = setTimeout(() => {
-      socket.emit("seat:speaking", { speaking: false });
-    }, 1500);
-  }
-
   if (!joined) return <JoinScreen onJoin={handleJoin} />;
 
   return (
@@ -123,13 +139,19 @@ export default function App() {
       <div className="room-bg" />
       <RoomHeader room={room} memberCount={room.members.length} />
 
+      {micError && (
+        <div className="mic-error">
+          🎤 لم يُسمح بالوصول للمايك — تقدر تسمع لكن ما تقدر تتكلم. فعّل إذن المايك من إعدادات المتصفح ثم أعد الدخول.
+        </div>
+      )}
+
       <SeatGrid
         seats={room.seats}
         selfId={selfId}
         onTakeSeat={takeSeat}
         onSeatTap={(seat) => {
-          // اضغط على مقعدك للتحدث (محاكاة)، أو افتح الهدايا على مقعد غيرك
-          if (seat.user?.id === selfId) pulseSpeaking();
+          // اضغط على مقعدك = كتم/فتح، وعلى غيرك = إرسال هدية
+          if (seat.user?.id === selfId) toggleMute();
           else if (seat.user) setGiftPickerOpen(true);
         }}
       />
@@ -138,9 +160,8 @@ export default function App() {
 
       <BottomBar
         onMic={onMic}
-        muted={mySeat?.muted}
+        muted={muted}
         onTakeMic={() => {
-          // خذ أول مقعد فاضي
           const free = room.seats.find((s) => !s.user && !s.locked);
           if (free) takeSeat(free.index);
         }}
@@ -148,7 +169,6 @@ export default function App() {
         onToggleMute={toggleMute}
         onSendChat={sendChat}
         onOpenGifts={() => setGiftPickerOpen(true)}
-        onSpeak={pulseSpeaking}
       />
 
       {giftPickerOpen && (

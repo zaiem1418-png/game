@@ -244,6 +244,13 @@ io.on("connection", (socket) => {
     socket.emit("gift:list", Object.entries(GIFTS).map(([id, g]) => ({ id, ...g })));
   });
 
+  // ===== تمرير إشارات WebRTC للصوت (signaling) =====
+  // السيرفر يمرّر العرض/الرد/مرشحات ICE بين طرفين فقط؛ الصوت نفسه ينتقل P2P.
+  socket.on("voice:signal", ({ to, data }) => {
+    if (!to) return;
+    io.to(to).emit("voice:signal", { from: socket.id, data });
+  });
+
   socket.on("disconnect", () => {
     if (!currentRoomId) return;
     const room = rooms.get(currentRoomId);
