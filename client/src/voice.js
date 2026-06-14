@@ -30,6 +30,7 @@ export class VoiceManager {
     this.ready = false;
     this._pendingIds = [];
     this._signalQueue = []; // إشارات وصلت قبل جهوزية المايك
+    this._candBuffer = new Map(); // from -> [candidates] وصلت قبل جهوزية الاتصال
     this.onSpeakingChange = null; // callback(boolean) لحالة تحدّث المستخدم نفسه
     this.onMicError = null; // callback عند رفض إذن المايك
     this._bindSignaling();
@@ -88,8 +89,6 @@ export class VoiceManager {
 
   async _createPeer(id, isInitiator) {
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-    pc._pendingCandidates = [];
-    pc._makingOffer = false;
     this.peers.set(id, pc);
 
     // أضف مسار المايك (أو استقبال فقط إن لم يتوفر مايك)
@@ -124,14 +123,11 @@ export class VoiceManager {
 
     if (isInitiator) {
       try {
-        pc._makingOffer = true;
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         this.socket.emit("voice:signal", { to: id, data: { sdp: pc.localDescription } });
       } catch (e) {
         console.warn("فشل إنشاء العرض:", e);
-      } finally {
-        pc._makingOffer = false;
       }
     }
     return pc;
@@ -169,6 +165,7 @@ export class VoiceManager {
       try { pc.close(); } catch {}
       this.peers.delete(id);
     }
+    this._candBuffer.delete(id);
     const el = this.audioEls.get(id);
     if (el) {
       el.srcObject = null;
@@ -189,18 +186,16 @@ export class VoiceManager {
   }
 
   async _handleSignal({ from, data }) {
-    let pc = this.peers.get(from);
-    if (!pc) {
-      // وصلنا عرض من طرف لم ننشئ له اتصالاً بعد → ننشئه كمستقبِل
-      pc = await this._createPeer(from, false);
-    }
     try {
       if (data.sdp) {
-        await pc.setRemoteDescription(data.sdp);
-        for (const c of pc._pendingCandidates) {
-          try { await pc.addIceCandidate(c); } catch {}
+        let pc = this.peers.get(from);
+        if (!pc) {
+          // فقط العروض تنشئ اتصالاً كمستقبِل — لا ننشئه من مرشّح ICE
+          if (data.sdp.type !== "offer") return;
+          pc = await this._createPeer(from, false);
         }
-        pc._pendingCandidates = [];
+        await pc.setRemoteDescription(data.sdp);
+        await this._flushCandidates(from, pc);
 
         if (data.sdp.type === "offer") {
           const answer = await pc.createAnswer();
@@ -208,15 +203,28 @@ export class VoiceManager {
           this.socket.emit("voice:signal", { to: from, data: { sdp: pc.localDescription } });
         }
       } else if (data.candidate) {
-        if (pc.remoteDescription && pc.remoteDescription.type) {
+        const pc = this.peers.get(from);
+        if (pc && pc.remoteDescription && pc.remoteDescription.type) {
           await pc.addIceCandidate(data.candidate);
         } else {
-          pc._pendingCandidates.push(data.candidate);
+          // الاتصال لم يجهز بعد → خزّن المرشّح حتى تُضبط الوصلة
+          if (!this._candBuffer.has(from)) this._candBuffer.set(from, []);
+          this._candBuffer.get(from).push(data.candidate);
         }
       }
     } catch (e) {
       console.warn("خطأ في معالجة الإشارة:", e);
     }
+  }
+
+  // أضف مرشحات ICE المخزّنة مؤقتاً بعد ضبط الوصف البعيد
+  async _flushCandidates(from, pc) {
+    const list = this._candBuffer.get(from);
+    if (!list) return;
+    for (const c of list) {
+      try { await pc.addIceCandidate(c); } catch {}
+    }
+    this._candBuffer.delete(from);
   }
 
   // كشف التحدّث الحقيقي من مستوى صوت المايك
