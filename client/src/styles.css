@@ -449,12 +449,13 @@ body {
 /* ===================================================================== */
 
 .gx-stage {
-  position: fixed;
+  position: absolute;          /* داخل الغرفة فقط (لا تملأ النافذة كاملة) */
   inset: 0;
   z-index: 9000;
   pointer-events: none;       /* لا يعيق التفاعل مع الغرفة */
   overflow: hidden;
   will-change: transform;
+  border-radius: inherit;
 }
 
 .gx-bg {
@@ -601,7 +602,7 @@ body {
   background: var(--accent); color: #06231f; border: 0; border-radius: 12px;
   padding: 10px 18px; font-weight: 800; cursor: pointer;
 }
-.admin { padding: 20px; max-width: 900px; margin: 0 auto; overflow-y: auto; height: 100%; }
+.admin { position: relative; padding: 20px; max-width: 900px; margin: 0 auto; overflow-y: auto; height: 100%; }
 .admin h1 { margin: 6px 0 16px; }
 .admin-msg { background: rgba(0,0,0,0.35); padding: 8px 14px; border-radius: 10px; margin-bottom: 14px; }
 .admin-form {

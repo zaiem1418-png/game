@@ -65,13 +65,15 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
     },
   }));
 
-  // ضبط حجم الكانفاس مع دعم DPR (محدود بـ2 للأداء)
+  // ضبط حجم الكانفاس على أبعاد الغرفة (المسرح) لا النافذة — حتى يبقى الأنيميشن داخل الغرفة
   function resize() {
     const c = canvasRef.current;
     if (!c) return;
+    const host = stageRef.current || c.parentElement; // .gx-stage = يملأ الغرفة
+    const rect = host.getBoundingClientRect();
+    const w = Math.round(rect.width) || host.clientWidth || 1;
+    const h = Math.round(rect.height) || host.clientHeight || 1;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = window.innerWidth,
-      h = window.innerHeight;
     c.width = w * dpr;
     c.height = h * dpr;
     c.style.width = w + "px";
@@ -95,6 +97,11 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
       cancelAnimationFrame(rafRef.current);
     };
   }, []);
+
+  // عند بدء العرض، المسرح يُركّب الآن في DOM → اقِس أبعاد الغرفة الفعلية
+  useEffect(() => {
+    if (playing) resize();
+  }, [playing]);
 
   function startPlay(payload) {
     const gift = payload.gift;
@@ -193,6 +200,8 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
   function loop(now) {
     const st = playStateRef.current;
     if (!st) return;
+    // أمان: لو لم تُقَس الأبعاد بعد، قِسها الآن (المسرح موجود في DOM)
+    if (!sizeRef.current.w || !sizeRef.current.h) resize();
     const t = clamp01((now - st.start) / st.duration);
     const { w: W, h: H, dpr } = sizeRef.current;
     const ctx = canvasRef.current.getContext("2d");

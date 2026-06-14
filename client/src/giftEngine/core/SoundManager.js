@@ -150,44 +150,66 @@ const SYNTH = {
     tone("sine", 1568, 2093, 0.4, v * 0.4, 0.05);
   },
   engine: (v) => {
-    // محرك رياضي واقعي: زوج أوسيليتر متنافر + سَب + تشويه + فلتر يتتبّع الدورات + احتكاك إطارات
+    // محرك رياضي (فيراري): نغمة احتراق سَوتوث تتبع الدورات + توافقي حادّ + سَب +
+    // تشويه + فلتر رنيني يتتبّع + انطلاقات (blips) مع طقطقة عادم + هسهسة سحب.
     const c = ac();
     const t0 = c.currentTime;
-    const rev = (o, base) => {
-      o.frequency.setValueAtTime(base * 0.7, t0);
-      o.frequency.linearRampToValueAtTime(base * 2.4, t0 + 0.5); // رفع الدورات
-      o.frequency.linearRampToValueAtTime(base * 1.6, t0 + 1.0);
-      o.frequency.linearRampToValueAtTime(base * 3.0, t0 + 1.8); // تعشيق أعلى
-      o.frequency.linearRampToValueAtTime(base * 1.8, t0 + 2.6);
+    const out = c.createGain();
+    out.connect(masterGain);
+    sendReverb(out, 0.18);
+    // مغلّف عام (دخول/خروج ناعم)
+    out.gain.setValueAtTime(0.0001, t0);
+    out.gain.exponentialRampToValueAtTime(v, t0 + 0.08);
+    out.gain.setValueAtTime(v, t0 + 2.5);
+    out.gain.exponentialRampToValueAtTime(0.0001, t0 + 3.0);
+
+    // منحنى الدورات (0..1): خمول → انطلاقات متتالية
+    const revAt = [[0, 0.3], [0.4, 1.0], [0.85, 0.55], [1.25, 1.0], [1.7, 0.65], [2.1, 1.0], [2.7, 0.5]];
+    const firing = (x) => 42 + x * 150; // تردد الاحتراق Hz
+
+    const mkOsc = (type, mul, detune, gain) => {
+      const o = c.createOscillator();
+      o.type = type;
+      o.detune.value = detune;
+      o.frequency.setValueAtTime(firing(revAt[0][1]) * mul, t0);
+      revAt.forEach(([tt, x]) => o.frequency.linearRampToValueAtTime(firing(x) * mul, t0 + tt));
+      const og = c.createGain();
+      og.gain.value = gain;
+      o.connect(og);
+      o.start(t0);
+      o.stop(t0 + 3.05);
+      return og;
     };
-    const o1 = c.createOscillator();
-    o1.type = "sawtooth";
-    rev(o1, 70);
-    const o2 = c.createOscillator();
-    o2.type = "sawtooth";
-    o2.detune.value = 18;
-    rev(o2, 70);
-    const sub = c.createOscillator();
-    sub.type = "sine";
-    sub.frequency.value = 48;
+
     const shaper = c.createWaveShaper();
-    shaper.curve = distortionCurve(25);
+    shaper.curve = distortionCurve(45);
     const lp = c.createBiquadFilter();
     lp.type = "lowpass";
-    lp.frequency.setValueAtTime(700, t0);
-    lp.frequency.linearRampToValueAtTime(1500, t0 + 1.8);
-    lp.Q.value = 6;
-    const g = envGain(0, 0.45, 2.8, v);
-    o1.connect(shaper);
-    o2.connect(shaper);
-    sub.connect(g);
-    shaper.connect(lp).connect(g);
-    sendReverb(g, 0.2);
-    [o1, o2, sub].forEach((o) => {
-      o.start(t0);
-      o.stop(t0 + 2.9);
+    lp.Q.value = 9;
+    lp.frequency.setValueAtTime(600, t0);
+    revAt.forEach(([tt, x]) => lp.frequency.linearRampToValueAtTime(700 + x * 2400, t0 + tt));
+
+    mkOsc("sawtooth", 1, 0, 0.5).connect(shaper);
+    mkOsc("sawtooth", 1, 16, 0.4).connect(shaper); // جسم متنافر
+    mkOsc("square", 2, 0, 0.12).connect(shaper); // صفير الدوران العالي
+    shaper.connect(lp).connect(out);
+
+    const sub = c.createOscillator(); // هدير منخفض
+    sub.type = "sine";
+    sub.frequency.value = 40;
+    const subG = c.createGain();
+    subG.gain.value = 0.4;
+    sub.connect(subG).connect(out);
+    sub.start(t0);
+    sub.stop(t0 + 3.05);
+
+    // طقطقة العادم عند كل انطلاقة
+    [0.4, 1.25, 2.1].forEach((tt) => {
+      setTimeout(() => {
+        for (let i = 0; i < 4; i++) playNoise(0.05, "bandpass", 1300, 380, v * 0.3);
+      }, tt * 1000);
     });
-    playNoise(2.4, "bandpass", 500, 900, v * 0.25); // احتكاك إطارات
+    playNoise(2.6, "bandpass", 600, 1500, v * 0.18); // سحب الهواء
   },
   jet: (v) => {
     playNoise(3.2, "bandpass", 1800, 600, v * 0.6);
@@ -195,30 +217,71 @@ const SYNTH = {
     tone("sawtooth", 70, 90, 3, v * 0.2); // هدير منخفض
   },
   roar: (v) => {
-    // زئير أسد: هدير منخفض مع غرغرة (LFO) + فورمانت ضوضائي + انحدار نغمي + صدى
+    // زئير أسد واقعي: مصدر سَوتوث منخفض هابط + زفير ضوضائي + غرغرة AM +
+    // فورمانتات (مسار صوتي) لإعطاء طابع حيواني + صدى.
     const c = ac();
     const t0 = c.currentTime;
-    const o = c.createOscillator();
-    o.type = "sawtooth";
-    o.frequency.setValueAtTime(150, t0);
-    o.frequency.exponentialRampToValueAtTime(65, t0 + 1.0);
-    const growl = c.createOscillator(); // تردد منخفض يهزّ المكسب → غرغرة
+    const out = c.createGain();
+    out.connect(masterGain);
+    sendReverb(out, 0.55);
+    out.gain.setValueAtTime(0.0001, t0);
+    out.gain.exponentialRampToValueAtTime(v, t0 + 0.06); // هجوم سريع
+    out.gain.setValueAtTime(v, t0 + 0.9);
+    out.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.55);
+
+    const src = c.createGain();
+    const o1 = c.createOscillator();
+    o1.type = "sawtooth";
+    o1.frequency.setValueAtTime(165, t0);
+    o1.frequency.exponentialRampToValueAtTime(72, t0 + 1.1);
+    const o2 = c.createOscillator();
+    o2.type = "sawtooth";
+    o2.detune.value = -12;
+    o2.frequency.setValueAtTime(150, t0);
+    o2.frequency.exponentialRampToValueAtTime(64, t0 + 1.1);
+    o1.connect(src);
+    o2.connect(src);
+    const nb = c.createBufferSource(); // زفير
+    nb.buffer = noiseBuffer(1.5);
+    const ng = c.createGain();
+    ng.gain.value = 0.5;
+    nb.connect(ng).connect(src);
+
+    // غرغرة AM (هزّ المكسب بتردد منخفض ينخفض تدريجياً)
+    const growl = c.createOscillator();
     growl.type = "sine";
-    growl.frequency.value = 22;
-    const growlGain = c.createGain();
-    growlGain.gain.value = 0.25;
-    const g = envGain(0, 0.85, 1.4, v);
-    growl.connect(growlGain).connect(g.gain);
+    growl.frequency.setValueAtTime(30, t0);
+    growl.frequency.linearRampToValueAtTime(17, t0 + 1.1);
+    const growlG = c.createGain();
+    growlG.gain.value = 0.4;
+    const amp = c.createGain();
+    amp.gain.value = 0.6;
+    growl.connect(growlG).connect(amp.gain);
+    src.connect(amp);
+
+    // فورمانتات الأسد
+    [[480, 8, 0.9], [1000, 9, 0.5], [2300, 10, 0.22]].forEach(([f, q, g]) => {
+      const bp = c.createBiquadFilter();
+      bp.type = "bandpass";
+      bp.frequency.value = f;
+      bp.Q.value = q;
+      const fg = c.createGain();
+      fg.gain.value = g;
+      amp.connect(bp).connect(fg).connect(out);
+    });
     const lp = c.createBiquadFilter();
     lp.type = "lowpass";
-    lp.frequency.value = 900;
-    o.connect(lp).connect(g);
-    sendReverb(g, 0.5);
-    o.start(t0);
-    growl.start(t0);
-    o.stop(t0 + 1.5);
-    growl.stop(t0 + 1.5);
-    playNoise(1.2, "bandpass", 700, 300, v * 0.5); // نفَس مزمجر
+    lp.frequency.value = 420;
+    const lg = c.createGain();
+    lg.gain.value = 0.6;
+    amp.connect(lp).connect(lg).connect(out);
+
+    [o1, o2, growl].forEach((o) => {
+      o.start(t0);
+      o.stop(t0 + 1.55);
+    });
+    nb.start(t0);
+    nb.stop(t0 + 1.5);
   },
   rocket: (v) => {
     playNoise(3, "lowpass", 200, 1300, v * 0.7);
