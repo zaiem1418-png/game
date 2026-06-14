@@ -17,6 +17,7 @@ export default function App() {
   const [gifts, setGifts] = useState([]);
   const [flyingGifts, setFlyingGifts] = useState([]); // أنيميشن الهدايا
   const [micError, setMicError] = useState(false); // رُفض إذن المايك؟
+  const [peerStates, setPeerStates] = useState([]); // تشخيص الاتصالات
   const voiceRef = useRef(null);
 
   // إعداد مستمعات السوكِت + الصوت مرة واحدة
@@ -30,6 +31,7 @@ export default function App() {
       socket.emit("seat:speaking", { speaking });
     };
     voice.onMicError = () => setMicError(true);
+    voice.onPeersChange = (list) => setPeerStates(list);
 
     socket.on("room:joined", ({ selfId, room }) => {
       mySelfId = selfId;
@@ -142,6 +144,26 @@ export default function App() {
       {micError && (
         <div className="mic-error">
           🎤 لم يُسمح بالوصول للمايك — تقدر تسمع لكن ما تقدر تتكلم. فعّل إذن المايك من إعدادات المتصفح ثم أعد الدخول.
+        </div>
+      )}
+
+      {peerStates.length > 0 && (
+        <div className="debug-panel">
+          <span className="debug-title">🔌 الاتصالات:</span>
+          {peerStates.map((p) => {
+            const name =
+              room.members.find((m) => m.id === p.id)?.name || p.id.slice(0, 4);
+            const ok = p.state === "connected";
+            const bad = p.state === "failed" || p.ice === "failed";
+            return (
+              <span
+                key={p.id}
+                className={`debug-peer ${ok ? "ok" : bad ? "bad" : "wait"}`}
+              >
+                {name}: {p.state}/{p.ice}
+              </span>
+            );
+          })}
         </div>
       )}
 

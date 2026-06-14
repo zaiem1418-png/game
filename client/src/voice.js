@@ -33,6 +33,7 @@ export class VoiceManager {
     this._candBuffer = new Map(); // from -> [candidates] وصلت قبل جهوزية الاتصال
     this.onSpeakingChange = null; // callback(boolean) لحالة تحدّث المستخدم نفسه
     this.onMicError = null; // callback عند رفض إذن المايك
+    this.onPeersChange = null; // callback(Array<{id, state, ice}>) للتشخيص
     this._bindSignaling();
   }
 
@@ -106,8 +107,11 @@ export class VoiceManager {
 
     pc.ontrack = (e) => this._attachAudio(id, e.streams[0]);
 
+    pc.oniceconnectionstatechange = () => this._emitPeers();
+
     pc.onconnectionstatechange = () => {
       const st = pc.connectionState;
+      this._emitPeers();
       if (st === "failed") {
         // أعد المحاولة: البادئ فقط (الأصغر) يعيد الإنشاء لتفادي التضارب
         this._closePeer(id);
@@ -130,7 +134,19 @@ export class VoiceManager {
         console.warn("فشل إنشاء العرض:", e);
       }
     }
+    this._emitPeers();
     return pc;
+  }
+
+  // أبلغ الواجهة بحالة كل الاتصالات (للوحة التشخيص)
+  _emitPeers() {
+    if (!this.onPeersChange) return;
+    const list = [...this.peers.entries()].map(([id, pc]) => ({
+      id,
+      state: pc.connectionState,
+      ice: pc.iceConnectionState,
+    }));
+    this.onPeersChange(list);
   }
 
   _attachAudio(id, stream) {
@@ -172,6 +188,7 @@ export class VoiceManager {
       el.remove();
       this.audioEls.delete(id);
     }
+    this._emitPeers();
   }
 
   _bindSignaling() {
