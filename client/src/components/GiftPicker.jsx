@@ -34,9 +34,12 @@ export default function GiftPicker({ gifts, members, onSend, onClose }) {
           {gifts.map((g) => (
             <button
               key={g.id}
-              className={`gift-item ${selected === g.id ? "active" : ""}`}
+              className={`gift-item rar-${g.rarity || "common"} ${selected === g.id ? "active" : ""}`}
               onClick={() => setSelected(g.id)}
             >
+              {(g.rarity === "legendary" || g.rarity === "epic") && (
+                <span className="gift-rar-badge">{g.rarity === "legendary" ? "أسطورية" : "ملحمية"}</span>
+              )}
               <span className="gift-emoji">{g.emoji}</span>
               <span className="gift-name">{g.name}</span>
               <span className="gift-coins">🪙 {g.coins}</span>

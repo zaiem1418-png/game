@@ -7,18 +7,23 @@ import SeatGrid from "./components/SeatGrid.jsx";
 import ChatPanel from "./components/ChatPanel.jsx";
 import BottomBar from "./components/BottomBar.jsx";
 import GiftPicker from "./components/GiftPicker.jsx";
-import GiftOverlay from "./components/GiftOverlay.jsx";
+import GiftStage from "./giftEngine/GiftStage.jsx";
+import AdminPanel from "./components/AdminPanel.jsx";
+import { unlockAudio } from "./giftEngine/core/SoundManager.js";
 
 export default function App() {
+  // لوحة الإدارة: افتحها عبر ?admin في الرابط
+  const isAdmin = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("admin");
+
   const [joined, setJoined] = useState(false);
   const [selfId, setSelfId] = useState(null);
   const [room, setRoom] = useState(null);
   const [giftPickerOpen, setGiftPickerOpen] = useState(false);
   const [gifts, setGifts] = useState([]);
-  const [flyingGifts, setFlyingGifts] = useState([]); // أنيميشن الهدايا
   const [micError, setMicError] = useState(false); // رُفض إذن المايك؟
   const [peerStates, setPeerStates] = useState([]); // تشخيص الاتصالات
   const voiceRef = useRef(null);
+  const giftStageRef = useRef(null); // محرك أنيميشن الهدايا
 
   // إعداد مستمعات السوكِت + الصوت مرة واحدة
   useEffect(() => {
@@ -81,11 +86,8 @@ export default function App() {
             }
           : r
       );
-      const id = payload.id;
-      setFlyingGifts((g) => [...g, payload]);
-      setTimeout(() => {
-        setFlyingGifts((g) => g.filter((x) => x.id !== id));
-      }, 2500);
+      // ادفع الهدية لمحرك الأنيميشن (طابور + أولوية + منع تكرار)
+      giftStageRef.current?.enqueue(payload);
     });
 
     socket.on("gift:list", (list) => setGifts(list));
@@ -112,6 +114,7 @@ export default function App() {
   }, [onMic, muted]);
 
   function handleJoin(user) {
+    unlockAudio(); // فتح سياق الصوت ضمن تفاعل المستخدم (مطلوب على الموبايل)
     socket.connect();
     socket.emit("room:join", { roomId: "130096", user });
     socket.emit("gift:list");
@@ -133,6 +136,8 @@ export default function App() {
     socket.emit("gift:send", { giftId, toUserId });
     setGiftPickerOpen(false);
   }
+
+  if (isAdmin) return <AdminPanel />;
 
   if (!joined) return <JoinScreen onJoin={handleJoin} />;
 
@@ -202,7 +207,7 @@ export default function App() {
         />
       )}
 
-      <GiftOverlay flyingGifts={flyingGifts} />
+      <GiftStage ref={giftStageRef} />
     </div>
   );
 }

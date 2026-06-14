@@ -6,13 +6,53 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
+import { giftStore } from "./giftStore.js";
 
 const PORT = process.env.PORT || 3001;
 const SEAT_COUNT = 12; // عدد المقاعد في كل غرفة
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "admin123"; // غيّره في الإنتاج
+
+giftStore.init();
 
 const app = express();
 app.use(cors());
+app.use(express.json({ limit: "256kb" }));
 app.get("/health", (_req, res) => res.json({ ok: true }));
+
+// ===== لوحة الإدارة: إدارة الهدايا عبر REST (دون تعديل الكود) =====
+function requireAdmin(req, res, next) {
+  const token = req.headers["x-admin-token"] || req.query.token;
+  if (token !== ADMIN_TOKEN) return res.status(401).json({ error: "غير مصرّح" });
+  next();
+}
+
+app.get("/api/gifts", (_req, res) => res.json(giftStore.all()));
+
+app.post("/api/admin/gifts", requireAdmin, (req, res) => {
+  try {
+    const gift = giftStore.upsert(req.body);
+    broadcastGiftList();
+    res.json(gift);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.delete("/api/admin/gifts/:id", requireAdmin, (req, res) => {
+  const ok = giftStore.remove(req.params.id);
+  if (ok) broadcastGiftList();
+  res.json({ ok });
+});
+
+app.post("/api/admin/gifts-reset", requireAdmin, (_req, res) => {
+  giftStore.reset();
+  broadcastGiftList();
+  res.json(giftStore.all());
+});
+
+function broadcastGiftList() {
+  io.emit("gift:list", giftStore.all());
+}
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -28,15 +68,6 @@ const io = new Server(httpServer, {
  * }
  */
 const rooms = new Map();
-
-const GIFTS = {
-  rose: { name: "وردة", emoji: "🌹", coins: 1 },
-  heart: { name: "قلب", emoji: "❤️", coins: 5 },
-  crown: { name: "تاج", emoji: "👑", coins: 50 },
-  rocket: { name: "صاروخ", emoji: "🚀", coins: 100 },
-  car: { name: "سيارة", emoji: "🏎️", coins: 500 },
-  castle: { name: "قصر", emoji: "🏰", coins: 1000 },
-};
 
 function createRoom(roomId) {
   const room = {
@@ -216,16 +247,17 @@ io.on("connection", (socket) => {
     io.to(room.id).emit("chat:new", msg);
   });
 
-  // إرسال هدية
-  socket.on("gift:send", ({ giftId, toUserId }) => {
+  // إرسال هدية — يبعث تعريف الهدية الكامل ليعرف العميل كيف يحرّكها
+  socket.on("gift:send", ({ giftId, toUserId, combo }) => {
     const room = rooms.get(currentRoomId);
     if (!room || !currentUser) return;
-    const gift = GIFTS[giftId];
+    const gift = giftStore.get(giftId);
     if (!gift) return;
     const to = toUserId ? room.members.get(toUserId) : null;
     const payload = {
       id: cryptoId(),
-      gift: { id: giftId, ...gift },
+      gift, // تعريف كامل: rarity/priority/duration/renderer/scenario/sound/...
+      combo: Math.max(1, Math.min(99, Number(combo) || 1)),
       from: currentUser,
       to,
       ts: Date.now(),
@@ -239,9 +271,9 @@ io.on("connection", (socket) => {
     broadcastRoom(room);
   });
 
-  // قائمة الهدايا المتاحة
+  // قائمة الهدايا المتاحة (التعريفات الكاملة)
   socket.on("gift:list", () => {
-    socket.emit("gift:list", Object.entries(GIFTS).map(([id, g]) => ({ id, ...g })));
+    socket.emit("gift:list", giftStore.all());
   });
 
   // ===== تمرير إشارات WebRTC للصوت (signaling) =====
