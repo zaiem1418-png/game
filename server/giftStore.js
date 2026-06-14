@@ -26,34 +26,44 @@ const FILE = join(__dirname, "gifts.json");
  * }
  */
 
-// الكتالوج الافتراضي — يشمل أمثلة المستخدم + هدايا إضافية كثيرة.
+// الكتالوج الافتراضي — مستوحى من تطبيقات الغرف (Jackaroo King) + إضافات.
+// category: للتبويبات (gift | vip | celeb | member | tribe). كلها هنا "gift".
 const DEFAULT_GIFTS = [
-  // ── عادية ──────────────────────────────────────────────
-  { id: "rose",   name: "وردة",   emoji: "🌹", coins: 1,   rarity: "common", priority: 1, duration: 2600, renderer: "scenario", scenario: "floatUp", sound: "pop",    volume: 0.5, shake: false, fullscreen: false },
-  { id: "heart",  name: "قلب",    emoji: "❤️", coins: 5,   rarity: "common", priority: 1, duration: 3000, renderer: "scenario", scenario: "heartBurst", sound: "chime", volume: 0.6, shake: false, fullscreen: false },
-  { id: "kiss",   name: "قبلة",   emoji: "💋", coins: 8,   rarity: "common", priority: 1, duration: 2800, renderer: "scenario", scenario: "floatUp", sound: "pop", volume: 0.5, shake: false, fullscreen: false },
-  { id: "clap",   name: "تصفيق",  emoji: "👏", coins: 10,  rarity: "common", priority: 1, duration: 2600, renderer: "scenario", scenario: "popStars", sound: "pop", volume: 0.5, shake: false, fullscreen: false },
-  { id: "beer",   name: "نخب",    emoji: "🍻", coins: 12,  rarity: "common", priority: 1, duration: 2800, renderer: "scenario", scenario: "popStars", sound: "chime", volume: 0.5, shake: false, fullscreen: false },
+  // ── عادية (رخيصة) ──────────────────────────────────────
+  { id: "rose",   name: "وردة",   emoji: "🌹", coins: 5,   rarity: "common", priority: 1, duration: 2600, renderer: "scenario", scenario: "floatUp",    sound: "pop",   volume: 0.5, shake: false, fullscreen: false, category: "gift" },
+  { id: "kiss",   name: "قبلة",   emoji: "💋", coins: 30,  rarity: "common", priority: 1, duration: 2800, renderer: "scenario", scenario: "heartBurst", sound: "pop",   volume: 0.5, shake: false, fullscreen: false, category: "gift" },
+  { id: "hookah", name: "شيشة",   emoji: "💨", coins: 30,  rarity: "common", priority: 1, duration: 3000, renderer: "scenario", scenario: "smokeRise",  sound: "whoosh", volume: 0.5, shake: false, fullscreen: false, category: "gift" },
+  { id: "kafu",   name: "كفو",    emoji: "🏅", coins: 50,  rarity: "rare",   priority: 2, duration: 3200, renderer: "scenario", scenario: "popStars",   sound: "fanfare", volume: 0.6, shake: false, fullscreen: false, category: "gift" },
 
   // ── نادرة ──────────────────────────────────────────────
-  { id: "crown",  name: "تاج",      emoji: "👑", coins: 50,  rarity: "rare", priority: 2, duration: 4000, renderer: "scenario", scenario: "crown",     sound: "fanfare", volume: 0.7, shake: false, fullscreen: true },
-  { id: "ring",   name: "خاتم",     emoji: "💍", coins: 80,  rarity: "rare", priority: 2, duration: 4200, renderer: "scenario", scenario: "diamond",   sound: "sparkle", volume: 0.7, shake: false, fullscreen: true },
-  { id: "fireworks", name: "ألعاب نارية", emoji: "🎆", coins: 120, rarity: "rare", priority: 2, duration: 4500, renderer: "scenario", scenario: "fireworksShow", sound: "fireworks", volume: 0.8, shake: true, fullscreen: true },
-  { id: "moneyrain", name: "مطر نقود", emoji: "💸", coins: 150, rarity: "rare", priority: 2, duration: 4500, renderer: "scenario", scenario: "moneyRain", sound: "cash", volume: 0.7, shake: false, fullscreen: true },
+  { id: "icecream",  name: "آيس كريم", emoji: "🍦", coins: 120, rarity: "rare", priority: 2, duration: 3000, renderer: "scenario", scenario: "floatUp",   sound: "chime",   volume: 0.6, shake: false, fullscreen: false, category: "gift" },
+  { id: "chocolate", name: "شوكولاتة", emoji: "🍫", coins: 120, rarity: "rare", priority: 2, duration: 3000, renderer: "scenario", scenario: "heartBurst", sound: "chime",  volume: 0.6, shake: false, fullscreen: false, category: "gift" },
+  { id: "baymax",    name: "بي ماكس",  emoji: "🤍", coins: 150, rarity: "rare", priority: 2, duration: 3400, renderer: "scenario", scenario: "floatUp",   sound: "chime",   volume: 0.6, shake: false, fullscreen: false, category: "gift" },
+  { id: "crown",     name: "تاج",      emoji: "👑", coins: 200, rarity: "rare", priority: 2, duration: 4000, renderer: "scenario", scenario: "crown",     sound: "fanfare", volume: 0.7, shake: false, fullscreen: true,  category: "vip" },
 
   // ── ملحمية (Epic) ──────────────────────────────────────
-  { id: "rocket", name: "صاروخ",        emoji: "🚀", coins: 200,  rarity: "epic", priority: 3, duration: 7000, renderer: "scenario", scenario: "rocket",  sound: "rocket", volume: 0.85, shake: true, fullscreen: true },
-  { id: "plane",  name: "طائرة خاصة",   emoji: "✈️", coins: 300,  rarity: "epic", priority: 3, duration: 6500, renderer: "scenario", scenario: "plane",   sound: "jet",    volume: 0.8,  shake: false, fullscreen: true },
-  { id: "sportscar", name: "سيارة رياضية", emoji: "🏎️", coins: 500, rarity: "epic", priority: 3, duration: 6500, renderer: "scenario", scenario: "sportscar", sound: "engine", volume: 0.85, shake: true, fullscreen: true },
-  { id: "lion",   name: "أسد",          emoji: "🦁", coins: 600,  rarity: "epic", priority: 3, duration: 6000, renderer: "scenario", scenario: "lion",    sound: "roar",   volume: 0.9,  shake: true, fullscreen: true },
+  { id: "heart",     name: "قلب",         emoji: "❤️", coins: 520,  rarity: "epic", priority: 3, duration: 4200, renderer: "scenario", scenario: "heartBurst", sound: "chime",  volume: 0.7, shake: false, fullscreen: true, category: "gift" },
+  { id: "loveletter",name: "رسالة العشاق", emoji: "💌", coins: 1200, rarity: "epic", priority: 3, duration: 4500, renderer: "scenario", scenario: "heartStorm", sound: "chime",  volume: 0.7, shake: false, fullscreen: true, category: "gift" },
+  { id: "kissyou",   name: "Kiss You",    emoji: "💋", coins: 1200, rarity: "epic", priority: 3, duration: 4500, renderer: "scenario", scenario: "heartStorm", sound: "chime",  volume: 0.7, shake: false, fullscreen: true, category: "gift" },
+  { id: "steak",     name: "شريحة لحم",   emoji: "🥩", coins: 1200, rarity: "epic", priority: 3, duration: 4000, renderer: "scenario", scenario: "popStars",   sound: "pop",    volume: 0.6, shake: false, fullscreen: true, category: "gift" },
 
   // ── أسطورية (Legendary) — أكبر تأثيرات ──────────────────
-  { id: "castle",  name: "قصر",     emoji: "🏰", coins: 1000, rarity: "legendary", priority: 5, duration: 8000, renderer: "scenario", scenario: "castle",  sound: "build",    volume: 0.85, shake: true, fullscreen: true },
-  { id: "diamond", name: "ألماسة",  emoji: "💎", coins: 1500, rarity: "legendary", priority: 5, duration: 7000, renderer: "scenario", scenario: "diamond", sound: "sparkle",  volume: 0.85, shake: true, fullscreen: true },
-  { id: "dragon",  name: "تنين",    emoji: "🐉", coins: 2000, rarity: "legendary", priority: 6, duration: 7500, renderer: "scenario", scenario: "dragon",  sound: "roar",     volume: 0.95, shake: true, fullscreen: true },
-  { id: "phoenix", name: "عنقاء",   emoji: "🦅", coins: 2500, rarity: "legendary", priority: 6, duration: 7500, renderer: "scenario", scenario: "phoenix", sound: "whoosh",   volume: 0.9,  shake: true, fullscreen: true },
-  { id: "yacht",   name: "يخت فاخر", emoji: "🛥️", coins: 3000, rarity: "legendary", priority: 6, duration: 8000, renderer: "scenario", scenario: "yacht",   sound: "horn",     volume: 0.85, shake: true, fullscreen: true },
-  { id: "galaxy",  name: "مجرّة",   emoji: "🌌", coins: 5000, rarity: "legendary", priority: 7, duration: 8500, renderer: "scenario", scenario: "galaxy",  sound: "cosmic",   volume: 0.9,  shake: true, fullscreen: true },
+  { id: "fireworks",   name: "ألعاب نارية", emoji: "🎆", coins: 2000, rarity: "legendary", priority: 5, duration: 5000, renderer: "scenario", scenario: "fireworksShow", sound: "fireworks", volume: 0.85, shake: true,  fullscreen: true, category: "gift" },
+  { id: "oud",         name: "عود",        emoji: "🪕", coins: 2000, rarity: "legendary", priority: 5, duration: 5000, renderer: "scenario", scenario: "musicNotes",    sound: "fanfare",   volume: 0.8,  shake: false, fullscreen: true, category: "gift" },
+  { id: "moneybouquet",name: "باقة المال", emoji: "💐", coins: 2000, rarity: "legendary", priority: 5, duration: 5000, renderer: "scenario", scenario: "moneyRain",     sound: "cash",      volume: 0.8,  shake: false, fullscreen: true, category: "gift" },
+  { id: "balloons",    name: "بالونات",    emoji: "🎈", coins: 5200, rarity: "legendary", priority: 5, duration: 5500, renderer: "scenario", scenario: "balloonsRise",  sound: "party",     volume: 0.8,  shake: false, fullscreen: true, category: "gift" },
+
+  // ── أسطورية سينمائية (premium) ─────────────────────────
+  { id: "rocket",  name: "صاروخ",      emoji: "🚀", coins: 3000,  rarity: "legendary", priority: 6, duration: 7000, renderer: "scenario", scenario: "rocket",  sound: "rocket", volume: 0.85, shake: true, fullscreen: true, category: "gift" },
+  { id: "plane",   name: "طائرة خاصة", emoji: "✈️", coins: 4000,  rarity: "legendary", priority: 6, duration: 6500, renderer: "scenario", scenario: "plane",   sound: "jet",    volume: 0.8,  shake: false, fullscreen: true, category: "gift" },
+  { id: "ferrari", name: "فيراري",     emoji: "🏎️", coins: 9999,  rarity: "legendary", priority: 7, duration: 6500, renderer: "scenario", scenario: "sportscar", sound: "engine", volume: 0.9, shake: true, fullscreen: true, category: "celeb" },
+  { id: "lion",    name: "أسد",        emoji: "🦁", coins: 6000,  rarity: "legendary", priority: 6, duration: 6000, renderer: "scenario", scenario: "lion",    sound: "roar",   volume: 0.9,  shake: true, fullscreen: true, category: "celeb" },
+  { id: "castle",  name: "قصر",        emoji: "🏰", coins: 8000,  rarity: "legendary", priority: 7, duration: 8000, renderer: "scenario", scenario: "castle",  sound: "build",  volume: 0.85, shake: true, fullscreen: true, category: "vip" },
+  { id: "diamond", name: "ألماسة",     emoji: "💎", coins: 8888,  rarity: "legendary", priority: 7, duration: 7000, renderer: "scenario", scenario: "diamond", sound: "sparkle", volume: 0.85, shake: true, fullscreen: true, category: "vip" },
+  { id: "dragon",  name: "تنين",       emoji: "🐉", coins: 12000, rarity: "legendary", priority: 8, duration: 7500, renderer: "scenario", scenario: "dragon",  sound: "roar",   volume: 0.95, shake: true, fullscreen: true, category: "celeb" },
+  { id: "phoenix", name: "عنقاء",      emoji: "🦅", coins: 15000, rarity: "legendary", priority: 8, duration: 7500, renderer: "scenario", scenario: "phoenix", sound: "whoosh", volume: 0.9,  shake: true, fullscreen: true, category: "celeb" },
+  { id: "yacht",   name: "يخت فاخر",   emoji: "🛥️", coins: 20000, rarity: "legendary", priority: 9, duration: 8000, renderer: "scenario", scenario: "yacht",   sound: "horn",   volume: 0.85, shake: true, fullscreen: true, category: "vip" },
+  { id: "galaxy",  name: "مجرّة",      emoji: "🌌", coins: 50000, rarity: "legendary", priority: 10, duration: 8500, renderer: "scenario", scenario: "galaxy",  sound: "cosmic", volume: 0.9, shake: true, fullscreen: true, category: "vip" },
 ];
 
 let gifts = [];
@@ -98,6 +108,7 @@ function normalize(g) {
     shake: !!g.shake,
     fullscreen: g.fullscreen == null ? true : !!g.fullscreen,
     loopAsset: !!g.loopAsset,
+    category: ["gift", "vip", "celeb", "member", "tribe"].includes(g.category) ? g.category : "gift",
   };
 }
 

@@ -137,15 +137,18 @@ io.on("connection", (socket) => {
   socket.on("room:join", ({ roomId, user }) => {
     roomId = roomId || "130096";
     currentRoomId = roomId;
+    const room = getRoom(roomId);
+    // أول من يدخل الغرفة = صاحب الغرفة (owner)، والبقية أعضاء
+    const role = room.members.size === 0 ? "owner" : "member";
     currentUser = {
       id: socket.id,
       name: (user?.name || "زائر").slice(0, 20),
       avatar: user?.avatar || null,
       frame: user?.frame || null, // إطار VIP اختياري
+      role, // owner | admin | member — يحدّد الإطار المتحرك
       coins: 10000,
     };
 
-    const room = getRoom(roomId);
     room.members.set(socket.id, currentUser);
     socket.join(roomId);
 
@@ -248,24 +251,26 @@ io.on("connection", (socket) => {
   });
 
   // إرسال هدية — يبعث تعريف الهدية الكامل ليعرف العميل كيف يحرّكها
-  socket.on("gift:send", ({ giftId, toUserId, combo }) => {
+  socket.on("gift:send", ({ giftId, toUserId, combo, anon }) => {
     const room = rooms.get(currentRoomId);
     if (!room || !currentUser) return;
     const gift = giftStore.get(giftId);
     if (!gift) return;
     const to = toUserId ? room.members.get(toUserId) : null;
+    // الإرسال المجهول يُخفي اسم المرسِل
+    const from = anon ? { id: currentUser.id, name: "مجهول", avatar: "🎭", role: "member" } : currentUser;
     const payload = {
       id: cryptoId(),
       gift, // تعريف كامل: rarity/priority/duration/renderer/scenario/sound/...
-      combo: Math.max(1, Math.min(99, Number(combo) || 1)),
-      from: currentUser,
+      combo: Math.max(1, Math.min(1314, Number(combo) || 1)),
+      from,
       to,
       ts: Date.now(),
     };
     pushMessage(room, {
       type: "gift",
-      text: `${currentUser.name} أرسل ${gift.emoji} ${gift.name}${to ? " إلى " + to.name : ""}`,
-      user: currentUser,
+      text: `${from.name} أرسل ${gift.emoji} ${gift.name}${to ? " إلى " + to.name : ""}`,
+      user: from,
     });
     io.to(room.id).emit("gift:new", payload);
     broadcastRoom(room);
@@ -274,6 +279,28 @@ io.on("connection", (socket) => {
   // قائمة الهدايا المتاحة (التعريفات الكاملة)
   socket.on("gift:list", () => {
     socket.emit("gift:list", giftStore.all());
+  });
+
+  // ===== التفاعلات السريعة (Reactions) =====
+  // تظهر فوق صورة المستخدم على مقعده وتُزامَن لحظياً للجميع.
+  const REACTIONS = ["laugh", "cry", "angry", "clap", "fire", "love", "celebrate", "dance", "like", "respect"];
+  let lastReactionAt = 0;
+  socket.on("reaction:send", ({ type }) => {
+    const room = rooms.get(currentRoomId);
+    if (!room || !currentUser) return;
+    if (!REACTIONS.includes(type)) return;
+    const now = Date.now();
+    if (now - lastReactionAt < 250) return; // حدّ بسيط لمنع السبام
+    lastReactionAt = now;
+    const seatIndex = seatOf(room, currentUser.id);
+    if (seatIndex === -1) return; // التفاعل يظهر فوق المقعد فقط
+    io.to(room.id).emit("reaction:new", {
+      id: cryptoId(),
+      seatIndex,
+      userId: currentUser.id,
+      type,
+      ts: now,
+    });
   });
 
   // ===== تمرير إشارات WebRTC للصوت (signaling) =====

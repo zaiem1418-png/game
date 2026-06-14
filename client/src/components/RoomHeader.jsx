@@ -1,21 +1,43 @@
-// رأس الغرفة: الاسم، الرقم، عدد الحاضرين، وحالة النشاط
+// رأس الغرفة — مستوحى من نمط تطبيقات الغرف: شارة الموسم/المستوى، الأصدقاء، المعرّف.
+const MONTHS_AR = [
+  "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+  "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
+];
+
 export default function RoomHeader({ room, memberCount }) {
+  const month = MONTHS_AR[new Date().getMonth()];
+  const level = room.level || 5;
+
   return (
     <div className="room-header">
-      <div className="rh-right">
-        <span className="rh-badge">7</span>
-        <div className="rh-titles">
-          <div className="rh-name">{room.name}</div>
-          <div className="rh-meta">
-            ID: {room.id} · <span className="rh-active">جاري النشاط</span>
-          </div>
+      {/* تحكّمات يسار (نهاية RTL) */}
+      <div className="rh-controls">
+        <button className="rh-ctl" title="القائمة">⋯</button>
+        <span className="rh-page">{memberCount || 1}</span>
+        <button className="rh-ctl" title="تصغير">－</button>
+      </div>
+
+      <div className="rh-flex" />
+
+      {/* معلومات الغرفة يمين (بداية RTL) */}
+      <div className="rh-shield" title="درع الغرفة">
+        <span>🛡️</span>
+      </div>
+
+      <div className="rh-room">
+        <div className="rh-line1">
+          <span className="rh-spark">✨</span>
+          <span className="rh-month">{month}</span>
+          <span className="rh-spark">✨</span>
+          <span className="rh-level">{level}</span>
+        </div>
+        <div className="rh-line2">
+          <span className="rh-friends">{room.name || "الأصدقاء"}</span>
+          <span className="rh-id">ID: {room.id}</span>
         </div>
       </div>
 
-      <div className="rh-left">
-        <div className="rh-count">👥 {memberCount}</div>
-        <button className="rh-fav">❤</button>
-      </div>
+      <button className="rh-next" title="تفاصيل الغرفة">›</button>
     </div>
   );
 }

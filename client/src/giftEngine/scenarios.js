@@ -330,6 +330,63 @@ export const SCENARIOS = {
     }
   },
 
+  // ══ عاصفة قلوب: قلب نابض مركزي + قلوب تصعد ══
+  heartStorm(api, t) {
+    api.bg("night");
+    const [cx, cy] = api.px(0.5, 0.42);
+    const beat = 1 + Math.sin(t * Math.PI * 8) * 0.1;
+    const scale = lerp(0.3, 1.2, E.easeOutBack(clamp01(t * 2))) * beat;
+    const opacity = t > 0.82 ? 1 - (t - 0.82) / 0.18 : 1;
+    api.hero({ x: cx, y: cy, scale, opacity, glow: 0.7 });
+    api.once("s", () => api.sound("chime", 0.7));
+    if (within(t, 0.1, 0.85)) {
+      const x = Math.random() * api.W;
+      api.emit("glitter", x, api.H * (0.5 + Math.random() * 0.4), 1, { spread: 6 });
+      if (Math.random() < 0.5) api.emit("sparks", cx + (Math.random() - 0.5) * 80, cy, 2, { palette: "fireworks", power: 0.4 });
+    }
+  },
+
+  // ══ شيشة: يرتفع بنعومة مع نفثات دخان ══
+  smokeRise(api, t) {
+    const [cx] = api.px(0.5, 0);
+    const y = lerp(api.H * 0.7, api.H * 0.4, E.easeOutCubic(t));
+    const opacity = t > 0.8 ? 1 - (t - 0.8) / 0.2 : Math.min(1, t * 4);
+    api.hero({ x: cx, y, scale: lerp(0.6, 1, E.easeOutBack(clamp01(t * 2))), opacity, glow: 0.2 });
+    api.once("s", () => api.sound("whoosh", 0.5));
+    if (within(t, 0.1, 0.85)) api.emit("smoke", cx + (Math.random() - 0.5) * 30, y - 10, 2, { vx: (Math.random() - 0.5) });
+  },
+
+  // ══ عود: نوتات موسيقية تتطاير حول الآلة ══
+  musicNotes(api, t) {
+    api.bg("gold");
+    const [cx, cy] = api.px(0.5, 0.42);
+    const sway = Math.sin(t * Math.PI * 4) * 0.06;
+    const scale = lerp(0.3, 1.15, E.easeOutBack(clamp01(t * 2)));
+    const opacity = t > 0.85 ? 1 - (t - 0.85) / 0.15 : 1;
+    api.hero({ x: cx, y: cy, scale, opacity, rot: sway, glow: 0.5 });
+    api.once("s", () => api.sound("fanfare", 0.8));
+    api.beam(cx, cy, 0.25 + 0.15 * Math.sin(t * 8));
+    if (within(t, 0.1, 0.85) && Math.random() < 0.6) {
+      api.emit("glitter", cx + (Math.random() - 0.5) * 180, cy - 20, 2, { spread: 20 });
+    }
+  },
+
+  // ══ بالونات: تصعد عبر الشاشة بألوان مبهجة ══
+  balloonsRise(api, t) {
+    api.bg("sky");
+    const [cx] = api.px(0.5, 0);
+    const sway = Math.sin(t * Math.PI * 3) * api.W * 0.05;
+    const y = lerp(api.H * 0.95, api.H * 0.2, E.easeOutCubic(t));
+    const opacity = t > 0.85 ? 1 - (t - 0.85) / 0.15 : Math.min(1, t * 4);
+    api.hero({ x: cx + sway, y, scale: lerp(0.5, 1.25, E.easeOutCubic(t)), opacity, rot: sway * 0.002, glow: 0.3 });
+    api.once("s", () => api.sound("party", 0.7));
+    if (within(t, 0.05, 0.85)) {
+      const x = Math.random() * api.W;
+      api.emit("confetti", x, api.H + 10, 1);
+      api.emit("glitter", cx + sway, y + 30, 1, { spread: 30 });
+    }
+  },
+
   // ══ مجرّة: دوامة كونية تتوسّع وتلمع ══
   galaxy(api, t) {
     api.bg("space");

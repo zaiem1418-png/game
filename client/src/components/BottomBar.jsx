@@ -9,6 +9,8 @@ export default function BottomBar({
   onToggleMute,
   onSendChat,
   onOpenGifts,
+  onOpenReactions,
+  canReact,
 }) {
   const [text, setText] = useState("");
 
@@ -24,6 +26,17 @@ export default function BottomBar({
       {/* زر الهدايا */}
       <button type="button" className="bb-icon gift-icon" onClick={onOpenGifts} title="الهدايا">
         🎁
+      </button>
+
+      {/* زر التفاعلات السريعة (متاح عند الجلوس على المايك) */}
+      <button
+        type="button"
+        className="bb-icon react-icon"
+        onClick={onOpenReactions}
+        disabled={!canReact}
+        title={canReact ? "تفاعل سريع" : "اصعد على المايك للتفاعل"}
+      >
+        😀
       </button>
 
       {/* إدخال الشات */}

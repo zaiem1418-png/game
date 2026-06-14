@@ -9,7 +9,9 @@ import BottomBar from "./components/BottomBar.jsx";
 import GiftPicker from "./components/GiftPicker.jsx";
 import GiftStage from "./giftEngine/GiftStage.jsx";
 import AdminPanel from "./components/AdminPanel.jsx";
+import ReactionPicker from "./components/ReactionPicker.jsx";
 import { unlockAudio } from "./giftEngine/core/SoundManager.js";
+import { useReactions } from "./useReactions.js";
 
 export default function App() {
   // لوحة الإدارة: افتحها عبر ?admin في الرابط
@@ -19,11 +21,13 @@ export default function App() {
   const [selfId, setSelfId] = useState(null);
   const [room, setRoom] = useState(null);
   const [giftPickerOpen, setGiftPickerOpen] = useState(false);
+  const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
   const [gifts, setGifts] = useState([]);
   const [micError, setMicError] = useState(false); // رُفض إذن المايك؟
   const [peerStates, setPeerStates] = useState([]); // تشخيص الاتصالات
   const voiceRef = useRef(null);
   const giftStageRef = useRef(null); // محرك أنيميشن الهدايا
+  const reactions = useReactions(); // طابور تفاعلات المقاعد
 
   // إعداد مستمعات السوكِت + الصوت مرة واحدة
   useEffect(() => {
@@ -92,6 +96,9 @@ export default function App() {
 
     socket.on("gift:list", (list) => setGifts(list));
 
+    // تفاعل جديد فوق أحد المقاعد — يُدفع لطابور المقعد
+    socket.on("reaction:new", (payload) => reactions.push(payload));
+
     return () => {
       socket.off("room:joined");
       socket.off("room:update");
@@ -99,6 +106,7 @@ export default function App() {
       socket.off("seat:speaking");
       socket.off("gift:new");
       socket.off("gift:list");
+      socket.off("reaction:new");
       voice.destroy();
     };
   }, []);
@@ -132,9 +140,18 @@ export default function App() {
   function sendChat(text) {
     socket.emit("chat:send", { text });
   }
-  function sendGift(giftId, toUserId) {
-    socket.emit("gift:send", { giftId, toUserId });
+  function sendGift(giftId, toUserId, opts = {}) {
+    socket.emit("gift:send", {
+      giftId,
+      toUserId,
+      combo: opts.quantity || 1,
+      anon: !!opts.anon,
+    });
     setGiftPickerOpen(false);
+  }
+  function sendReaction(type) {
+    unlockAudio();
+    socket.emit("reaction:send", { type });
   }
 
   if (isAdmin) return <AdminPanel />;
@@ -175,6 +192,7 @@ export default function App() {
       <SeatGrid
         seats={room.seats}
         selfId={selfId}
+        reactions={reactions.active}
         onTakeSeat={takeSeat}
         onSeatTap={(seat) => {
           // اضغط على مقعدك = كتم/فتح، وعلى غيرك = إرسال هدية
@@ -182,6 +200,16 @@ export default function App() {
           else if (seat.user) setGiftPickerOpen(true);
         }}
       />
+
+      {/* بانر اليانصيب الترويجي */}
+      <div className="promo-banner" onClick={() => setGiftPickerOpen(true)}>
+        <button className="promo-cta">التفاصيل</button>
+        <div className="promo-text">
+          <b>أرسل الهدايا واربح اليانصيب</b>
+          <span>احصل على أرقام الحظ وإربح المكافآت المفاجئة</span>
+        </div>
+        <span className="promo-spark">🎉</span>
+      </div>
 
       <ChatPanel messages={room.messages} selfId={selfId} />
 
@@ -196,15 +224,22 @@ export default function App() {
         onToggleMute={toggleMute}
         onSendChat={sendChat}
         onOpenGifts={() => setGiftPickerOpen(true)}
+        onOpenReactions={() => setReactionPickerOpen(true)}
+        canReact={onMic}
       />
 
       {giftPickerOpen && (
         <GiftPicker
           gifts={gifts}
           members={room.members.filter((m) => m.id !== selfId)}
+          selfCoins={room.members.find((m) => m.id === selfId)?.coins ?? 0}
           onSend={sendGift}
           onClose={() => setGiftPickerOpen(false)}
         />
+      )}
+
+      {reactionPickerOpen && (
+        <ReactionPicker onPick={sendReaction} onClose={() => setReactionPickerOpen(false)} />
       )}
 
       <GiftStage ref={giftStageRef} />
