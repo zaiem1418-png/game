@@ -12,3 +12,10 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "20"
+      # مفاتيح LiveKit (الصوت) — تُضبط من لوحة Render (Environment) لا من هنا (سرّية)
+      - key: LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false

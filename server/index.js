@@ -1,16 +1,24 @@
 // خادم الغرف الصوتية — Socket.IO
 // يدير: حالة الغرف، المقاعد، أخذ/ترك المايك، الكتم، الشات، والهدايا.
-// الصوت الحقيقي (WebRTC) غير مدمج بعد — هذه طبقة الحالة والمزامنة فقط.
+// الصوت الحقيقي ينتقل عبر LiveKit Cloud (بنية SFU تدعم 10+ أشخاص).
+// هذا السيرفر يصدر فقط "توكن الدخول" لـ LiveKit ويدير حالة الغرفة.
 
+import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
+import { AccessToken } from "livekit-server-sdk";
 import { giftStore } from "./giftStore.js";
 
 const PORT = process.env.PORT || 3001;
 const SEAT_COUNT = 12; // عدد المقاعد في كل غرفة
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "admin123"; // غيّره في الإنتاج
+
+// ===== إعدادات LiveKit (الصوت) — تُقرأ من متغيرات البيئة فقط، لا تُكتب في الكود =====
+const LIVEKIT_URL = process.env.LIVEKIT_URL || "";
+const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "";
+const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "";
 
 giftStore.init();
 
@@ -18,6 +26,32 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: "256kb" }));
 app.get("/health", (_req, res) => res.json({ ok: true }));
+
+// ===== إصدار توكن الدخول لـ LiveKit (الصوت) =====
+// العميل يطلب هذا التوكن ثم يتصل بـ LiveKit Cloud مباشرة لنقل الصوت.
+// المفاتيح السرية تبقى هنا في الخادم ولا تصل أبداً للواجهة.
+app.get("/api/voice-token", async (req, res) => {
+  if (!LIVEKIT_API_KEY || !LIVEKIT_API_SECRET || !LIVEKIT_URL) {
+    return res.status(500).json({ error: "الصوت غير مهيّأ على الخادم (LiveKit env مفقود)" });
+  }
+  const room = String(req.query.room || "130096").slice(0, 64);
+  const identity = String(req.query.identity || "").slice(0, 64);
+  const name = String(req.query.name || "زائر").slice(0, 40);
+  if (!identity) return res.status(400).json({ error: "identity مطلوب" });
+
+  try {
+    const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
+      identity,
+      name,
+      ttl: "2h",
+    });
+    at.addGrant({ roomJoin: true, room, canPublish: true, canSubscribe: true });
+    const token = await at.toJwt();
+    res.json({ token, url: LIVEKIT_URL });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // ===== لوحة الإدارة: إدارة الهدايا عبر REST (دون تعديل الكود) =====
 function requireAdmin(req, res, next) {
@@ -303,12 +337,7 @@ io.on("connection", (socket) => {
     });
   });
 
-  // ===== تمرير إشارات WebRTC للصوت (signaling) =====
-  // السيرفر يمرّر العرض/الرد/مرشحات ICE بين طرفين فقط؛ الصوت نفسه ينتقل P2P.
-  socket.on("voice:signal", ({ to, data }) => {
-    if (!to) return;
-    io.to(to).emit("voice:signal", { from: socket.id, data });
-  });
+  // ملاحظة: لم نعد نمرّر إشارات WebRTC هنا — الصوت ينتقل عبر LiveKit Cloud (SFU).
 
   socket.on("disconnect", () => {
     if (!currentRoomId) return;

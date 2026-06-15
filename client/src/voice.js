@@ -1,285 +1,148 @@
-// إدارة الصوت عبر WebRTC (شبكة mesh نظير-لنظير)
-// - كل عضو يتصل بكل الأعضاء.
-// - المايك يُرسل فعلياً فقط عند الجلوس على مقعد وعدم الكتم (نتحكم بـ track.enabled).
-// - كشف التحدّث الحقيقي عبر تحليل مستوى الصوت (Web Audio).
-// السيرفر يمرّر الإشارات فقط؛ الصوت ينتقل مباشرة بين الأجهزة.
+// إدارة الصوت عبر LiveKit Cloud (بنية SFU).
+// - كل عضو يرفع نسخة واحدة من صوته للخادم، والخادم يوزّعها على الباقين.
+// - تدعم 10+ أشخاص يتحدثون معاً (عكس Mesh القديمة التي تنهار بعد ~6).
+// - المايك يُنشر فقط عند الجلوس على مقعد وفك الكتم.
+// - كشف التحدّث يأتي جاهزاً من LiveKit (ActiveSpeakers).
 
-const ICE_SERVERS = [
-  { urls: "stun:stun.l.google.com:19302" },
-  { urls: "stun:stun1.l.google.com:19302" },
-  // خوادم TURN مجانية (Open Relay) — تساعد على الاتصال عبر شبكات الجوال والـNAT الصارم
-  {
-    urls: ["turn:openrelay.metered.ca:80", "turn:openrelay.metered.ca:443"],
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
-  {
-    urls: "turn:openrelay.metered.ca:443?transport=tcp",
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
-];
+import { Room, RoomEvent, Track, ConnectionState } from "livekit-client";
+
+// نطلب التوكن من سيرفر الحالة (Render) — المفاتيح السرية تبقى هناك.
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3001";
 
 export class VoiceManager {
-  constructor(socket) {
-    this.socket = socket;
-    this.peers = new Map(); // id -> RTCPeerConnection
-    this.audioEls = new Map(); // id -> <audio>
-    this.localStream = null;
+  constructor() {
+    this.room = null;
     this.selfId = null;
     this.ready = false;
-    this._pendingIds = [];
-    this._signalQueue = []; // إشارات وصلت قبل جهوزية المايك
-    this._candBuffer = new Map(); // from -> [candidates] وصلت قبل جهوزية الاتصال
-    this.onSpeakingChange = null; // callback(boolean) لحالة تحدّث المستخدم نفسه
-    this.onMicError = null; // callback عند رفض إذن المايك
-    this.onPeersChange = null; // callback(Array<{id, state, ice}>) للتشخيص
-    this._bindSignaling();
+    this._micWanted = false; // هل يريد المستخدم نشر المايك حالياً؟
+    this._lastSpeaking = false;
+    this._audioEls = new Map(); // identity -> <audio>
+    this.onSpeakingChange = null; // callback(boolean) لتحدّث المستخدم نفسه
+    this.onMicError = null; // callback عند فشل المايك/الاتصال
+    this.onPeersChange = null; // callback(Array) للوحة التشخيص
   }
 
-  // طلب إذن المايك وتهيئة كشف التحدّث ثم بدء الاتصالات
-  async init(selfId) {
-    this.selfId = selfId;
+  // اتصل بغرفة LiveKit: اجلب التوكن ثم انضمّ
+  async init({ identity, name, roomId }) {
+    this.selfId = identity;
+
+    let token, url;
     try {
-      this.localStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-        video: false,
-      });
-      // المايك مغلق حتى يجلس المستخدم ويفك الكتم
-      this.localStream.getAudioTracks().forEach((t) => (t.enabled = false));
-      this._setupVoiceDetection();
+      const qs = new URLSearchParams({ room: roomId, identity, name: name || "زائر" });
+      const res = await fetch(`${SERVER_URL}/api/voice-token?${qs}`);
+      if (!res.ok) throw new Error("token HTTP " + res.status);
+      ({ token, url } = await res.json());
     } catch (err) {
-      console.warn("تعذّر الوصول للمايك:", err?.message || err);
-      this.localStream = null;
+      console.warn("تعذّر جلب توكن الصوت:", err?.message || err);
+      this.onMicError?.(err);
+      return;
+    }
+
+    const room = new Room({ adaptiveStream: false, dynacast: true });
+    this.room = room;
+
+    room
+      .on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
+        if (track.kind === Track.Kind.Audio) this._attach(participant.identity, track);
+      })
+      .on(RoomEvent.TrackUnsubscribed, (track, _pub, participant) => {
+        if (track.kind === Track.Kind.Audio) this._detach(participant.identity);
+      })
+      .on(RoomEvent.ParticipantConnected, () => this._emitPeers())
+      .on(RoomEvent.ParticipantDisconnected, () => this._emitPeers())
+      .on(RoomEvent.ConnectionQualityChanged, () => this._emitPeers())
+      .on(RoomEvent.LocalTrackPublished, () => this._emitPeers())
+      .on(RoomEvent.ActiveSpeakersChanged, (speakers) => {
+        const meSpeaking = speakers.some((p) => p.isLocal);
+        if (meSpeaking !== this._lastSpeaking) {
+          this._lastSpeaking = meSpeaking;
+          this.onSpeakingChange?.(meSpeaking);
+        }
+      });
+
+    try {
+      await room.connect(url, token);
+      this.ready = true;
+      // تشغيل الصوت قد يُحظر حتى أول تفاعل — نعالجه عند أول نقرة
+      try { await room.startAudio(); } catch { this._retryAudioOnGesture(); }
+      // طبّق رغبة المايك إن طُلبت قبل اكتمال الاتصال
+      if (this._micWanted) this.setMicEnabled(true);
+    } catch (err) {
+      console.warn("تعذّر الاتصال بـ LiveKit:", err?.message || err);
       this.onMicError?.(err);
     }
-
-    this.ready = true;
-
-    // مهم: عالج الإشارات المؤجّلة أولاً (تنشئ اتصالات الاستقبال مع المايك جاهز)
-    const queued = this._signalQueue;
-    this._signalQueue = [];
-    for (const sig of queued) await this._handleSignal(sig);
-
-    // ثم أنشئ اتصالات بقية الأعضاء (كبادئ)
-    if (this._pendingIds.length) this.syncPeers(this._pendingIds);
-  }
-
-  // تفعيل/تعطيل إرسال المايك فعلياً
-  setMicEnabled(enabled) {
-    if (!this.localStream) return;
-    this.localStream.getAudioTracks().forEach((t) => (t.enabled = enabled));
-  }
-
-  // مزامنة الاتصالات مع قائمة الأعضاء الحالية
-  syncPeers(memberIds) {
-    this._pendingIds = memberIds;
-    if (!this.ready) return;
-
-    for (const id of memberIds) {
-      if (id === this.selfId) continue;
-      if (!this.peers.has(id)) {
-        // الطرف صاحب المعرّف الأصغر يبدأ العرض (لتفادي التضارب)
-        this._createPeer(id, this.selfId < id);
-      }
-    }
-    for (const id of [...this.peers.keys()]) {
-      if (!memberIds.includes(id)) this._closePeer(id);
-    }
-  }
-
-  async _createPeer(id, isInitiator) {
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-    this.peers.set(id, pc);
-
-    // أضف مسار المايك (أو استقبال فقط إن لم يتوفر مايك)
-    if (this.localStream) {
-      this.localStream.getTracks().forEach((t) => pc.addTrack(t, this.localStream));
-    } else {
-      pc.addTransceiver("audio", { direction: "recvonly" });
-    }
-
-    pc.onicecandidate = (e) => {
-      if (e.candidate) {
-        this.socket.emit("voice:signal", { to: id, data: { candidate: e.candidate } });
-      }
-    };
-
-    pc.ontrack = (e) => this._attachAudio(id, e.streams[0]);
-
-    pc.oniceconnectionstatechange = () => this._emitPeers();
-
-    pc.onconnectionstatechange = () => {
-      const st = pc.connectionState;
-      this._emitPeers();
-      if (st === "failed") {
-        // أعد المحاولة: البادئ فقط (الأصغر) يعيد الإنشاء لتفادي التضارب
-        this._closePeer(id);
-        if (this.selfId < id && this._pendingIds.includes(id)) {
-          setTimeout(() => {
-            if (!this.peers.has(id) && this._pendingIds.includes(id)) {
-              this._createPeer(id, true);
-            }
-          }, 800);
-        }
-      }
-    };
-
-    if (isInitiator) {
-      try {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        this.socket.emit("voice:signal", { to: id, data: { sdp: pc.localDescription } });
-      } catch (e) {
-        console.warn("فشل إنشاء العرض:", e);
-      }
-    }
     this._emitPeers();
-    return pc;
   }
 
-  // أبلغ الواجهة بحالة كل الاتصالات (للوحة التشخيص)
+  // LiveKit يدير الأنداد تلقائياً — لا حاجة للمزامنة اليدوية (للتوافق مع الكود القديم)
+  syncPeers() {}
+
+  // نشر/إيقاف المايك فعلياً (publish/unpublish على مستوى الخادم)
+  async setMicEnabled(enabled) {
+    this._micWanted = enabled;
+    if (!this.room || this.room.state !== ConnectionState.Connected) return;
+    try {
+      await this.room.localParticipant.setMicrophoneEnabled(enabled, {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      });
+    } catch (err) {
+      console.warn("تعذّر ضبط المايك:", err?.message || err);
+      if (enabled) this.onMicError?.(err);
+    }
+  }
+
+  _attach(id, track) {
+    this._detach(id); // نظّف أي عنصر سابق لنفس العضو
+    const el = track.attach(); // ينشئ <audio> ويربط الصوت
+    el.autoplay = true;
+    el.dataset.peer = id;
+    document.body.appendChild(el);
+    this._audioEls.set(id, el);
+    el.play?.().catch(() => this._retryAudioOnGesture());
+  }
+
+  _detach(id) {
+    const el = this._audioEls.get(id);
+    if (el) {
+      el.srcObject = null;
+      el.remove();
+      this._audioEls.delete(id);
+    }
+  }
+
+  // أعد محاولة تشغيل الصوت عند أول نقرة/لمسة (تجاوز حظر التشغيل التلقائي)
+  _retryAudioOnGesture() {
+    const retry = () => {
+      this.room?.startAudio?.().catch(() => {});
+      for (const el of this._audioEls.values()) el.play?.().catch(() => {});
+      document.removeEventListener("click", retry);
+      document.removeEventListener("touchstart", retry);
+    };
+    document.addEventListener("click", retry);
+    document.addEventListener("touchstart", retry);
+  }
+
+  // أبلغ الواجهة بحالة المشاركين (للوحة التشخيص)
   _emitPeers() {
-    if (!this.onPeersChange) return;
-    const list = [...this.peers.entries()].map(([id, pc]) => ({
-      id,
-      state: pc.connectionState,
-      ice: pc.iceConnectionState,
+    if (!this.onPeersChange || !this.room) return;
+    const list = [...this.room.remoteParticipants.values()].map((p) => ({
+      id: p.identity,
+      state: p.connectionQuality || "connected",
+      ice: p.audioTrackPublications.size ? "🎤" : "👂",
     }));
     this.onPeersChange(list);
   }
 
-  _attachAudio(id, stream) {
-    let el = this.audioEls.get(id);
-    if (!el) {
-      el = document.createElement("audio");
-      el.autoplay = true;
-      el.playsInline = true;
-      el.dataset.peer = id;
-      document.body.appendChild(el);
-      this.audioEls.set(id, el);
-    }
-    el.srcObject = stream;
-    el.play().catch(() => {
-      // قد يُحظر التشغيل التلقائي حتى أول تفاعل — نعيد المحاولة عند أي نقرة
-      const retry = () => {
-        el.play().catch(() => {});
-        document.removeEventListener("click", retry);
-        document.removeEventListener("touchstart", retry);
-      };
-      document.addEventListener("click", retry);
-      document.addEventListener("touchstart", retry);
-    });
-  }
-
-  _closePeer(id) {
-    const pc = this.peers.get(id);
-    if (pc) {
-      pc.onicecandidate = null;
-      pc.ontrack = null;
-      pc.onconnectionstatechange = null;
-      try { pc.close(); } catch {}
-      this.peers.delete(id);
-    }
-    this._candBuffer.delete(id);
-    const el = this.audioEls.get(id);
-    if (el) {
+  destroy() {
+    for (const el of this._audioEls.values()) {
       el.srcObject = null;
       el.remove();
-      this.audioEls.delete(id);
     }
-    this._emitPeers();
-  }
-
-  _bindSignaling() {
-    this.socket.on("voice:signal", (msg) => {
-      // أجّل الإشارات حتى يجهز المايك لتفادي إنشاء اتصال بلا صوت
-      if (!this.ready) {
-        this._signalQueue.push(msg);
-        return;
-      }
-      this._handleSignal(msg);
-    });
-  }
-
-  async _handleSignal({ from, data }) {
-    try {
-      if (data.sdp) {
-        let pc = this.peers.get(from);
-        if (!pc) {
-          // فقط العروض تنشئ اتصالاً كمستقبِل — لا ننشئه من مرشّح ICE
-          if (data.sdp.type !== "offer") return;
-          pc = await this._createPeer(from, false);
-        }
-        await pc.setRemoteDescription(data.sdp);
-        await this._flushCandidates(from, pc);
-
-        if (data.sdp.type === "offer") {
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          this.socket.emit("voice:signal", { to: from, data: { sdp: pc.localDescription } });
-        }
-      } else if (data.candidate) {
-        const pc = this.peers.get(from);
-        if (pc && pc.remoteDescription && pc.remoteDescription.type) {
-          await pc.addIceCandidate(data.candidate);
-        } else {
-          // الاتصال لم يجهز بعد → خزّن المرشّح حتى تُضبط الوصلة
-          if (!this._candBuffer.has(from)) this._candBuffer.set(from, []);
-          this._candBuffer.get(from).push(data.candidate);
-        }
-      }
-    } catch (e) {
-      console.warn("خطأ في معالجة الإشارة:", e);
-    }
-  }
-
-  // أضف مرشحات ICE المخزّنة مؤقتاً بعد ضبط الوصف البعيد
-  async _flushCandidates(from, pc) {
-    const list = this._candBuffer.get(from);
-    if (!list) return;
-    for (const c of list) {
-      try { await pc.addIceCandidate(c); } catch {}
-    }
-    this._candBuffer.delete(from);
-  }
-
-  // كشف التحدّث الحقيقي من مستوى صوت المايك
-  _setupVoiceDetection() {
-    try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      const ctx = new Ctx();
-      ctx.resume?.();
-      const source = ctx.createMediaStreamSource(this.localStream);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 512;
-      source.connect(analyser);
-      const data = new Uint8Array(analyser.frequencyBinCount);
-      let speaking = false;
-
-      const loop = () => {
-        analyser.getByteFrequencyData(data);
-        let sum = 0;
-        for (let i = 0; i < data.length; i++) sum += data[i];
-        const avg = sum / data.length;
-        const micOn = this.localStream?.getAudioTracks()[0]?.enabled;
-        const now = !!micOn && avg > 18; // عتبة التحدّث
-        if (now !== speaking) {
-          speaking = now;
-          this.onSpeakingChange?.(now);
-        }
-        this._raf = requestAnimationFrame(loop);
-      };
-      loop();
-    } catch (e) {
-      console.warn("تعذّر تفعيل كشف التحدّث:", e);
-    }
-  }
-
-  destroy() {
-    cancelAnimationFrame(this._raf);
-    for (const id of [...this.peers.keys()]) this._closePeer(id);
-    this.localStream?.getTracks().forEach((t) => t.stop());
-    this.socket.off("voice:signal");
+    this._audioEls.clear();
+    try { this.room?.disconnect(); } catch {}
+    this.room = null;
+    this.ready = false;
   }
 }

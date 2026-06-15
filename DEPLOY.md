@@ -1,8 +1,9 @@
 # 🌐 نشر الغرفة الصوتية (Deploy)
 
-المشروع قطعتان تُنشران بشكل منفصل:
-- **السيرفر** (`server/`) → يحتاج استضافة دائمة → **Render**.
+المشروع ثلاث قطع:
+- **السيرفر** (`server/`) → يحتاج استضافة دائمة → **Render** (حالة الغرفة + إصدار توكن الصوت).
 - **الواجهة** (`client/`) → ملفات ثابتة → **Vercel**.
+- **الصوت** → **LiveKit Cloud** (بنية SFU تدعم 10 أشخاص وأكثر يتحدثون معاً).
 
 ---
 
@@ -33,7 +34,15 @@ git remote add origin https://github.com/USERNAME/REPO.git
 git push -u origin main
 ```
 
-### الخطوة 1: انشر السيرفر على Render
+### الخطوة 1: جهّز الصوت على LiveKit Cloud (مجاني)
+1. ادخل [cloud.livekit.io](https://cloud.livekit.io) وأنشئ مشروعاً.
+2. من **Settings ➜ Keys** انسخ الثلاثة:
+   - `LIVEKIT_URL` (يبدأ بـ `wss://`)
+   - `LIVEKIT_API_KEY`
+   - `LIVEKIT_API_SECRET`
+   > الخطة المجانية: 5000 دقيقة/شهر وحتى 50 شخصاً في الغرفة.
+
+### الخطوة 2: انشر السيرفر على Render
 1. ادخل [render.com](https://render.com) وسجّل بحساب GitHub.
 2. **New ➜ Web Service** واختر مستودعك.
 3. الإعدادات:
@@ -42,11 +51,15 @@ git push -u origin main
    - **Start Command:** `npm start`
    - **Health Check Path:** `/health`
    - الخطة: **Free**
-4. اضغط **Create** — بعد دقيقة يعطيك رابطاً مثل:
+4. في **Environment** أضف مفاتيح LiveKit الثلاثة من الخطوة 1:
+   `LIVEKIT_URL` · `LIVEKIT_API_KEY` · `LIVEKIT_API_SECRET`
+5. اضغط **Create** — بعد دقيقة يعطيك رابطاً مثل:
    `https://voice-room-server.onrender.com`
-   > (أو استخدم ملف `render.yaml` الجاهز عبر New ➜ Blueprint).
+   > (أو استخدم ملف `render.yaml` الجاهز عبر New ➜ Blueprint ثم أضف المفاتيح في Environment).
 
-### الخطوة 2: انشر الواجهة على Vercel
+> 🎙️ الصوت ينتقل عبر LiveKit Cloud مباشرة؛ السيرفر يُصدر توكن الدخول فقط.
+
+### الخطوة 3: انشر الواجهة على Vercel
 1. ادخل [vercel.com](https://vercel.com) بحساب GitHub.
 2. **Add New ➜ Project** واختر نفس المستودع.
 3. الإعدادات:
@@ -57,8 +70,8 @@ git push -u origin main
    - `VITE_SERVER_URL` = رابط سيرفر Render (من الخطوة 1)
 5. اضغط **Deploy** — يعطيك رابط الواجهة النهائي 🎉
 
-### الخطوة 3: جرّب
-افتح رابط Vercel من أي جهاز/جوال، وافتحه على جهازين لتجربة المزامنة.
+### الخطوة 4: جرّب
+افتح رابط Vercel من أي جهاز/جوال، وافتحه على عدة أجهزة لتجربة الصوت الجماعي.
 
 ---
 

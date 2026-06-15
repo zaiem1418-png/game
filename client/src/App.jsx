@@ -32,7 +32,7 @@ export default function App() {
   // إعداد مستمعات السوكِت + الصوت مرة واحدة
   useEffect(() => {
     let mySelfId = null;
-    const voice = new VoiceManager(socket);
+    const voice = new VoiceManager();
     voiceRef.current = voice;
 
     // كشف التحدّث الحقيقي → أبلغ السيرفر ليُظهر الموجة للجميع
@@ -47,15 +47,13 @@ export default function App() {
       setSelfId(selfId);
       setRoom(room);
       setJoined(true);
-      // ابدأ الصوت: اطلب المايك ثم اربط الأعضاء
-      voice.init(selfId).then(() => {
-        voice.syncPeers(room.members.map((m) => m.id));
-      });
+      // ابدأ الصوت: اتصل بغرفة LiveKit (الانضمام للأعضاء يتم تلقائياً)
+      const me = room.members.find((m) => m.id === selfId);
+      voice.init({ identity: selfId, name: me?.name || "زائر", roomId: room.id });
     });
 
     socket.on("room:update", (room) => {
       setRoom(room);
-      voice.syncPeers(room.members.map((m) => m.id));
     });
 
     socket.on("chat:new", (msg) => {
