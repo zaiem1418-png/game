@@ -638,18 +638,18 @@ body {
 /* الحاوية فوق الصورة */
 .rx { position: absolute; left: 50%; top: 0; width: 0; height: 0; transform: translateX(-50%); }
 
-/* الوجه الرئيسي — دخول + طفو + تلاشٍ على مدى عمر التفاعل */
+/* الوجه الرئيسي — يظهر فوق صورة البروفايل نفسها داخل نفس الإطار */
 .rx-main {
-  position: absolute; left: 0; bottom: 34px; transform: translateX(-50%);
+  position: absolute; left: 0; top: 32px; transform: translate(-50%, -50%);
   animation: rxLife var(--life, 2800ms) ease forwards;
 }
-.rx-face { display: inline-block; font-size: 34px; line-height: 1; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5)); }
+.rx-face { display: inline-block; font-size: 32px; line-height: 1; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.65)); }
 @keyframes rxLife {
-  0%   { opacity: 0; transform: translateX(-50%) translateY(12px) scale(0.3); }
-  12%  { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.12); }
-  22%  { transform: translateX(-50%) translateY(0) scale(1); }
-  80%  { opacity: 1; transform: translateX(-50%) translateY(-8px) scale(1); }
-  100% { opacity: 0; transform: translateX(-50%) translateY(-26px) scale(0.85); }
+  0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.3); }
+  12%  { opacity: 1; transform: translate(-50%,-50%) scale(1.18); }
+  22%  { transform: translate(-50%,-50%) scale(1); }
+  80%  { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%,-50%) scale(0.85); }
 }
 
 /* حركات خاصة بكل تفاعل على الوجه */
@@ -669,7 +669,7 @@ body {
 @keyframes faceDance { 0%,100% { transform: rotate(-10deg) translateY(0); } 50% { transform: rotate(10deg) translateY(-4px); } }
 
 /* الجسيمات الصغيرة */
-.rx-parts { position: absolute; left: 0; bottom: 36px; transform: translateX(-50%); width: 80px; height: 80px; }
+.rx-parts { position: absolute; left: 0; top: 32px; transform: translate(-50%, -50%); width: 80px; height: 80px; }
 .rx-p { position: absolute; left: 50%; top: 50%; font-size: 14px; opacity: 0; will-change: transform, opacity; }
 
 .rx-p-bubble { animation: pRise var(--dur) ease-out var(--d) infinite; font-size: 13px; }
