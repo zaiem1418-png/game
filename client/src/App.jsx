@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { socket } from "./socket.js";
 import { VoiceManager } from "./voice.js";
+import GameLobby from "./lobby/GameLobby.jsx";
 import JoinScreen from "./components/JoinScreen.jsx";
 import RoomHeader from "./components/RoomHeader.jsx";
 import SeatGrid from "./components/SeatGrid.jsx";
@@ -10,13 +11,18 @@ import GiftPicker from "./components/GiftPicker.jsx";
 import GiftStage from "./giftEngine/GiftStage.jsx";
 import AdminPanel from "./components/AdminPanel.jsx";
 import ReactionPicker from "./components/ReactionPicker.jsx";
+import WalletBar from "./components/WalletBar.jsx";
+import StoreModal from "./components/StoreModal.jsx";
+import OwnerLogin from "./components/OwnerLogin.jsx";
 import { unlockAudio } from "./giftEngine/core/SoundManager.js";
 import { useReactions } from "./useReactions.js";
+import { getUid, fetchWallet } from "./wallet.js";
 
 export default function App() {
   // لوحة الإدارة: افتحها عبر ?admin في الرابط
   const isAdmin = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("admin");
 
+  const [view, setView] = useState("lobby"); // "lobby" = واجهة الألعاب الرئيسية، "app" = الغرفة الصوتية
   const [joined, setJoined] = useState(false);
   const [selfId, setSelfId] = useState(null);
   const [room, setRoom] = useState(null);
@@ -25,6 +31,11 @@ export default function App() {
   const [gifts, setGifts] = useState([]);
   const [micError, setMicError] = useState(false); // رُفض إذن المايك؟
   const [peerStates, setPeerStates] = useState([]); // تشخيص الاتصالات
+  const [wallet, setWallet] = useState(null); // رصيد الألماس/الكوينز
+  const [storeTab, setStoreTab] = useState(null); // تبويب المتجر المفتوح (null = مغلق)
+  const [ownerOpen, setOwnerOpen] = useState(false); // نافذة دخول المالك
+  const [bonusToast, setBonusToast] = useState(null); // مكافأة الترحيب للمستخدم الجديد
+  const [needCoins, setNeedCoins] = useState(false); // الرصيد لا يكفي لإرسال الهدية
   const voiceRef = useRef(null);
   const giftStageRef = useRef(null); // محرك أنيميشن الهدايا
   const reactions = useReactions(); // طابور تفاعلات المقاعد
@@ -97,6 +108,16 @@ export default function App() {
     // تفاعل جديد فوق أحد المقاعد — يُدفع لطابور المقعد
     socket.on("reaction:new", (payload) => reactions.push(payload));
 
+    // تحديث الرصيد لحظياً (بعد الشحن/إرسال هدية/دخول المالك)
+    socket.on("wallet:update", (w) => setWallet(w));
+
+    // الرصيد لا يكفي لإرسال الهدية → افتح المتجر على تبويب الكوينز
+    socket.on("wallet:insufficient", () => {
+      setNeedCoins(true);
+      setStoreTab("coins");
+      setTimeout(() => setNeedCoins(false), 4000);
+    });
+
     return () => {
       socket.off("room:joined");
       socket.off("room:update");
@@ -105,8 +126,20 @@ export default function App() {
       socket.off("gift:new");
       socket.off("gift:list");
       socket.off("reaction:new");
+      socket.off("wallet:update");
+      socket.off("wallet:insufficient");
       voice.destroy();
     };
+  }, []);
+
+  // اجلب المحفظة عند فتح اللعبة — مستخدم جديد يحصل على مكافأة البداية (500💎 + 10000🪙)
+  useEffect(() => {
+    fetchWallet()
+      .then(({ wallet, isNew, starter }) => {
+        setWallet(wallet);
+        if (isNew) setBonusToast(starter); // اعرض رسالة الترحيب بالمكافأة
+      })
+      .catch(() => {});
   }, []);
 
   const mySeatIndex = room?.seats.findIndex((s) => s.user?.id === selfId) ?? -1;
@@ -122,7 +155,8 @@ export default function App() {
   function handleJoin(user) {
     unlockAudio(); // فتح سياق الصوت ضمن تفاعل المستخدم (مطلوب على الموبايل)
     socket.connect();
-    socket.emit("room:join", { roomId: "130096", user });
+    // أرفق uid الثابت ليربط الخادم العضو بمحفظته الدائمة
+    socket.emit("room:join", { roomId: "130096", user: { ...user, uid: getUid() } });
     socket.emit("gift:list");
   }
 
@@ -154,11 +188,77 @@ export default function App() {
 
   if (isAdmin) return <AdminPanel />;
 
-  if (!joined) return <JoinScreen onJoin={handleJoin} />;
+  // مكافأة الترحيب — تظهر أول ما تُفتح اللعبة للمستخدم الجديد
+  const bonusBanner = bonusToast && (
+    <div className="bonus-toast" onClick={() => setBonusToast(null)}>
+      <div className="bonus-card">
+        <div className="bonus-gift">🎁</div>
+        <h3>هدية ترحيب!</h3>
+        <p>حصلت على رصيد مجاني للبدء</p>
+        <div className="bonus-amounts">
+          <span className="bonus-amt diamonds">💎 {bonusToast.diamonds}</span>
+          <span className="bonus-amt coins">🪙 {bonusToast.coins.toLocaleString("en-US")}</span>
+        </div>
+        <button className="store-pay" onClick={() => setBonusToast(null)}>استلام والبدء</button>
+      </div>
+    </div>
+  );
+
+  // نوافذ المحفظة المشتركة (المتجر/المالك/التنبيهات) — متاحة في اللوبي والغرفة
+  const walletOverlays = (
+    <>
+      {storeTab && (
+        <StoreModal
+          initialTab={storeTab}
+          onClose={() => setStoreTab(null)}
+          onPurchased={(w) => setWallet(w)}
+        />
+      )}
+      {ownerOpen && (
+        <OwnerLogin
+          onClose={() => setOwnerOpen(false)}
+          onSuccess={(w) => {
+            setWallet(w);
+            setOwnerOpen(false);
+          }}
+        />
+      )}
+      {needCoins && <div className="need-coins-toast">رصيد الكوينز لا يكفي — اشحن لإرسال الهدية</div>}
+      {bonusBanner}
+    </>
+  );
+
+  // ===== الواجهة الرئيسية: لوبي الألعاب (جاكارو/لودو/بلوت) مع السحب =====
+  if (view === "lobby")
+    return (
+      <>
+        <GameLobby
+          wallet={wallet}
+          onOpenRooms={() => setView("app")}
+          onPlay={() => setView("app")}
+          onRecharge={(tab) => setStoreTab(tab)}
+          onOwnerTap={() => setOwnerOpen(true)}
+        />
+        {walletOverlays}
+      </>
+    );
+
+  if (!joined)
+    return (
+      <>
+        <JoinScreen onJoin={handleJoin} onBack={() => setView("lobby")} />
+        {bonusBanner}
+      </>
+    );
 
   return (
     <div className="room">
       <div className="room-bg" />
+      <WalletBar
+        wallet={wallet}
+        onRecharge={(tab) => setStoreTab(tab)}
+        onOwnerTap={() => setOwnerOpen(true)}
+      />
       <RoomHeader room={room} memberCount={room.members.length} />
 
       {micError && (
@@ -230,7 +330,7 @@ export default function App() {
         <GiftPicker
           gifts={gifts}
           members={room.members.filter((m) => m.id !== selfId)}
-          selfCoins={room.members.find((m) => m.id === selfId)?.coins ?? 0}
+          selfCoins={wallet?.coins ?? 0}
           onSend={sendGift}
           onClose={() => setGiftPickerOpen(false)}
         />
@@ -239,6 +339,8 @@ export default function App() {
       {reactionPickerOpen && (
         <ReactionPicker onPick={sendReaction} onClose={() => setReactionPickerOpen(false)} />
       )}
+
+      {walletOverlays}
 
       <GiftStage ref={giftStageRef} />
     </div>

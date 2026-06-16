@@ -10,7 +10,7 @@ const FRAMES = [
 
 const AVATARS = ["🦁", "🐯", "🐼", "🦊", "🐵", "🐶", "🐱", "🐸"];
 
-export default function JoinScreen({ onJoin }) {
+export default function JoinScreen({ onJoin, onBack }) {
   const [name, setName] = useState("");
   const [avatar, setAvatar] = useState(AVATARS[0]);
   const [frame, setFrame] = useState(null);
@@ -23,6 +23,11 @@ export default function JoinScreen({ onJoin }) {
   return (
     <div className="join">
       <form className="join-card" onSubmit={submit}>
+        {onBack && (
+          <button type="button" className="join-back" onClick={onBack}>
+            ‹ الرئيسية
+          </button>
+        )}
         <h1>🎙️ الغرفة الصوتية</h1>
         <p className="join-sub">اختر اسمك وادخل الجلسة</p>
 

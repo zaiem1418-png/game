@@ -1,0 +1,306 @@
+/* ===================================================================== */
+/* ============ واجهة لوبي الألعاب (Jackaroo / Ludo / Baloot) ========== */
+/* RTL · موبايل أولاً · أنميشن Framer Motion + لمسات CSS                 */
+/* ===================================================================== */
+
+.gl {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  overflow: hidden;
+  direction: rtl;
+  display: flex;
+  flex-direction: column;
+  color: #f6eeff;
+  font-family: "Segoe UI", Tahoma, "Noto Sans Arabic", sans-serif;
+  --gold: #f5c451;
+}
+
+.gl-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(120% 90% at 50% 0%, #6a2f8f 0%, #3a1850 45%, #1f0e2e 100%);
+}
+.gl > *:not(.gl-bg):not(.gl-stars) { position: relative; z-index: 2; }
+
+/* النجوم */
+.gl-stars { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.gl-star {
+  position: absolute; border-radius: 50%;
+  background: #fff; box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+}
+
+/* شريط الحالة الوهمي */
+.gl-status {
+  display: flex; align-items: center; justify-content: space-between;
+  direction: ltr; padding: 8px 20px 2px; font-size: 14px; font-weight: 700;
+  color: #fff; opacity: 0.92;
+}
+.gl-time {
+  background: #2ecc71; color: #06210f; padding: 2px 12px; border-radius: 999px; font-size: 13px;
+}
+.gl-status-right { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.gl-batt {
+  background: rgba(255, 255, 255, 0.18); border-radius: 6px; padding: 1px 6px; font-size: 11px;
+}
+
+/* منطقة قابلة للتمرير عند الحاجة */
+.gl-scroll {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; padding-bottom: 6px;
+}
+.gl-scroll::-webkit-scrollbar { width: 0; }
+
+/* ===== الرأس ===== */
+.gl-top {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px 4px;
+}
+.gl-activities {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: linear-gradient(135deg, #f5c451, #e09a2a); color: #3a1d00;
+  border: none; cursor: pointer; border-radius: 12px; padding: 5px 8px;
+  font-size: 10px; font-weight: 800; box-shadow: 0 4px 12px rgba(245, 196, 81, 0.4);
+}
+.gl-act-ico { font-size: 18px; }
+
+.gl-currencies {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.gl-chip {
+  display: flex; align-items: center; gap: 5px; padding: 4px 12px 4px 8px;
+  border-radius: 999px; background: rgba(10, 6, 18, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 13px; font-weight: 800; color: var(--c);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+.gl-chip-ico { font-size: 14px; }
+.gl-chip-val { color: #fff; }
+.gl-chip-plus {
+  margin-inline-start: 2px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--c); color: #1a1320; font-size: 12px; display: grid; place-items: center;
+  border: none; padding: 0; line-height: 1; cursor: pointer; font-weight: 800;
+}
+button.gl-chip-plus:active { transform: scale(0.88); }
+
+.gl-profile {
+  width: 42px; height: 42px; border-radius: 50%; flex: 0 0 auto; cursor: pointer;
+  border: 2px solid var(--gold); background: linear-gradient(150deg, #5a3a6a, #2a1530);
+  font-size: 22px; display: grid; place-items: center;
+  box-shadow: 0 0 12px rgba(245, 196, 81, 0.4);
+}
+
+/* ===== صفّ الترتيب ===== */
+.gl-rank-row { display: flex; gap: 10px; padding: 6px 12px 2px; }
+.gl-rank {
+  flex: 1; position: relative; cursor: pointer; text-align: right;
+  background: linear-gradient(120deg, rgba(40, 24, 56, 0.7), rgba(24, 14, 34, 0.7));
+  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 14px;
+  padding: 10px 44px 10px 12px; color: #fff;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.gl-rank.hl { border-color: rgba(245, 196, 81, 0.5); }
+.gl-rank-main { font-size: 13px; font-weight: 800; }
+.gl-rank-sub { font-size: 11px; color: #c9b8e0; }
+.gl-rank-ico {
+  position: absolute; inset-inline-start: 10px; top: 50%; transform: translateY(-50%);
+  font-size: 24px; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5));
+}
+
+/* ===== المسرح ===== */
+.gl-stage {
+  position: relative; display: flex; align-items: stretch; gap: 4px;
+  padding: 6px 8px 0; min-height: 300px;
+}
+.gl-side {
+  display: flex; flex-direction: column; gap: 14px; padding-top: 10px;
+  width: 64px; flex: 0 0 auto; z-index: 5;
+}
+
+.gl-sideicon {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: none; border: none; cursor: pointer; color: #f0e6ff;
+}
+.gl-side-badge {
+  position: relative; width: 46px; height: 46px; border-radius: 14px;
+  display: grid; place-items: center; font-size: 24px;
+  background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.18), rgba(20, 12, 30, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 3px rgba(255, 255, 255, 0.15);
+}
+.gl-side-lbl { font-size: 9px; line-height: 1.15; text-align: center; max-width: 60px; }
+.gl-side-timer { font-size: 9px; color: var(--gold); font-weight: 700; }
+.gl-side-dot {
+  position: absolute; top: -3px; inset-inline-end: -3px; width: 10px; height: 10px;
+  border-radius: 50%; background: #ff3b50; border: 2px solid #1f0e2e;
+  animation: glDotPulse 1.4s ease-in-out infinite;
+}
+@keyframes glDotPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.35); } }
+
+.gl-giftbox .gl-gift-badge {
+  background: radial-gradient(circle at 50% 30%, #ffe08a, #e0902a);
+  border-color: rgba(255, 220, 120, 0.6);
+  box-shadow: 0 0 16px rgba(245, 196, 81, 0.6);
+}
+.gl-gift-timer {
+  background: rgba(0, 0, 0, 0.45); padding: 1px 6px; border-radius: 999px;
+  letter-spacing: 0.5px; color: #ffe08a;
+}
+
+/* المشهد الأوسط */
+.gl-hero { flex: 1; position: relative; min-width: 0; }
+.gl-hero-card { position: absolute; inset: 0; touch-action: pan-y; cursor: grab; }
+.gl-hero-card:active { cursor: grabbing; }
+
+.gl-scene {
+  position: relative; height: 100%; width: 100%;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* الطاولة المضيئة */
+.gl-table {
+  position: absolute; bottom: 8%; left: 50%; transform: translateX(-50%);
+  width: 78%; height: 44%; border-radius: 50%;
+  filter: blur(2px); opacity: 0.85;
+  box-shadow: 0 0 60px 20px rgba(0, 0, 0, 0.35), inset 0 8px 30px rgba(255, 255, 255, 0.2);
+}
+.gl-table::after {
+  content: ""; position: absolute; inset: 14%; border-radius: 50%;
+  border: 2px dashed rgba(255, 255, 255, 0.25);
+}
+
+/* الشخصيات حول الطاولة */
+.gl-cast { position: absolute; inset: 0; }
+.gl-char {
+  position: absolute; font-size: 40px;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5));
+}
+.gl-char-0 { bottom: 6%; left: 50%; transform: translateX(-50%); font-size: 52px; }
+.gl-char-1 { bottom: 26%; left: 10%; }
+.gl-char-2 { bottom: 26%; right: 10%; }
+.gl-char-3 { top: 24%; left: 50%; transform: translateX(-50%); }
+
+/* القِطع الطائرة */
+.gl-pieces { position: absolute; inset: 0; }
+.gl-piece {
+  position: absolute; top: 32%; font-size: 26px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+}
+
+/* الشعار */
+.gl-logo { position: absolute; top: 6%; left: 50%; transform: translateX(-50%); }
+.gl-logo-text {
+  position: relative; font-size: 46px; font-weight: 900; letter-spacing: 1px;
+  font-family: "Arial Black", "Segoe UI", sans-serif;
+  background: linear-gradient(180deg, #fff7e0 10%, var(--gold) 45%, #c97a18 90%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 0 rgba(120, 60, 0, 0.6)) drop-shadow(0 0 18px var(--glow));
+}
+.gl-logo-shine {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 38%, rgba(255, 255, 255, 0.65) 50%, transparent 62%);
+  background-size: 220% 100%; mix-blend-mode: overlay;
+  -webkit-background-clip: text; background-clip: text;
+  animation: glShine 3.2s linear infinite;
+}
+@keyframes glShine { from { background-position: 200% 0; } to { background-position: -60% 0; } }
+
+/* ===== أزرار أنماط اللعب ===== */
+.gl-modes { padding: 4px 12px 0; }
+.gl-modes-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  grid-auto-flow: dense;
+}
+.gl-mode {
+  position: relative; overflow: hidden; cursor: pointer; border: none;
+  border-radius: 18px; padding: 16px 14px; color: #fff; text-align: center;
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--tint) 92%, #fff 0%), color-mix(in srgb, var(--tint) 60%, #000 22%));
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.35);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  min-height: 96px; justify-content: center;
+}
+/* المقاسات: صغير (نصف صف)، كبير (يمتد عمودين أو ارتفاع مضاعف)، عريض (صف كامل) */
+.gl-mode-sm { min-height: 70px; }
+.gl-mode-lg { grid-row: span 2; min-height: 150px; }
+.gl-mode-wide { grid-column: 1 / -1; min-height: 110px; }
+
+/* عندما يوجد زر sm وزر lg: ضع الـlg في العمود الأيمن يمتد صفّين */
+.gl-modes-grid .gl-mode-lg { grid-column: 1; }
+.gl-modes-grid .gl-mode-sm { grid-column: 2; }
+
+.gl-mode-ico { font-size: 40px; line-height: 1; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4)); }
+.gl-mode-lbl { font-size: 17px; font-weight: 800; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); }
+.gl-mode-shine {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(120deg, transparent 40%, rgba(255, 255, 255, 0.3) 50%, transparent 60%);
+  background-size: 250% 100%; animation: glShine 3.5s linear infinite;
+}
+
+/* ===== الصفّ الثانوي ===== */
+.gl-secondary { display: flex; gap: 8px; padding: 10px 12px 4px; }
+.gl-sec-btn {
+  flex: 1; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px; padding: 12px 8px; color: #fff;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--tint) 55%, #1a1326), rgba(20, 12, 30, 0.75));
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.gl-sec-ico { font-size: 24px; }
+
+/* ===== تبويبات الألعاب ===== */
+.gl-tabs {
+  display: flex; align-items: flex-end; justify-content: space-around; gap: 4px;
+  margin: 8px 12px 0; padding: 8px 6px; border-radius: 18px;
+  background: rgba(10, 6, 18, 0.5); border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow-x: auto;
+}
+.gl-tabs::-webkit-scrollbar { height: 0; }
+.gl-tab {
+  position: relative; flex: 0 0 auto; cursor: pointer; border: none; background: none;
+  color: #b9a8cf; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 4px 8px; font-size: 11px; transition: color 0.2s; min-width: 56px;
+}
+.gl-tab.active { color: var(--gold); }
+.gl-tab-ico {
+  font-size: 22px; transition: transform 0.2s; filter: grayscale(0.4);
+}
+.gl-tab.active .gl-tab-ico { transform: scale(1.25) translateY(-2px); filter: none; }
+.gl-tab-lbl { font-weight: 700; white-space: nowrap; }
+.gl-tab-underline {
+  position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%);
+  width: 26px; height: 3px; border-radius: 3px; background: var(--gold);
+  box-shadow: 0 0 8px var(--gold);
+}
+
+/* نقاط الصفحات */
+.gl-dots { display: flex; justify-content: center; gap: 6px; padding: 10px 0 6px; }
+.gl-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, 0.3);
+  transition: all 0.25s;
+}
+.gl-dot.active { width: 18px; border-radius: 4px; background: var(--gold); }
+
+/* ===== شريط التنقّل السفلي ===== */
+.gl-nav {
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 8px 6px calc(8px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, rgba(20, 10, 30, 0.4), rgba(10, 5, 16, 0.9));
+  border-top: 1px solid rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px);
+}
+.gl-nav-btn {
+  flex: 1; cursor: pointer; border: none; background: none;
+  color: #9a86b8; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  font-size: 11px; transition: color 0.2s;
+}
+.gl-nav-btn.active { color: var(--gold); }
+.gl-nav-ico { position: relative; font-size: 22px; }
+.gl-nav-btn.active .gl-nav-ico { filter: drop-shadow(0 0 8px var(--gold)); }
+.gl-nav-dot {
+  position: absolute; top: -2px; inset-inline-end: -4px; width: 8px; height: 8px;
+  border-radius: 50%; background: #ff3b50; border: 1.5px solid #0a0510;
+}
+.gl-nav-lbl { font-weight: 700; }
