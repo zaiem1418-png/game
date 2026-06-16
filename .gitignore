@@ -6,3 +6,6 @@ dist/
 .env.production
 .DS_Store
 *.log
+
+# بيانات محافظ المستخدمين (تُنشأ وقت التشغيل)
+server/wallets.json

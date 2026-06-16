@@ -1,9 +1,0 @@
-{
-  "testuser1": {
-    "uid": "testuser1",
-    "coins": 10000,
-    "diamonds": 500,
-    "owner": false,
-    "createdAt": 1781646716161
-  }
-}

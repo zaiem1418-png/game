@@ -19,3 +19,6 @@ services:
         sync: false
       - key: LIVEKIT_API_SECRET
         sync: false
+      # كلمة سر مالك اللعبة — من يدخلها يحصل على رصيد ألماس/كوينز لانهائي (سرّية)
+      - key: OWNER_KEY
+        sync: false
