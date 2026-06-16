@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GAMES, NAV } from "./games.js";
+import GameArt from "./art/GameArt.jsx";
 import "./gameLobby.css";
 
 /* عدّاد تنازلي حي بصيغة HH:MM:SS أو "Nd Nh" */
@@ -251,37 +252,8 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
 function HeroScene({ game }) {
   return (
     <div className="gl-scene">
-      {/* الطاولة المضيئة */}
-      <div className="gl-table" style={{ background: game.table }} />
-
-      {/* القِطع الطائرة فوق الطاولة */}
-      <div className="gl-pieces">
-        {game.pieces.map((p, i) => (
-          <motion.span
-            key={i}
-            className="gl-piece"
-            style={{ left: `${12 + i * 18}%` }}
-            animate={{ y: [0, -14, 0], rotate: [0, i % 2 ? 12 : -12, 0] }}
-            transition={{ duration: 2.4 + i * 0.3, repeat: Infinity, ease: "easeInOut", delay: i * 0.2 }}
-          >
-            {p}
-          </motion.span>
-        ))}
-      </div>
-
-      {/* الشخصيات حول الطاولة */}
-      <div className="gl-cast">
-        {game.cast.map((c, i) => (
-          <motion.span
-            key={i}
-            className={`gl-char gl-char-${i}`}
-            animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 3 + i * 0.4, repeat: Infinity, ease: "easeInOut", delay: i * 0.25 }}
-          >
-            {c}
-          </motion.span>
-        ))}
-      </div>
+      {/* مشهد SVG أصلي: طاولة + لوحة لعب + شخصيات + قِطع */}
+      <GameArt game={game} />
 
       {/* الشعار اللامع */}
       <motion.div
