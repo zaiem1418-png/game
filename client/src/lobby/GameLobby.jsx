@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { GAMES, NAV } from "./games.js";
+import { GAMES } from "./games.js";
 import GameArt from "./art/GameArt.jsx";
 import "./gameLobby.css";
 
@@ -43,7 +43,6 @@ function fmtNum(n) {
 export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharge, onOwnerTap }) {
   // [page, direction] — صفحة لانهائية (تلتف) مع اتجاه السحب
   const [[page, dir], setPage] = useState([0, 0]);
-  const [nav, setNav] = useState("home");
   const n = GAMES.length;
   const idx = ((page % n) + n) % n;
   const game = GAMES[idx];
@@ -223,26 +222,6 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
           ))}
         </div>
       </div>
-
-      {/* ===== شريط التنقّل السفلي ===== */}
-      <nav className="gl-nav">
-        {NAV.map((item) => (
-          <button
-            key={item.id}
-            className={`gl-nav-btn ${nav === item.id ? "active" : ""}`}
-            onClick={() => {
-              setNav(item.id);
-              if (item.id === "rooms") onOpenRooms?.();
-            }}
-          >
-            <span className="gl-nav-ico">
-              {item.icon}
-              {item.dot && <span className="gl-nav-dot" />}
-            </span>
-            <span className="gl-nav-lbl">{item.label}</span>
-          </button>
-        ))}
-      </nav>
     </div>
   );
 }

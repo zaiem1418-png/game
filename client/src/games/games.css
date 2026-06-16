@@ -221,6 +221,78 @@
 .snl-note.ladder { background: rgba(55, 194, 106, 0.25); }
 .snl-note.snake { background: rgba(233, 79, 79, 0.25); }
 
+/* ===== لودو ===== */
+.ludo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  overflow-y: auto;
+}
+.ludo-board {
+  position: relative;
+  width: min(94vw, 460px);
+  aspect-ratio: 1;
+  background: #0e1a30;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+}
+.ludo-base {
+  position: absolute;
+  width: 40%;
+  height: 40%;
+  border: 3px solid;
+  border-radius: 12px;
+}
+.ludo-cell {
+  position: absolute;
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+.ludo-cell.safe { background: rgba(255, 255, 255, 0.16); }
+.ludo-star { font-size: clamp(8px, 2.4vw, 12px); opacity: 0.7; }
+.ludo-center {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(20px, 6vw, 34px);
+  background: radial-gradient(circle, rgba(255,255,255,0.15), rgba(255,255,255,0.04));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-sizing: border-box;
+}
+.ludo-token {
+  position: absolute;
+  width: clamp(18px, 5vw, 28px);
+  height: clamp(18px, 5vw, 28px);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(10px, 3vw, 15px);
+  padding: 0;
+  cursor: default;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  z-index: 5;
+}
+.ludo-token.movable {
+  cursor: pointer;
+  z-index: 6;
+  animation: ludoPulse 1s infinite;
+}
+@keyframes ludoPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0); }
+}
+
 .snl-over { text-align: center; }
 .snl-over h3 { margin: 4px 0 10px; }
 .snl-rank { list-style: none; padding: 0; margin: 0 0 14px; }

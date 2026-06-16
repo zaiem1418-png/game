@@ -1,0 +1,182 @@
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { fetchRooms } from "./rooms.js";
+import CreateRoomModal from "./CreateRoomModal.jsx";
+
+const TOP_TABS = ["غرفتي", "الشائعة", "الكل"];
+const CATS = ["الكل", "الأصدقاء", "جاكارو", "بلوت", "لودو", "القبيلة", "الموسيقى"];
+
+// شاشة الغرف الصوتية — دليل الغرف + زر "+" لإنشاء غرفة (عامة/خاصة برمز PIN)
+export default function VoiceRooms({ onEnterRoom }) {
+  const [rooms, setRooms] = useState([]);
+  const [topTab, setTopTab] = useState("الكل");
+  const [cat, setCat] = useState("الكل");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [pinRoom, setPinRoom] = useState(null); // غرفة خاصة بانتظار إدخال الرمز
+  const [pinVal, setPinVal] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const load = () =>
+    fetchRooms()
+      .then((r) => setRooms(r))
+      .catch(() => setRooms([]))
+      .finally(() => setLoading(false));
+
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 8000); // تحديث دوري لأعداد الأعضاء
+    return () => clearInterval(t);
+  }, []);
+
+  const list = rooms.filter((r) => cat === "الكل" || r.category === cat);
+
+  function tapRoom(r) {
+    if (r.locked) {
+      setPinRoom(r);
+      setPinVal("");
+    } else {
+      onEnterRoom(r.id, null);
+    }
+  }
+
+  return (
+    <div className="vr">
+      <div className="gl-bg vr-bg" />
+
+      {/* الرأس: + | بحث | تبويبات علوية */}
+      <header className="vr-top">
+        <div className="vr-top-actions">
+          <motion.button className="vr-add" whileTap={{ scale: 0.9 }} onClick={() => setCreateOpen(true)} aria-label="إنشاء غرفة">
+            ＋
+          </motion.button>
+          <button className="vr-search" aria-label="بحث">🔍</button>
+        </div>
+        <div className="vr-tabs">
+          {TOP_TABS.map((t) => (
+            <button key={t} className={`vr-tab ${topTab === t ? "active" : ""}`} onClick={() => setTopTab(t)}>
+              {t}
+              {topTab === t && <motion.span layoutId="vr-tab-ul" className="vr-tab-ul" />}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      <div className="vr-scroll">
+        {/* بانر ترويجي */}
+        <div className="vr-promo">
+          <span className="vr-promo-spark">🎆</span>
+          <b>إرشادات إنشاء الأنشطة</b>
+          <span className="vr-promo-lion">🦁</span>
+        </div>
+
+        {/* بطاقتا الترتيب */}
+        <div className="vr-rankings">
+          <button className="vr-rank vip">
+            <span className="vr-rank-ava" />
+            <span className="vr-rank-mid">VIP <span>🏆</span></span>
+          </button>
+          <button className="vr-rank pop">
+            <span className="vr-rank-ava" />
+            <span className="vr-rank-mid">الشعبية <span>🏆</span></span>
+          </button>
+        </div>
+
+        {/* تصنيفات أفقية */}
+        <div className="vr-cats">
+          {CATS.map((c) => (
+            <button key={c} className={`vr-cat ${cat === c ? "active" : ""}`} onClick={() => setCat(c)}>
+              {c}
+            </button>
+          ))}
+        </div>
+
+        {/* قائمة الغرف */}
+        <div className="vr-list">
+          {loading && <div className="vr-empty">جارٍ التحميل…</div>}
+          {!loading && list.length === 0 && <div className="vr-empty">لا توجد غرف في هذا التصنيف بعد — أنشئ واحدة ＋</div>}
+          {list.map((r, i) => (
+            <motion.button
+              key={r.id}
+              className="vr-room"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: Math.min(i * 0.04, 0.4) }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => tapRoom(r)}
+            >
+              <span className="vr-room-cover" style={{ background: `linear-gradient(135deg, ${r.cover}, #15101f)` }}>
+                {r.locked ? "🔒" : "🎙️"}
+              </span>
+              <span className="vr-room-info">
+                <span className="vr-room-name">
+                  {r.name} <span className="vr-room-flag">{r.country}</span>
+                </span>
+                <span className="vr-room-meta">
+                  <span className="vr-room-cat">{r.category}</span>
+                  <span className="vr-room-count">👥 {r.members}</span>
+                  {r.tag && <span className="vr-room-tag">{r.tag}</span>}
+                </span>
+              </span>
+              <span className="vr-room-go">‹</span>
+            </motion.button>
+          ))}
+        </div>
+      </div>
+
+      {/* نافذة الإنشاء */}
+      <AnimatePresence>
+        {createOpen && (
+          <CreateRoomModal
+            onClose={() => setCreateOpen(false)}
+            onCreated={(roomId, pin) => {
+              setCreateOpen(false);
+              load();
+              onEnterRoom(roomId, pin);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* طلب رمز PIN لغرفة خاصة */}
+      <AnimatePresence>
+        {pinRoom && (
+          <div className="cr-backdrop" onClick={() => setPinRoom(null)}>
+            <motion.div
+              className="vr-pin-box"
+              onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+            >
+              <div className="vr-pin-lock">🔒</div>
+              <h3>غرفة خاصة</h3>
+              <p>أدخل رمز الدخول لـ «{pinRoom.name}»</p>
+              <input
+                className="cr-input cr-pin"
+                placeholder="• • • •"
+                inputMode="numeric"
+                autoFocus
+                value={pinVal}
+                maxLength={8}
+                onChange={(e) => setPinVal(e.target.value.replace(/\D/g, ""))}
+              />
+              <div className="vr-pin-actions">
+                <button className="vr-pin-cancel" onClick={() => setPinRoom(null)}>إلغاء</button>
+                <button
+                  className="vr-pin-go"
+                  disabled={pinVal.length < 4}
+                  onClick={() => {
+                    onEnterRoom(pinRoom.id, pinVal);
+                    setPinRoom(null);
+                  }}
+                >
+                  دخول
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

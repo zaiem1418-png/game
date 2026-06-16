@@ -156,6 +156,31 @@ app.post("/api/owner/login", (req, res) => {
   res.json({ ok: true, wallet });
 });
 
+// ===== دليل الغرف الصوتية + إنشاء غرفة (عامة/خاصة برمز PIN) =====
+app.get("/api/rooms", (_req, res) => res.json(listRooms()));
+
+app.post("/api/rooms", (req, res) => {
+  const { name, type, pin, category, country, cover, uid } = req.body || {};
+  const isPrivate = type === "private";
+  if (isPrivate && !/^\d{4,8}$/.test(String(pin || ""))) {
+    return res.status(400).json({ error: "رمز PIN يجب أن يكون 4 إلى 8 أرقام" });
+  }
+  const id = genRoomId();
+  roomMeta.set(id, {
+    id,
+    name: String(name || "غرفتي").slice(0, 40),
+    type: isPrivate ? "private" : "public",
+    pin: isPrivate ? String(pin).slice(0, 8) : null,
+    category: ROOM_CATEGORIES.includes(category) ? category : "الأصدقاء",
+    country: String(country || "🌍").slice(0, 8),
+    cover: String(cover || "#6a2f8f").slice(0, 16),
+    ownerUid: String(uid || "").slice(0, 64),
+    createdAt: Date.now(),
+  });
+  io.emit("room:list", listRooms());
+  res.json({ ok: true, roomId: id });
+});
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: "*", methods: ["GET", "POST"] },
@@ -194,6 +219,57 @@ function createRoom(roomId) {
 
 function getRoom(roomId) {
   return rooms.get(roomId) || createRoom(roomId);
+}
+
+// ===== سجلّ بيانات الغرف (Meta) — يدعم الغرف العامة والخاصة برمز PIN =====
+// roomMeta[roomId] = { id, name, type:"public"|"private", pin, category, country, cover, tag, fakeMembers, ownerUid, createdAt }
+const roomMeta = new Map();
+const ROOM_CATEGORIES = ["الأصدقاء", "جاكارو", "بلوت", "لودو", "القبيلة", "الموسيقى"];
+
+function genRoomId() {
+  let id;
+  do {
+    id = String(Math.floor(100000 + Math.random() * 900000));
+  } while (rooms.has(id) || roomMeta.has(id));
+  return id;
+}
+
+// غرف افتراضية ليبدو دليل الغرف حيّاً
+function seedRooms() {
+  const demos = [
+    { name: "OVERLORD", category: "القبيلة", country: "🇦🇪", cover: "#5a1f24", tag: "الفائز الكبير", fakeMembers: 370 },
+    { name: "آلِـدُولة", category: "القبيلة", country: "🇴🇲", cover: "#6a521f", fakeMembers: 32 },
+    { name: "ÇUKUR", category: "جاكارو", country: "🇸🇦", cover: "#3a1f4a", tag: "وضع الموارد", fakeMembers: 48 },
+    { name: "Tranquility", category: "الموسيقى", country: "🇴🇲", cover: "#5a2a2a", fakeMembers: 5 },
+    { name: "حياكم الله", category: "الأصدقاء", country: "🇸🇦", cover: "#2a2f4a", fakeMembers: 4 },
+    { name: "جلسة بلوت", category: "بلوت", country: "🇰🇼", cover: "#6a3a1f", fakeMembers: 17 },
+    { name: "سهرة لودو", category: "لودو", country: "🇶🇦", cover: "#1f4a3a", fakeMembers: 23 },
+  ];
+  for (const d of demos) {
+    const id = genRoomId();
+    roomMeta.set(id, { id, type: "public", pin: null, createdAt: Date.now(), ...d });
+  }
+}
+seedRooms();
+
+// قائمة الغرف للعرض (تشمل الخاصة بعلامة قفل دون كشف الرمز)
+function listRooms() {
+  const out = [];
+  for (const meta of roomMeta.values()) {
+    const room = rooms.get(meta.id);
+    const members = room ? room.members.size : meta.fakeMembers || 0;
+    out.push({
+      id: meta.id,
+      name: meta.name,
+      category: meta.category,
+      country: meta.country,
+      cover: meta.cover,
+      tag: meta.tag || null,
+      members,
+      locked: meta.type === "private",
+    });
+  }
+  return out.sort((a, b) => b.members - a.members);
 }
 
 // يحوّل حالة الغرفة لصيغة قابلة للإرسال (Map -> Array)
@@ -240,11 +316,21 @@ io.on("connection", (socket) => {
 
   let currentUid = null; // معرّف المستخدم الثابت (للمحفظة)
 
+  // قائمة الغرف لحظياً عبر السوكِت
+  socket.on("room:list", () => socket.emit("room:list", listRooms()));
+
   // الانضمام للغرفة
-  socket.on("room:join", ({ roomId, user }) => {
+  socket.on("room:join", ({ roomId, user, pin }) => {
     roomId = roomId || "130096";
+    // تحقّق رمز PIN للغرف الخاصة
+    const meta = roomMeta.get(roomId);
+    if (meta && meta.type === "private" && meta.pin && String(pin || "") !== meta.pin) {
+      socket.emit("room:join:error", { reason: "pin", roomId });
+      return;
+    }
     currentRoomId = roomId;
     const room = getRoom(roomId);
+    if (meta?.name) room.name = meta.name; // اسم الغرفة من السجلّ
     // أول من يدخل الغرفة = صاحب الغرفة (owner)، والبقية أعضاء
     const role = room.members.size === 0 ? "owner" : "member";
 

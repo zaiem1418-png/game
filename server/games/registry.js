@@ -3,10 +3,12 @@
 // applyAction / botAction / isOver. أضف ألعاباً جديدة هنا فقط.
 
 import snake from "./snakeLadder.js";
+import ludo from "./ludo.js";
 
 export const GAME_MODULES = {
   snake,
-  // ludo, jackaroo, baloot — تُضاف تباعاً
+  ludo,
+  // jackaroo, baloot — تُضاف تباعاً
 };
 
 export function getGameModule(id) {

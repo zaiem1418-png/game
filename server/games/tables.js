@@ -8,7 +8,7 @@ import { getGameModule } from "./registry.js";
 
 const BOT_NAMES = ["نورة", "سعد", "ليان", "خالد", "ريم", "فهد", "جود", "ماجد"];
 const BOT_AVATARS = ["🦊", "🐼", "🐯", "🦉", "🐧", "🐵", "🐸", "🦁"];
-const BOT_TURN_DELAY = 1100; // ms — تأخير لطيف ليبدو البوت طبيعياً
+const BOT_TURN_DELAY = 850; // ms — تأخير لطيف ليبدو البوت طبيعياً
 
 function rid() {
   return Math.random().toString(36).slice(2, 9);
