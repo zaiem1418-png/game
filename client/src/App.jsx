@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { socket } from "./socket.js";
 import { VoiceManager } from "./voice.js";
-import GameLobby from "./lobby/GameLobby.jsx";
+import Shell from "./lobby/Shell.jsx";
 import GameRoom from "./games/GameRoom.jsx";
 import JoinScreen from "./components/JoinScreen.jsx";
 import RoomHeader from "./components/RoomHeader.jsx";
@@ -25,6 +25,8 @@ export default function App() {
 
   const [view, setView] = useState("lobby"); // "lobby" = واجهة الألعاب، "game" = طاولة لعبة، "app" = الغرفة الصوتية
   const [activeGame, setActiveGame] = useState(null); // { gameId, mode } للعبة المفتوحة
+  const [pendingRoom, setPendingRoom] = useState(null); // الغرفة الصوتية المستهدفة { roomId, pin }
+  const [pinError, setPinError] = useState(false); // رمز PIN خاطئ لغرفة خاصة
   const [joined, setJoined] = useState(false);
   const [selfId, setSelfId] = useState(null);
   const [room, setRoom] = useState(null);
@@ -120,6 +122,13 @@ export default function App() {
       setTimeout(() => setNeedCoins(false), 4000);
     });
 
+    // رمز PIN خاطئ لغرفة خاصة → ارجع للغلاف واعرض تنبيهاً
+    socket.on("room:join:error", () => {
+      setPinError(true);
+      setView("lobby");
+      setTimeout(() => setPinError(false), 4000);
+    });
+
     return () => {
       socket.off("room:joined");
       socket.off("room:update");
@@ -130,6 +139,7 @@ export default function App() {
       socket.off("reaction:new");
       socket.off("wallet:update");
       socket.off("wallet:insufficient");
+      socket.off("room:join:error");
       voice.destroy();
     };
   }, []);
@@ -157,8 +167,12 @@ export default function App() {
   function handleJoin(user) {
     unlockAudio(); // فتح سياق الصوت ضمن تفاعل المستخدم (مطلوب على الموبايل)
     socket.connect();
-    // أرفق uid الثابت ليربط الخادم العضو بمحفظته الدائمة
-    socket.emit("room:join", { roomId: "130096", user: { ...user, uid: getUid() } });
+    // أرفق uid الثابت ليربط الخادم العضو بمحفظته الدائمة + الغرفة المستهدفة ورمزها
+    socket.emit("room:join", {
+      roomId: pendingRoom?.roomId || "130096",
+      pin: pendingRoom?.pin || undefined,
+      user: { ...user, uid: getUid() },
+    });
     socket.emit("gift:list");
   }
 
@@ -230,21 +244,31 @@ export default function App() {
     </>
   );
 
-  // ===== الواجهة الرئيسية: لوبي الألعاب (جاكارو/لودو/بلوت) مع السحب =====
+  // تنبيه رمز PIN الخاطئ
+  const pinToast = pinError && (
+    <div className="need-coins-toast">🔒 رمز الدخول غير صحيح — حاول مرة أخرى</div>
+  );
+
+  // ===== الغلاف الرئيسي: الرئيسية/الغرف الصوتية/الرسائل/أنا =====
   if (view === "lobby")
     return (
       <>
-        <GameLobby
+        <Shell
           wallet={wallet}
-          onOpenRooms={() => setView("app")}
+          user={{ avatar: "🧑🏻", uid: getUid() }}
+          onRecharge={(tab) => setStoreTab(tab)}
+          onOwnerTap={() => setOwnerOpen(true)}
+          onEnterRoom={(roomId, pin) => {
+            setPendingRoom(roomId ? { roomId, pin } : null);
+            setView("app");
+          }}
           onPlay={(game, mode) => {
             setActiveGame({ gameId: game.id, mode: mode?.id || "default" });
             setView("game");
           }}
-          onRecharge={(tab) => setStoreTab(tab)}
-          onOwnerTap={() => setOwnerOpen(true)}
         />
         {walletOverlays}
+        {pinToast}
       </>
     );
 

@@ -4,11 +4,13 @@
 
 import snake from "./snakeLadder.js";
 import ludo from "./ludo.js";
+import jackaroo from "./jackaroo.js";
 
 export const GAME_MODULES = {
   snake,
   ludo,
-  // jackaroo, baloot — تُضاف تباعاً
+  jackaroo,
+  // baloot — يُضاف تالياً
 };
 
 export function getGameModule(id) {

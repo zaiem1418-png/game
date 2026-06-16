@@ -76,17 +76,21 @@ export function attachGames(io) {
     io.to(roomName(table.id)).emit("game:lobby", lobbyView(table));
   }
 
-  // بثّ حالة اللعبة الجارية + من دوره الآن
+  // بثّ حالة اللعبة الجارية + من دوره الآن.
+  // لو للّعبة أوراق مخفية (playerView) نرسل عرضاً خاصاً لكل لاعب بشري؛
+  // غير ذلك نبثّ الحالة العامة لكل الطاولة.
   function broadcastState(table) {
-    const pub = table.mod.publicState(table.state);
     const turn = table.mod.currentTurn(table.state);
-    io.to(roomName(table.id)).emit("game:state", {
-      tableId: table.id,
-      gameId: table.gameId,
-      state: pub,
-      turn,
-      over: table.mod.isOver(table.state),
-    });
+    const over = table.mod.isOver(table.state);
+    const base = { tableId: table.id, gameId: table.gameId, turn, over };
+    if (table.mod.playerView) {
+      for (const p of table.players) {
+        if (p.bot) continue;
+        io.to(p.id).emit("game:state", { ...base, state: table.mod.playerView(table.state, p.id) });
+      }
+    } else {
+      io.to(roomName(table.id)).emit("game:state", { ...base, state: table.mod.publicState(table.state) });
+    }
   }
 
   function startGame(table) {
