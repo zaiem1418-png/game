@@ -1,0 +1,234 @@
+/* ===== حاوية طاولة اللعبة + اللوبي ===== */
+.grm {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(120% 90% at 50% 0%, #243b6b 0%, #16233f 50%, #0b1322 100%);
+  color: #eaf0ff;
+  font-family: inherit;
+  direction: rtl;
+  overflow: hidden;
+}
+.grm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  flex: 0 0 auto;
+}
+.grm-head h2 { margin: 0; font-size: 18px; }
+.grm-back {
+  background: rgba(255, 255, 255, 0.12);
+  border: 0;
+  color: #fff;
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.grm-error {
+  background: #b3261e;
+  color: #fff;
+  text-align: center;
+  padding: 8px;
+  font-size: 14px;
+}
+.grm-loading, .grm-wait { text-align: center; opacity: 0.8; padding: 24px; }
+
+.grm-soon {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.grm-soon-ico { font-size: 56px; }
+
+.grm-btn {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 22px;
+  font-size: 15px;
+  cursor: pointer;
+}
+.grm-btn.ghost { background: transparent; border: 1px solid rgba(255,255,255,0.25); }
+
+/* ===== اللوبي ===== */
+.grm-lobby {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 24px 16px;
+}
+.grm-lobby-hint { text-align: center; opacity: 0.85; font-size: 14px; max-width: 340px; }
+.grm-seats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  max-width: 380px;
+}
+.grm-seat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  padding: 12px;
+  min-height: 56px;
+}
+.grm-seat.filled { border-style: solid; border-color: rgba(120, 180, 255, 0.5); background: rgba(120, 180, 255, 0.12); }
+.grm-seat-av { font-size: 26px; }
+.grm-seat-name { font-size: 14px; }
+.grm-host { color: #f5c451; }
+.grm-you { color: #7fffd4; font-weight: 400; }
+
+.grm-start {
+  background: linear-gradient(135deg, #37c26a, #1f8a4a);
+  color: #fff;
+  border: 0;
+  border-radius: 14px;
+  padding: 14px 40px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(55, 194, 106, 0.4);
+}
+
+/* ===== السلم والثعبان ===== */
+.snl {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  overflow-y: auto;
+}
+.snl-players {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.snl-pl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 5px 10px;
+  font-size: 13px;
+}
+.snl-pl.active { border-color: var(--c); box-shadow: 0 0 12px var(--c); }
+.snl-pl.done { opacity: 0.55; }
+.snl-pl-av { font-size: 18px; }
+.snl-pl-pos { font-weight: 700; color: var(--c); min-width: 22px; text-align: center; }
+
+.snl-board {
+  width: min(94vw, 460px);
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0e1a30;
+}
+.snl-row { flex: 1; display: flex; }
+.snl-cell {
+  flex: 1;
+  position: relative;
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+}
+.snl-cell.ladder { background: rgba(55, 194, 106, 0.18); }
+.snl-cell.snake { background: rgba(233, 79, 79, 0.18); }
+.snl-num {
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  font-size: 9px;
+  opacity: 0.5;
+}
+.snl-mark { font-size: clamp(11px, 3.2vw, 16px); opacity: 0.8; }
+.snl-tokens {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+.snl-token {
+  width: clamp(14px, 4vw, 22px);
+  height: clamp(14px, 4vw, 22px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(9px, 2.6vw, 13px);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+}
+.snl-start {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.snl-ctrl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+}
+.snl-turn { font-size: 15px; font-weight: 600; }
+.snl-die {
+  width: 70px;
+  height: 70px;
+  border-radius: 16px;
+  border: 0;
+  font-size: 46px;
+  line-height: 1;
+  background: #fff;
+  color: #16233f;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+.snl-die:disabled { opacity: 0.45; cursor: default; }
+.snl-note {
+  font-size: 13px;
+  padding: 4px 12px;
+  border-radius: 10px;
+}
+.snl-note.ladder { background: rgba(55, 194, 106, 0.25); }
+.snl-note.snake { background: rgba(233, 79, 79, 0.25); }
+
+.snl-over { text-align: center; }
+.snl-over h3 { margin: 4px 0 10px; }
+.snl-rank { list-style: none; padding: 0; margin: 0 0 14px; }
+.snl-rank li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  padding: 5px;
+  font-size: 15px;
+}

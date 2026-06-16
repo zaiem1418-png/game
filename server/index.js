@@ -13,6 +13,7 @@ import { giftStore } from "./giftStore.js";
 import { walletStore } from "./walletStore.js";
 import { storeCatalog, resolvePackage } from "./storeCatalog.js";
 import { processPayment } from "./payment.js";
+import { attachGames } from "./games/tables.js";
 
 const PORT = process.env.PORT || 3001;
 const SEAT_COUNT = 12; // عدد المقاعد في كل غرفة
@@ -159,6 +160,9 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: "*", methods: ["GET", "POST"] },
 });
+
+// طاولات الألعاب (جاكارو/لودو/بلوت/السلم والثعبان) — معالج اتصال مستقل
+attachGames(io);
 
 /**
  * حالة الغرف في الذاكرة.

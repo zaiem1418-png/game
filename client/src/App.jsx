@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { socket } from "./socket.js";
 import { VoiceManager } from "./voice.js";
 import GameLobby from "./lobby/GameLobby.jsx";
+import GameRoom from "./games/GameRoom.jsx";
 import JoinScreen from "./components/JoinScreen.jsx";
 import RoomHeader from "./components/RoomHeader.jsx";
 import SeatGrid from "./components/SeatGrid.jsx";
@@ -22,7 +23,8 @@ export default function App() {
   // لوحة الإدارة: افتحها عبر ?admin في الرابط
   const isAdmin = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("admin");
 
-  const [view, setView] = useState("lobby"); // "lobby" = واجهة الألعاب الرئيسية، "app" = الغرفة الصوتية
+  const [view, setView] = useState("lobby"); // "lobby" = واجهة الألعاب، "game" = طاولة لعبة، "app" = الغرفة الصوتية
+  const [activeGame, setActiveGame] = useState(null); // { gameId, mode } للعبة المفتوحة
   const [joined, setJoined] = useState(false);
   const [selfId, setSelfId] = useState(null);
   const [room, setRoom] = useState(null);
@@ -235,9 +237,29 @@ export default function App() {
         <GameLobby
           wallet={wallet}
           onOpenRooms={() => setView("app")}
-          onPlay={() => setView("app")}
+          onPlay={(game, mode) => {
+            setActiveGame({ gameId: game.id, mode: mode?.id || "default" });
+            setView("game");
+          }}
           onRecharge={(tab) => setStoreTab(tab)}
           onOwnerTap={() => setOwnerOpen(true)}
+        />
+        {walletOverlays}
+      </>
+    );
+
+  // ===== طاولة لعبة (السلم والثعبان/لودو/جاكارو/بلوت) =====
+  if (view === "game" && activeGame)
+    return (
+      <>
+        <GameRoom
+          gameId={activeGame.gameId}
+          mode={activeGame.mode}
+          user={{ name: "زائر", avatar: "🧑🏻", uid: getUid() }}
+          onExit={() => {
+            setActiveGame(null);
+            setView("lobby");
+          }}
         />
         {walletOverlays}
       </>
