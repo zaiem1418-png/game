@@ -1,0 +1,286 @@
+/* ===================================================================== */
+/* ====== شاشات الغلاف: الغرف الصوتية / الرسائل / أنا + إنشاء غرفة ====== */
+/* RTL · نمط داكن دافئ مطابق للقطات الشاشة                                */
+/* ===================================================================== */
+
+.shell {
+  position: relative; height: 100%; width: 100%; max-width: 480px; margin: 0 auto;
+  display: flex; flex-direction: column; overflow: hidden;
+  background: #1a1014;
+  font-family: "Segoe UI", Tahoma, "Noto Sans Arabic", sans-serif;
+  direction: rtl; color: #f4ecef;
+}
+.shell-screen { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+
+/* خلفية بنية دافئة مشتركة للشاشات */
+.vr-bg, .pf-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background: radial-gradient(120% 80% at 50% 0%, #4a342a 0%, #2c1d18 45%, #170f0d 100%);
+}
+
+/* منطقة تمرير مشتركة */
+.vr-scroll { position: relative; z-index: 1; flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: 10px; }
+.vr-scroll::-webkit-scrollbar { width: 0; }
+
+/* ===================== الغرف الصوتية ===================== */
+.vr, .ms, .pf {
+  position: relative; height: 100%; display: flex; flex-direction: column; overflow: hidden;
+}
+
+.vr-top {
+  position: relative; z-index: 2; display: flex; align-items: center; gap: 10px;
+  padding: 14px 14px 6px;
+}
+.vr-top-actions { display: flex; align-items: center; gap: 8px; }
+.vr-add {
+  width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer;
+  background: linear-gradient(135deg, #1fd0b0, #15a88d); color: #06231f;
+  font-size: 24px; font-weight: 800; line-height: 1; display: grid; place-items: center;
+  box-shadow: 0 6px 16px rgba(31, 208, 176, 0.45);
+}
+.vr-search {
+  width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(255, 255, 255, 0.08); color: #f4ecef; font-size: 18px;
+}
+.vr-tabs { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 18px; }
+.vr-tab {
+  position: relative; background: none; border: none; cursor: pointer;
+  color: #b9a597; font-size: 18px; font-weight: 700; padding: 4px 2px;
+}
+.vr-tab.active { color: #fff; font-size: 22px; font-weight: 900; }
+.vr-tab-ul {
+  position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+  width: 22px; height: 3px; border-radius: 3px; background: #fff;
+}
+
+/* بانر ترويجي */
+.vr-promo {
+  position: relative; margin: 10px 14px; height: 92px; border-radius: 16px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: linear-gradient(110deg, #7b3ff2, #b05cff 60%, #7b3ff2);
+  box-shadow: 0 8px 24px rgba(120, 60, 220, 0.4); color: #fff; font-weight: 900; font-size: 20px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.vr-promo::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.25) 50%, transparent 60%);
+  background-size: 250% 100%; animation: gxShine 3s linear infinite;
+}
+.vr-promo-spark { font-size: 26px; }
+.vr-promo-lion { font-size: 34px; }
+
+/* بطاقتا الترتيب */
+.vr-rankings { display: flex; gap: 12px; padding: 4px 14px 8px; }
+.vr-rank {
+  flex: 1; display: flex; align-items: center; gap: 10px; cursor: pointer;
+  border-radius: 14px; padding: 10px 12px; border: 1px solid rgba(255,255,255,0.12);
+  color: #fff; font-weight: 800; font-size: 15px;
+}
+.vr-rank.vip { background: linear-gradient(120deg, #5a4030, #3a2a1f); border-color: rgba(245,196,81,0.4); }
+.vr-rank.pop { background: linear-gradient(120deg, #3a2f5a, #241f3a); border-color: rgba(150,120,255,0.4); }
+.vr-rank-ava {
+  width: 38px; height: 38px; border-radius: 50%; flex: 0 0 auto;
+  background: radial-gradient(circle at 40% 30%, #555, #222); border: 2px solid rgba(255,255,255,0.5);
+}
+.vr-rank-mid { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+
+/* تصنيفات أفقية */
+.vr-cats {
+  display: flex; gap: 18px; overflow-x: auto; padding: 6px 14px 10px;
+  flex-direction: row-reverse; justify-content: flex-start;
+}
+.vr-cats::-webkit-scrollbar { height: 0; }
+.vr-cat {
+  background: none; border: none; cursor: pointer; color: #b9a597;
+  font-size: 16px; font-weight: 700; white-space: nowrap; padding: 2px;
+}
+.vr-cat.active { color: #fff; font-weight: 900; }
+
+/* قائمة الغرف */
+.vr-list { display: flex; flex-direction: column; }
+.vr-room {
+  display: flex; align-items: center; gap: 12px; cursor: pointer; text-align: right;
+  background: none; border: none; border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 12px 14px; color: #f4ecef;
+}
+.vr-room:active { background: rgba(255,255,255,0.04); }
+.vr-room-cover {
+  width: 64px; height: 64px; border-radius: 14px; flex: 0 0 auto;
+  display: grid; place-items: center; font-size: 26px;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+}
+.vr-room-info { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.vr-room-name { font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+.vr-room-flag { font-size: 14px; }
+.vr-room-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #c9b8ad; flex-wrap: wrap; }
+.vr-room-cat { background: rgba(31,170,140,0.25); color: #6fe0c0; padding: 2px 8px; border-radius: 999px; }
+.vr-room-count { color: #d8c8bd; }
+.vr-room-tag { background: rgba(245,196,81,0.2); color: #ffce5a; padding: 2px 8px; border-radius: 999px; }
+.vr-room-go { color: #8a7a70; font-size: 22px; flex: 0 0 auto; }
+.vr-empty { text-align: center; color: #b9a597; padding: 40px 20px; font-size: 14px; }
+
+/* صندوق إدخال رمز PIN */
+.vr-pin-box {
+  width: min(320px, 86%); background: linear-gradient(180deg, #2a1f26, #1a1217);
+  border-radius: 20px; padding: 24px; text-align: center; margin: auto;
+  border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.vr-pin-lock { font-size: 40px; margin-bottom: 6px; }
+.vr-pin-box h3 { margin: 4px 0; font-size: 20px; }
+.vr-pin-box p { color: #c9b8ad; font-size: 13px; margin: 0 0 14px; }
+.vr-pin-actions { display: flex; gap: 10px; margin-top: 14px; }
+.vr-pin-cancel, .vr-pin-go {
+  flex: 1; padding: 12px; border-radius: 12px; border: none; cursor: pointer; font-weight: 800; font-size: 15px;
+}
+.vr-pin-cancel { background: rgba(255,255,255,0.1); color: #f4ecef; }
+.vr-pin-go { background: linear-gradient(90deg, #1fd0b0, #15a88d); color: #06231f; }
+.vr-pin-go:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ===================== نافذة إنشاء غرفة ===================== */
+.cr-backdrop {
+  position: absolute; inset: 0; z-index: 50; background: rgba(0,0,0,0.55);
+  display: flex; align-items: flex-end; backdrop-filter: blur(2px);
+}
+.cr-sheet {
+  width: 100%; max-height: 92%; overflow-y: auto;
+  background: linear-gradient(180deg, #281d24, #160f13);
+  border-radius: 22px 22px 0 0; padding: 8px 18px 22px;
+  border-top: 1px solid rgba(255,255,255,0.1); box-shadow: 0 -12px 40px rgba(0,0,0,0.6);
+}
+.cr-sheet::-webkit-scrollbar { width: 0; }
+.cr-grip { width: 42px; height: 4px; border-radius: 4px; background: rgba(255,255,255,0.25); margin: 6px auto 12px; }
+.cr-title { text-align: center; font-size: 19px; margin: 0 0 14px; }
+
+.cr-preview {
+  position: relative; height: 84px; border-radius: 16px; margin-bottom: 16px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  border: 1px solid rgba(255,255,255,0.12); overflow: hidden;
+}
+.cr-prev-flag { font-size: 20px; }
+.cr-prev-name { font-size: 18px; font-weight: 900; color: #fff; }
+.cr-prev-cat { font-size: 12px; color: rgba(255,255,255,0.8); }
+.cr-prev-lock {
+  position: absolute; top: 8px; inset-inline-start: 8px; font-size: 11px; font-weight: 800;
+  background: rgba(0,0,0,0.4); color: #ffce5a; padding: 3px 8px; border-radius: 999px;
+}
+
+.cr-label { display: block; font-size: 13px; color: #c9b8ad; margin: 12px 2px 6px; font-weight: 700; }
+.cr-input {
+  width: 100%; padding: 13px 14px; border-radius: 12px; outline: none;
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14);
+  color: #f4ecef; font-size: 15px; text-align: right;
+}
+.cr-input:focus { border-color: #1fd0b0; }
+.cr-pin { text-align: center; letter-spacing: 10px; font-size: 22px; font-weight: 800; }
+.cr-hint { font-size: 11px; color: #a89388; margin: 6px 2px 0; }
+
+.cr-seg { display: flex; gap: 8px; }
+.cr-seg button {
+  flex: 1; padding: 12px; border-radius: 12px; cursor: pointer; font-size: 14px; font-weight: 800;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #c9b8ad;
+}
+.cr-seg button.active { background: rgba(31,208,176,0.18); border-color: #1fd0b0; color: #fff; }
+
+.cr-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.cr-chips button {
+  padding: 8px 14px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 700;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #c9b8ad;
+}
+.cr-chips button.active { background: rgba(245,196,81,0.2); border-color: #f5c451; color: #ffce5a; }
+.cr-flags button { font-size: 18px; padding: 6px 10px; }
+
+.cr-covers { display: flex; gap: 10px; }
+.cr-cover {
+  width: 40px; height: 40px; border-radius: 12px; cursor: pointer; border: 2px solid transparent;
+}
+.cr-cover.active { border-color: #fff; transform: scale(1.08); }
+
+.cr-err { color: #ff9a8f; font-size: 13px; margin-top: 12px; text-align: center; }
+.cr-create {
+  width: 100%; margin-top: 18px; padding: 15px; border: none; cursor: pointer; border-radius: 14px;
+  font-size: 16px; font-weight: 800; color: #06231f;
+  background: linear-gradient(90deg, #1fd0b0, #15a88d); box-shadow: 0 8px 20px rgba(31,208,176,0.4);
+}
+.cr-create:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+/* ===================== الرسائل ===================== */
+.ms-top { position: relative; z-index: 2; display: flex; align-items: center; padding: 14px 16px 8px; }
+.ms-top-actions { display: flex; gap: 10px; }
+.ms-act {
+  width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(255,255,255,0.08); color: #f4ecef; font-size: 18px; display: grid; place-items: center;
+}
+.ms-act.add { background: linear-gradient(135deg, #1fd0b0, #15a88d); color: #06231f; font-size: 22px; font-weight: 800; }
+.ms-title { flex: 1; text-align: end; margin: 0; font-size: 24px; font-weight: 900; }
+
+.ms-quick { display: flex; justify-content: space-around; padding: 10px 12px 14px; }
+.ms-quick-btn { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #e8dcd5; }
+.ms-quick-ico {
+  width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-size: 26px;
+  border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.ms-quick-lbl { font-size: 12px; }
+
+.ms-list { display: flex; flex-direction: column; }
+.ms-thread {
+  display: flex; align-items: center; gap: 12px; cursor: pointer; text-align: right;
+  background: none; border: none; padding: 12px 16px; color: #f4ecef;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.ms-thread:active { background: rgba(255,255,255,0.04); }
+.ms-ava {
+  width: 54px; height: 54px; border-radius: 50%; flex: 0 0 auto; display: grid; place-items: center;
+  font-size: 26px; border: 1px solid rgba(255,255,255,0.12);
+}
+.ms-ava.heart { background: #ff3b50 !important; }
+.ms-thread-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ms-thread-row1 { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ms-thread-name { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ms-official {
+  font-size: 9px; font-weight: 800; color: #5fd0c0; border: 1px solid #2b8a7a;
+  padding: 1px 6px; border-radius: 999px; white-space: nowrap;
+}
+.ms-thread-time { font-size: 11px; color: #a89388; flex: 0 0 auto; }
+.ms-thread-preview { font-size: 13px; color: #c9b8ad; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ===================== الملف الشخصي (أنا) ===================== */
+.pf-bg {
+  background:
+    radial-gradient(140% 60% at 50% 0%, #5a4236 0%, #3a2820 40%, #1a110d 100%);
+}
+.pf-head {
+  position: relative; z-index: 2; display: flex; align-items: center; gap: 12px; padding: 24px 18px 14px;
+}
+.pf-back { background: none; border: none; color: #e8dcd5; font-size: 28px; cursor: pointer; }
+.pf-id-block { flex: 1; min-width: 0; }
+.pf-name { display: flex; align-items: center; gap: 6px; font-size: 24px; font-weight: 900; font-style: italic; }
+.pf-spark { font-size: 16px; }
+.pf-frame-ico { font-size: 18px; }
+.pf-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-id { font-size: 13px; color: #c9b8ad; margin-top: 4px; }
+.pf-avatar {
+  width: 74px; height: 74px; border-radius: 50%; flex: 0 0 auto; cursor: pointer;
+  border: 3px solid #fff; background: radial-gradient(circle at 40% 30%, #555, #222);
+  font-size: 34px; display: grid; place-items: center; box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+}
+
+.pf-quick { position: relative; z-index: 2; display: flex; justify-content: space-around; padding: 8px 12px 16px; }
+.pf-quick-btn { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #e8dcd5; }
+.pf-quick-ico { font-size: 30px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)); }
+.pf-quick-lbl { font-size: 12px; }
+
+.pf-rows { display: flex; flex-direction: column; padding: 0 6px; }
+.pf-row {
+  position: relative; display: flex; align-items: center; gap: 12px; cursor: pointer;
+  background: none; border: none; padding: 16px 12px; color: #f4ecef; flex-direction: row;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.pf-row:active { background: rgba(255,255,255,0.04); }
+.pf-row-go { color: #8a7a70; font-size: 22px; }
+.pf-row-label { flex: 1; text-align: start; font-size: 16px; font-weight: 700; }
+.pf-row-ico {
+  width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-size: 18px;
+  background: radial-gradient(circle at 50% 30%, #6a4a38, #2a1c16); border: 1px solid rgba(255,255,255,0.12);
+}
+.pf-row-gift { position: absolute; inset-inline-start: 40px; font-size: 22px; }
+.pf-sep { height: 8px; }

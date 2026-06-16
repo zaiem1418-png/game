@@ -3,6 +3,7 @@ import { useGameTable } from "./useGameTable.js";
 import SnakeLadderBoard from "./SnakeLadderBoard.jsx";
 import LudoBoard from "./LudoBoard.jsx";
 import JackarooBoard from "./JackarooBoard.jsx";
+import BalootBoard from "./BalootBoard.jsx";
 import "./games.css";
 
 // خريطة معرّف اللعبة -> لوحتها
@@ -10,6 +11,7 @@ const BOARDS = {
   snake: SnakeLadderBoard,
   ludo: LudoBoard,
   jackaroo: JackarooBoard,
+  baloot: BalootBoard,
 };
 
 const TITLES = {

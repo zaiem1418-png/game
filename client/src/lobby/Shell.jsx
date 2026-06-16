@@ -4,9 +4,10 @@ import VoiceRooms from "./VoiceRooms.jsx";
 import Messages from "./Messages.jsx";
 import Profile from "./Profile.jsx";
 import BottomNav from "./BottomNav.jsx";
+import "./screens.css";
 
 // الغلاف الرئيسي: يبدّل بين الشاشات الأربع ويعرض شريط التنقّل المشترك
-export default function Shell({ user, wallet, onRecharge, onOwnerTap, onEnterRoom }) {
+export default function Shell({ user, wallet, onRecharge, onOwnerTap, onEnterRoom, onPlay }) {
   const [tab, setTab] = useState("home");
 
   return (
@@ -19,7 +20,7 @@ export default function Shell({ user, wallet, onRecharge, onOwnerTap, onEnterRoo
             onRecharge={onRecharge}
             onOwnerTap={onOwnerTap}
             onOpenRooms={() => setTab("rooms")}
-            onPlay={() => onEnterRoom(null, null)}
+            onPlay={onPlay}
           />
         )}
         {tab === "rooms" && <VoiceRooms onEnterRoom={onEnterRoom} />}
