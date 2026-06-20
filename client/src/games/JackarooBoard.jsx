@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 
 // ===== هندسة مسار جاكارو (حلقة مربّعة 64 خانة) =====
@@ -56,9 +56,19 @@ function marblePos(seat, step, mi) {
 
 const SUIT_COLOR = { "♥": "#e3405a", "♦": "#e3405a", "♠": "#1b2440", "♣": "#1b2440", "🃏": "#7a3aa6" };
 
+// صورة طاولة جاكارو (ضع الملف في client/public/games/jackaroo-table.png)
+const TABLE_IMG = "/games/jackaroo-table.png";
+
 export default function JackarooBoard({ game, you, action, onExit }) {
   const st = game?.state;
   const [selCard, setSelCard] = useState(null);
+  // لا نُفعّل صورة الطاولة إلا بعد التأكد من تحميلها (وإلا يبقى اللوح الخشبي)
+  const [tableReady, setTableReady] = useState(false);
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setTableReady(true);
+    img.src = TABLE_IMG;
+  }, []);
   if (!st) return <div className="grm-loading">جاري التحميل…</div>;
 
   const players = st.players;
@@ -124,7 +134,10 @@ export default function JackarooBoard({ game, you, action, onExit }) {
         ))}
 
       {/* اللوحة */}
-      <div className="jak-board">
+      <div
+        className={`jak-board ${tableReady ? "has-photo" : ""}`}
+        style={tableReady ? { "--jak-table": `url(${TABLE_IMG})` } : undefined}
+      >
         {/* قواعد ملوّنة بالزوايا */}
         {CORNERS.map((c, seat) => (
           <div

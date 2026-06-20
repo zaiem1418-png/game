@@ -489,13 +489,25 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1;
-  /* لوح خشبي بزوايا مشطوفة */
+  /* طاولة جاكارو: صورة حقيقية إن وُجدت، وإلا لوح خشبي مرسوم */
   background:
+    var(--jak-table, none),
     radial-gradient(circle at 50% 45%, #e8c79a 0%, #d9b079 45%, #c79a5e 100%);
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
   border: 7px solid #2f7d56;
   border-radius: 22%;
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5), inset 0 0 40px rgba(120, 75, 30, 0.35);
 }
+/* عند توفّر صورة الطاولة: أخفِ الإطار الأخضر لأن الصورة تحمل إطارها */
+.jak-board.has-photo {
+  border-color: transparent;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+}
+/* خفّف خانات المسار فوق الصورة كي تبقى الصورة واضحة */
+.jak-board.has-photo .jak-cell { background: rgba(80, 50, 18, 0.28); border-color: rgba(255,255,255,0.35); }
+.jak-board.has-photo .jak-base { background: rgba(255,255,255,0.08) !important; }
 .jak-base {
   position: absolute;
   width: 22%;
