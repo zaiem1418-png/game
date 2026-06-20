@@ -98,25 +98,30 @@ export default function JackarooBoard({ game, you, action, onExit }) {
   }
 
   const ev = st.lastEvent;
+  // موضع مقعد كل لاعب حول اللوحة حسب زاويته
+  const POD_POS = ["tl", "tr", "br", "bl"];
 
   return (
     <div className="jak">
-      {/* شريط اللاعبين (فريقان) */}
-      <div className="jak-players">
+      {/* اللوحة الخشبية + مقاعد اللاعبين حول الحواف */}
+      <div className="jak-stage">
         {players.map((p) => (
           <div
             key={p.id}
-            className={`jak-pl ${game.turn === p.id ? "active" : ""}`}
+            className={`jak-pod ${POD_POS[p.seat] || "tl"} ${game.turn === p.id ? "active" : ""}`}
             style={{ "--c": p.color }}
           >
-            <span className="snl-pl-av">{p.avatar}</span>
-            <span className="snl-pl-name">
-              {p.name}{p.id === you ? " (أنت)" : ""} <i className={`jak-team t${p.team}`}>ف{p.team + 1}</i>
-            </span>
-            <span className="snl-pl-pos">🏠{p.homeCount}/4 · 🂠{p.handCount ?? p.hand?.length ?? 0}</span>
+            <div className="jak-pod-av">
+              {game.turn === p.id && <span className="jak-pod-ring" aria-hidden />}
+              <span className="jak-pod-em">{p.avatar}</span>
+              <span className={`jak-pod-team t${p.team}`}>{p.team === 0 ? "A" : "B"}</span>
+            </div>
+            <div className="jak-pod-info">
+              <span className="jak-pod-name">{p.name}{p.id === you ? " (أنت)" : ""}</span>
+              <span className="jak-pod-meta">🏠{p.homeCount}/4 · 🂠{p.handCount ?? p.hand?.length ?? 0}</span>
+            </div>
           </div>
         ))}
-      </div>
 
       {/* اللوحة */}
       <div className="jak-board">
@@ -159,8 +164,12 @@ export default function JackarooBoard({ game, you, action, onExit }) {
           ))
         )}
 
-        {/* المركز */}
-        <div className="jak-center">🏁</div>
+        {/* المركز — كومة التخلّص */}
+        <div className="jak-center">
+          <span className="jak-pile-card c1" />
+          <span className="jak-pile-card c2" />
+          <span className="jak-pile-lbl">تخلّص</span>
+        </div>
 
         {/* البيادق */}
         {players.map((p) =>
@@ -180,6 +189,7 @@ export default function JackarooBoard({ game, you, action, onExit }) {
             );
           })
         )}
+        </div>
       </div>
 
       {/* حالة الدور */}

@@ -33,17 +33,24 @@ export default function BalootBoard({ game, you, action, onExit }) {
   const turnPlayer = st.players[st.phase === "bid" ? st.bidTurn : st.turn];
   const myTurn = turnPlayer?.id === you;
 
+  const myTeam = me?.team ?? 0;
+  const usPts = st.teamPoints[myTeam];
+  const themPts = st.teamPoints[myTeam === 0 ? 1 : 0];
+
   return (
     <div className="bl">
-      {/* النقاط */}
-      <div className="bl-scores">
-        <span className="bl-score t0">فريق 1: {st.teamPoints[0]}</span>
+      {/* لوحة النقاط */}
+      <div className="bl-scoreboard">
+        <div className="bl-sb-row">
+          <span className="bl-sb-us">لنا {usPts}</span>
+          <span className="bl-sb-sep">:</span>
+          <span className="bl-sb-them">{themPts} لهم</span>
+        </div>
         {st.mode && (
-          <span className="bl-mode">
+          <div className="bl-sb-mode">
             {st.mode === "sun" ? "☀️ صن" : `🃏 حكم ${st.trump}`}
-          </span>
+          </div>
         )}
-        <span className="bl-score t1">فريق 2: {st.teamPoints[1]}</span>
       </div>
 
       {/* الطاولة */}
@@ -53,9 +60,14 @@ export default function BalootBoard({ game, you, action, onExit }) {
           const active = turnPlayer?.id === p.id;
           return (
             <div key={p.id} className={`bl-seat ${pos} ${active ? "active" : ""}`} style={{ "--c": p.team === 0 ? "#3aa3ff" : "#f5c451" }}>
-              <span className="bl-seat-av">{p.avatar}</span>
-              <span className="bl-seat-name">{p.name}{p.id === you ? " (أنت)" : ""}</span>
-              <span className="bl-seat-cards">🂠 {p.id === you ? me.hand.length : p.handCount}</span>
+              <span className="bl-seat-avwrap">
+                {active && <span className="bl-seat-ring" aria-hidden />}
+                <span className="bl-seat-av">{p.avatar}</span>
+              </span>
+              <span className="bl-seat-pill">
+                <span className="bl-seat-name">{p.name}{p.id === you ? " (أنت)" : ""}</span>
+                <span className="bl-seat-cards">🂠 {p.id === you ? me.hand.length : p.handCount}</span>
+              </span>
               {st.buyerSeat === p.seat && <span className="bl-buyer">مشتري</span>}
             </div>
           );

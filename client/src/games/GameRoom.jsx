@@ -42,7 +42,7 @@ export default function GameRoom({ gameId, mode, user, onExit }) {
   }
 
   return (
-    <div className="grm">
+    <div className={`grm grm--${gameId}`}>
       <Header title={TITLES[gameId]} onExit={onExit} />
       {error && <div className="grm-error">{error}</div>}
 
