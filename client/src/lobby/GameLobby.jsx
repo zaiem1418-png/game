@@ -231,18 +231,28 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
 function HeroScene({ game }) {
   return (
     <div className="gl-scene">
-      {/* مشهد SVG أصلي: طاولة + لوحة لعب + شخصيات + قِطع */}
-      <GameArt game={game} />
+      {game.photo ? (
+        /* صورة خلفية اللعبة (رسم أصلي كامل) */
+        <div
+          className="gl-photo"
+          style={{ backgroundImage: `url(${game.photo})` }}
+        />
+      ) : (
+        <>
+          {/* مشهد SVG أصلي: طاولة + لوحة لعب + شخصيات + قِطع */}
+          <GameArt game={game} />
 
-      {/* الشعار اللامع */}
-      <motion.div
-        className="gl-logo"
-        animate={{ y: [0, -8, 0] }}
-        transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <span className="gl-logo-text" data-text={game.logo}>{game.logo}</span>
-        <span className="gl-logo-shine" />
-      </motion.div>
+          {/* الشعار اللامع */}
+          <motion.div
+            className="gl-logo"
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <span className="gl-logo-text" data-text={game.logo}>{game.logo}</span>
+            <span className="gl-logo-shine" />
+          </motion.div>
+        </>
+      )}
     </div>
   );
 }

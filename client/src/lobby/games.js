@@ -7,6 +7,8 @@ export const GAMES = [
     id: "jackaroo",
     logo: "JACKAROO",
     tab: "جاكارو",
+    // صورة خلفية المشهد (إن وُجدت تُعرض بدل الرسم المتحرك)
+    photo: "/games/jackaroo.jpg",
     // تدرّج خلفية المشهد + ألوان الثيم
     bg: "radial-gradient(120% 90% at 50% 0%, #6a2f8f 0%, #3a1850 45%, #1f0e2e 100%)",
     glow: "#b06bff",
@@ -68,6 +70,7 @@ export const GAMES = [
     id: "snake",
     logo: "SNAKE",
     tab: "السلم و الثعبان",
+    photo: "/games/snake.jpg",
     bg: "radial-gradient(120% 90% at 50% 0%, #1f6a8a 0%, #134a5a 45%, #0b2a2a 100%)",
     glow: "#3ad6c4",
     accent: "#7fffd4",
