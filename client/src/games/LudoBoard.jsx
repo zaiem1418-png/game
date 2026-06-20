@@ -86,53 +86,68 @@ export default function LudoBoard({ game, you, action, onExit }) {
   }, []);
 
   const ev = st.lastEvent;
+  // ترتيب الزوايا البصري: 0=أعلى-يسار، 1=أعلى-يمين، 2=أسفل-يمين، 3=أسفل-يسار
+  const POD_POS = ["tl", "tr", "br", "bl"];
 
   return (
     <div className="ludo">
-      {/* شريط اللاعبين */}
-      <div className="snl-players">
+      {/* اللوحة مع مقاعد اللاعبين في الزوايا */}
+      <div className="ludo-stage">
         {players.map((p) => (
-          <div
+          <PlayerPod
             key={p.id}
-            className={`snl-pl ${game.turn === p.id ? "active" : ""} ${p.finishedCount === 4 ? "done" : ""}`}
-            style={{ "--c": p.color }}
-          >
-            <span className="snl-pl-av">{p.avatar}</span>
-            <span className="snl-pl-name">{p.name}{p.id === you ? " (أنت)" : ""}</span>
-            <span className="snl-pl-pos">🏠{p.finishedCount}/4</span>
-          </div>
-        ))}
-      </div>
-
-      {/* اللوحة */}
-      <div className="ludo-board">
-        {/* قواعد ملوّنة بالزوايا */}
-        {CORNERS.map((co) => (
-          <div
-            key={co.seat}
-            className="ludo-base"
-            style={{
-              top: `${(co.r / 15) * 100}%`,
-              left: `${(co.c / 15) * 100}%`,
-              background: hexA(players[co.seat]?.color || "#555", 0.18),
-              borderColor: players[co.seat]?.color || "#555",
-            }}
+            player={p}
+            pos={POD_POS[p.seat] || "tl"}
+            active={game.turn === p.id}
+            isYou={p.id === you}
+            dice={game.turn === p.id ? st.dice : null}
           />
         ))}
 
-        {/* عمود البيت الملوّن لكل لاعب */}
-        {HOME_COLS.map((col, seat) =>
-          col.map(([r, c], k) => (
-            <span
-              key={`h${seat}-${k}`}
-              className="ludo-cell home"
-              style={{ ...cellBox(r, c), background: hexA(players[seat]?.color || "#555", 0.5) }}
-            />
-          ))
-        )}
+        <div className="ludo-board">
+          {/* قواعد ملوّنة بالزوايا — ساحة بيضاء بداخلها 4 جيوب */}
+          {CORNERS.map((co) => {
+            const c = players[co.seat]?.color || "#5a6478";
+            return (
+              <div
+                key={co.seat}
+                className="ludo-base"
+                style={{
+                  top: `${(co.r / 15) * 100}%`,
+                  left: `${(co.c / 15) * 100}%`,
+                  background: c,
+                }}
+              >
+                <div className="ludo-yard">
+                  {[0, 1, 2, 3].map((k) => (
+                    <span key={k} className="ludo-pocket" style={{ borderColor: c }} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
 
-        {/* المركز (البيت النهائي) */}
-        <div className="ludo-center" style={cellBox(6, 6, 3, 3)}>🏠</div>
+          {/* عمود البيت الملوّن لكل لاعب */}
+          {HOME_COLS.map((col, seat) =>
+            col.map(([r, c], k) => (
+              <span
+                key={`h${seat}-${k}`}
+                className="ludo-cell home"
+                style={{ ...cellBox(r, c), background: players[seat]?.color || "#5a6478" }}
+              />
+            ))
+          )}
+
+          {/* المركز — أربعة مثلثات بألوان اللاعبين */}
+          <div className="ludo-center" style={cellBox(6, 6, 3, 3)}>
+            {[0, 1, 2, 3].map((seat) => (
+              <span
+                key={seat}
+                className={`ludo-tri t${seat}`}
+                style={{ background: players[seat]?.color || "#5a6478" }}
+              />
+            ))}
+          </div>
 
         {/* خانات المسار */}
         {cells.map((cell) => (
@@ -170,6 +185,7 @@ export default function LudoBoard({ game, you, action, onExit }) {
             );
           })
         )}
+        </div>
       </div>
 
       {/* لوحة التحكم */}
@@ -203,6 +219,23 @@ export default function LudoBoard({ game, you, action, onExit }) {
 }
 
 const DICE = { 1: "⚀", 2: "⚁", 3: "⚂", 4: "⚃", 5: "⚄", 6: "⚅" };
+
+// مقعد لاعب في زاوية اللوحة — صورة بإطار ملوّن + نرده + عدّاد البيت
+function PlayerPod({ player, pos, active, isYou, dice }) {
+  return (
+    <div className={`ludo-pod ${pos} ${active ? "active" : ""} ${player.finishedCount === 4 ? "done" : ""}`} style={{ "--c": player.color }}>
+      <div className="ludo-pod-av">
+        {active && <span className="ludo-pod-ring" aria-hidden />}
+        <span className="ludo-pod-em">{player.avatar}</span>
+      </div>
+      <div className="ludo-pod-info">
+        <span className="ludo-pod-name">{player.name}{isYou ? " (أنت)" : ""}</span>
+        <span className="ludo-pod-home">🏠 {player.finishedCount}/4</span>
+      </div>
+      <span className={`ludo-pod-die ${active ? "lit" : ""}`}>{dice ? DICE[dice] : "🎲"}</span>
+    </div>
+  );
+}
 
 function cellBox(r, c, w = 1, h = 1) {
   return {

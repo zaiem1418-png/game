@@ -8,16 +8,8 @@ const QUICK = [
   { id: "moments", label: "اللحظات", icon: "🌀", tint: "#5a3a9a" },
 ];
 
-// رسائل تجريبية (تشبه نمط التطبيق)
-const THREADS = [
-  { id: 1, name: "لايكات", preview: "تعبيرات • Siham🦋", time: "00:41", icon: "❤️", color: "#ff3b50", heart: true },
-  { id: 2, name: "المذيع جاكر", official: true, preview: "تهانينا! أكملت مهمة تسجيل الدخول اليومي…", time: "00:31", icon: "🦁", color: "#caa23a" },
-  { id: 3, name: "دي جي جاكر", official: true, preview: "يدعوك Zeena 💋 الذي تتابعه إلى دخول الغرفة", time: "00:12", icon: "🎧", color: "#7a4fd0" },
-  { id: 4, name: "NB ∞", preview: "يوُير 🌷 : [العاب] جاكارو", time: "أمس 20:26", icon: "🧑", color: "#3a4a6a" },
-  { id: 5, name: "GENERAL", preview: "رابع : GENERAL ✘", time: "الأحد", icon: "🎯", color: "#5a5a5a" },
-  { id: 6, name: "Burhan", preview: "[الغرف الصوتية] واحد عُراق 🇮🇶", time: "03/06/2026", icon: "👑", color: "#b53a3a" },
-  { id: 7, name: "العضيد ❤️", preview: "[الغرف الصوتية] EWAN ✨✨✨", time: "01/06/2026", icon: "🧔", color: "#3a6a8a" },
-];
+// قائمة المحادثات (فارغة — تُملأ بالرسائل الواردة)
+const THREADS = [];
 
 export default function Messages() {
   return (
@@ -47,6 +39,12 @@ export default function Messages() {
 
         {/* قائمة المحادثات */}
         <div className="ms-list">
+          {THREADS.length === 0 && (
+            <div className="ms-empty">
+              <span className="ms-empty-ico">💬</span>
+              <span>لا توجد رسائل</span>
+            </div>
+          )}
           {THREADS.map((t, i) => (
             <motion.button
               key={t.id}

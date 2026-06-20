@@ -4,6 +4,7 @@ import SnakeLadderBoard from "./SnakeLadderBoard.jsx";
 import LudoBoard from "./LudoBoard.jsx";
 import JackarooBoard from "./JackarooBoard.jsx";
 import BalootBoard from "./BalootBoard.jsx";
+import GameTopSeats from "./GameTopSeats.jsx";
 import "./games.css";
 
 // خريطة معرّف اللعبة -> لوحتها
@@ -48,7 +49,10 @@ export default function GameRoom({ gameId, mode, user, onExit }) {
       {phase !== "playing" ? (
         <Lobby lobby={lobby} you={you} onStart={table.start} onExit={onExit} />
       ) : (
-        <Board game={game} you={you} action={table.action} onExit={onExit} />
+        <>
+          <GameTopSeats players={game?.state?.players} turn={game?.turn} you={you} />
+          <Board game={game} you={you} action={table.action} onExit={onExit} />
+        </>
       )}
     </div>
   );

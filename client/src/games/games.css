@@ -103,6 +103,78 @@
   box-shadow: 0 8px 24px rgba(55, 194, 106, 0.4);
 }
 
+/* ===== المقاعد العلوية فوق الطاولة (محاكاة غرفة الدردشة) ===== */
+.gts {
+  flex: 0 0 auto;
+  width: 100%;
+  padding: 8px 4px 6px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0));
+}
+.gts-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 2px 12px;
+  justify-content: safe center;
+  scrollbar-width: none;
+}
+.gts-row::-webkit-scrollbar { display: none; }
+.gts-seat {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 52px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.gts-circle {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+}
+.gts-circle.filled {
+  background: radial-gradient(circle at 50% 35%, #2a3a5e, #16233f);
+  border: 2.5px solid var(--ring, #caa23a);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45), inset 0 0 6px rgba(0, 0, 0, 0.4);
+}
+.gts-seat.empty .gts-circle {
+  border: 2px dashed rgba(255, 255, 255, 0.28);
+}
+.gts-plus { font-size: 20px; color: rgba(255, 255, 255, 0.5); }
+.gts-av { font-size: 24px; line-height: 1; }
+.gts-name {
+  font-size: 10px;
+  max-width: 52px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.85;
+}
+.gts-seat.active .gts-circle.filled {
+  border-color: #5be08a;
+  box-shadow: 0 0 0 2px rgba(91, 224, 138, 0.35), 0 2px 10px rgba(91, 224, 138, 0.5);
+}
+.gts-seat.active .gts-name { color: #5be08a; opacity: 1; font-weight: 700; }
+.gts-pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #5be08a;
+  animation: gtsPulse 1.4s ease-out infinite;
+}
+@keyframes gtsPulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
 /* ===== السلم والثعبان ===== */
 .snl {
   flex: 1;
@@ -227,60 +299,89 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 10px;
+  gap: 8px;
+  padding: 8px;
   overflow-y: auto;
+}
+.ludo-stage {
+  position: relative;
+  width: min(94vw, 460px);
+  padding: 54px 0;            /* مساحة للمقاعد أعلى/أسفل اللوحة */
 }
 .ludo-board {
   position: relative;
-  width: min(94vw, 460px);
+  width: 100%;
   aspect-ratio: 1;
-  background: #0e1a30;
-  border: 3px solid rgba(255, 255, 255, 0.25);
-  border-radius: 12px;
+  background: #fbf3e0;        /* لوح كلاسيكي كريمي */
+  border: 6px solid #caa23a;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 0 0 2px rgba(255, 255, 255, 0.4);
 }
+/* الزوايا الملوّنة — ساحة كل لاعب */
 .ludo-base {
   position: absolute;
   width: 40%;
   height: 40%;
+  border-radius: 10px;
+  box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.25);
+}
+.ludo-yard {
+  position: absolute;
+  inset: 16%;
+  background: #fbf3e0;
+  border-radius: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  place-items: center;
+  gap: 8%;
+  padding: 10%;
+}
+.ludo-pocket {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
   border: 3px solid;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5);
 }
 .ludo-cell {
   position: absolute;
-  border: 0.5px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(120, 90, 40, 0.25);
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
 }
-.ludo-cell.safe { background: rgba(255, 255, 255, 0.16); }
-.ludo-star { font-size: clamp(8px, 2.4vw, 12px); opacity: 0.7; }
+.ludo-cell.safe { background: #ece1c6; }
+.ludo-star { font-size: clamp(8px, 2.4vw, 12px); color: #b08a3a; opacity: 0.9; }
+/* المركز — أربعة مثلثات بألوان اللاعبين تشكّل البيت */
 .ludo-center {
   position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(20px, 6vw, 34px);
-  background: radial-gradient(circle, rgba(255,255,255,0.15), rgba(255,255,255,0.04));
-  border: 1px solid rgba(255, 255, 255, 0.2);
   box-sizing: border-box;
+  border: 1px solid rgba(120, 90, 40, 0.3);
 }
+.ludo-tri {
+  position: absolute;
+  inset: 0;
+}
+.ludo-tri.t0 { clip-path: polygon(0 0, 0 100%, 50% 50%); }       /* يسار — أحمر */
+.ludo-tri.t1 { clip-path: polygon(0 0, 100% 0, 50% 50%); }       /* أعلى — أخضر */
+.ludo-tri.t2 { clip-path: polygon(100% 0, 100% 100%, 50% 50%); } /* يمين — أصفر */
+.ludo-tri.t3 { clip-path: polygon(0 100%, 100% 100%, 50% 50%); } /* أسفل — أزرق */
 .ludo-token {
   position: absolute;
   width: clamp(18px, 5vw, 28px);
   height: clamp(18px, 5vw, 28px);
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  border: 2px solid rgba(255, 255, 255, 0.9);
+  border: 2px solid #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: clamp(10px, 3vw, 15px);
   padding: 0;
   cursor: default;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.45), inset 0 2px 3px rgba(255, 255, 255, 0.5);
   z-index: 5;
 }
 .ludo-token.movable {
@@ -289,9 +390,78 @@
   animation: ludoPulse 1s infinite;
 }
 @keyframes ludoPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
-  50% { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(45, 130, 60, 0.8); }
+  50% { box-shadow: 0 0 0 7px rgba(45, 130, 60, 0); }
 }
+
+/* ===== مقاعد اللاعبين في زوايا لوحة لودو ===== */
+.ludo-pod {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 8px 4px 4px;
+  background: rgba(10, 18, 34, 0.7);
+  border: 2px solid transparent;
+  border-radius: 30px;
+  z-index: 10;
+  max-width: 47%;
+}
+.ludo-pod.tl { top: 2px; left: 2px; }
+.ludo-pod.tr { top: 2px; right: 2px; flex-direction: row-reverse; padding: 4px 4px 4px 8px; }
+.ludo-pod.bl { bottom: 2px; left: 2px; }
+.ludo-pod.br { bottom: 2px; right: 2px; flex-direction: row-reverse; padding: 4px 4px 4px 8px; }
+.ludo-pod.active {
+  border-color: var(--c);
+  box-shadow: 0 0 14px var(--c);
+  background: rgba(10, 18, 34, 0.92);
+}
+.ludo-pod.done { opacity: 0.5; }
+.ludo-pod-av {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 35%, #2a3a5e, #16233f);
+  border: 2.5px solid var(--c);
+  flex: 0 0 auto;
+}
+.ludo-pod-em { font-size: 22px; line-height: 1; }
+.ludo-pod-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--c);
+  animation: gtsPulse 1.4s ease-out infinite;
+}
+.ludo-pod-info { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.ludo-pod-name {
+  font-size: 11px;
+  font-weight: 600;
+  max-width: 78px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ludo-pod-home { font-size: 10px; opacity: 0.8; }
+.ludo-pod-die {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #fff;
+  color: #16233f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  flex: 0 0 auto;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+.ludo-pod-die.lit { box-shadow: 0 0 10px var(--c), 0 2px 5px rgba(0, 0, 0, 0.4); }
 
 /* ===== جاكارو ===== */
 .jak {
