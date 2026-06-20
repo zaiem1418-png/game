@@ -229,13 +229,18 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
 /* ===================== مكوّنات فرعية ===================== */
 
 function HeroScene({ game }) {
+  // يُعرض المشهد ضمن AnimatePresence بمفتاح game.id، لذا تُعاد التهيئة مع كل لعبة
+  const [photoOk, setPhotoOk] = useState(Boolean(game.photo));
+
   return (
     <div className="gl-scene">
-      {game.photo ? (
-        /* صورة خلفية اللعبة (رسم أصلي كامل) */
-        <div
+      {photoOk ? (
+        /* صورة خلفية اللعبة (رسم أصلي كامل) — تسقط للرسم المتحرك إن فشل تحميلها */
+        <img
           className="gl-photo"
-          style={{ backgroundImage: `url(${game.photo})` }}
+          src={game.photo}
+          alt={game.tab}
+          onError={() => setPhotoOk(false)}
         />
       ) : (
         <>
