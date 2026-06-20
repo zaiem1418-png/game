@@ -62,12 +62,14 @@ function homeCells(seat) {
   return (HOME_LANES[seat] || HOME_LANES[0]).map(([x, y]) => ({ x, y }));
 }
 
-// مواضع البيادق الأربعة داخل قاعدة اللاعب (2×2 في الزاوية)
+// مواضع البيادق الأربعة داخل قاعدة اللاعب — على هيئة زهرة (clover) مثل زوايا الصورة
 function yardSlots(seat) {
   const c = CORNERS[seat];
   return [
-    { x: c.x - 5, y: c.y - 5 }, { x: c.x + 5, y: c.y - 5 },
-    { x: c.x - 5, y: c.y + 5 }, { x: c.x + 5, y: c.y + 5 },
+    { x: c.x, y: c.y - 6 }, // أعلى
+    { x: c.x - 6, y: c.y }, // يسار
+    { x: c.x + 6, y: c.y }, // يمين
+    { x: c.x, y: c.y + 6 }, // أسفل
   ];
 }
 
@@ -161,18 +163,27 @@ export default function JackarooBoard({ game, you, action, onExit }) {
         className={`jak-board ${tableReady ? "has-photo" : ""}`}
         style={tableReady ? { "--jak-table": `url(${TABLE_IMG})` } : undefined}
       >
-        {/* قواعد ملوّنة بالزوايا */}
+        {/* قواعد بهيئة زهرة في الزوايا: قرص خافت + 4 ثقوب ملوّنة */}
         {CORNERS.map((c, seat) => (
           <div
             key={seat}
             className="jak-base"
             style={{
               left: `${c.x}%`, top: `${c.y}%`,
-              background: hexA(players[seat]?.color || "#555", 0.16),
+              background: hexA(players[seat]?.color || "#555", 0.14),
               borderColor: players[seat]?.color || "#555",
             }}
           />
         ))}
+        {players.map((p) =>
+          yardSlots(p.seat).map((s, k) => (
+            <span
+              key={`y${p.seat}-${k}`}
+              className="jak-cell yard"
+              style={{ left: `${s.x}%`, top: `${s.y}%`, background: hexA(p.color, 0.6), borderColor: p.color }}
+            />
+          ))
+        )}
 
         {/* خانات المسار */}
         {ring.map((cell) => {
