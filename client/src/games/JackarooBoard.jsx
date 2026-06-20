@@ -1,50 +1,73 @@
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 
-// ===== هندسة مسار جاكارو (حلقة مربّعة 64 خانة) =====
+// ===== هندسة مسار جاكارو (لوحة على شكل صليب/زائد، 64 خانة حول المحيط) =====
 const LOOP = 64;
-const SEG = 16;
 const HOME_FIRST = 65;
 
-// موضع خانة على محيط المربّع (نسبة مئوية)
-function perimeter(i) {
-  const side = Math.floor(i / SEG); // 0 أعلى، 1 يمين، 2 أسفل، 3 يسار
-  const t = (i % SEG) / SEG; // 0..1 على طول الضلع
-  const lo = 7, hi = 93, span = hi - lo;
-  switch (side) {
-    case 0: return { x: lo + t * span, y: lo }; // أعلى ←→
-    case 1: return { x: hi, y: lo + t * span }; // يمين ↓
-    case 2: return { x: hi - t * span, y: hi }; // أسفل →←
-    default: return { x: lo, y: hi - t * span }; // يسار ↑
-  }
-}
-
-// نقطة البداية لكل لاعب على المحيط
-const START_INDEX = [0, 16, 32, 48];
-// زاوية كل لاعب (للبيت/القاعدة) ولون
-const CORNERS = [
-  { x: 7, y: 7 }, // 0 أعلى-يسار
-  { x: 93, y: 7 }, // 1 أعلى-يمين
-  { x: 93, y: 93 }, // 2 أسفل-يمين
-  { x: 7, y: 93 }, // 3 أسفل-يسار
+// رؤوس مضلّع الصليب (٪) — حافة خارجية 7/93، تجويف داخلي 35/65
+const OUT_LO = 7, OUT_HI = 93, IN_LO = 35, IN_HI = 65;
+const CROSS = [
+  [IN_LO, OUT_LO], [IN_HI, OUT_LO], // حافّة ذراع أعلى
+  [IN_HI, IN_LO], [OUT_HI, IN_LO], // الانتقال لذراع اليمين
+  [OUT_HI, IN_HI], [IN_HI, IN_HI], // حافّة ذراع اليمين
+  [IN_HI, OUT_HI], [IN_LO, OUT_HI], // ذراع أسفل
+  [IN_LO, IN_HI], [OUT_LO, IN_HI], // الانتقال لذراع اليسار
+  [OUT_LO, IN_LO], [IN_LO, IN_LO], // حافّة ذراع اليسار + إغلاق
 ];
 
-// خانات بيت النهاية (4) تتجه للداخل من زاوية اللاعب نحو المركز
-function homeCells(seat) {
-  const c = CORNERS[seat];
-  const cx = 50, cy = 50;
-  return [0.22, 0.36, 0.5, 0.64].map((f) => ({ x: c.x + (cx - c.x) * f, y: c.y + (cy - c.y) * f }));
+// أطوال الأضلاع التراكمية على محيط الصليب
+const SEGLEN = [];
+const CUM = [0];
+for (let k = 0; k < CROSS.length; k++) {
+  const a = CROSS[k], b = CROSS[(k + 1) % CROSS.length];
+  const d = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  SEGLEN.push(d);
+  CUM.push(CUM[k] + d);
 }
-// مواضع البيادق في القاعدة (داخل الزاوية)
+const PERIM = CUM[CUM.length - 1];
+
+// موضع خانة رقم i (0..63) موزّعة بالتساوي حول محيط الصليب
+function perimeter(i) {
+  const target = ((i % LOOP) / LOOP) * PERIM;
+  for (let k = 0; k < CROSS.length; k++) {
+    if (target <= CUM[k + 1] || k === CROSS.length - 1) {
+      const a = CROSS[k], b = CROSS[(k + 1) % CROSS.length];
+      const t = SEGLEN[k] ? (target - CUM[k]) / SEGLEN[k] : 0;
+      return { x: a[0] + (b[0] - a[0]) * t, y: a[1] + (b[1] - a[1]) * t };
+    }
+  }
+  return { x: 50, y: 50 };
+}
+
+// بداية كل لاعب تقع على رأس ذراعه (0=أعلى، 16=يمين، 32=أسفل، 48=يسار)
+const START_INDEX = [0, 16, 32, 48];
+
+// قواعد (بيوت) اللاعبين في الزوايا القُطرية بجوار مقاعدهم
+const CORNERS = [
+  { x: 16, y: 16 }, // 0 أعلى-يسار
+  { x: 84, y: 16 }, // 1 أعلى-يمين
+  { x: 84, y: 84 }, // 2 أسفل-يمين
+  { x: 16, y: 84 }, // 3 أسفل-يسار
+];
+
+// ممرّات بيت النهاية: خط ملوّن داخل ذراع كل لاعب يتجه للمركز
+const HOME_LANES = [
+  [[50, 17], [50, 25], [50, 33], [50, 41]], // 0 ذراع أعلى ↓
+  [[83, 50], [75, 50], [67, 50], [59, 50]], // 1 ذراع يمين ←
+  [[50, 83], [50, 75], [50, 67], [50, 59]], // 2 ذراع أسفل ↑
+  [[17, 50], [25, 50], [33, 50], [41, 50]], // 3 ذراع يسار →
+];
+function homeCells(seat) {
+  return (HOME_LANES[seat] || HOME_LANES[0]).map(([x, y]) => ({ x, y }));
+}
+
+// مواضع البيادق الأربعة داخل قاعدة اللاعب (2×2 في الزاوية)
 function yardSlots(seat) {
   const c = CORNERS[seat];
-  const dx = c.x < 50 ? 1 : -1;
-  const dy = c.y < 50 ? 1 : -1;
   return [
-    { x: c.x + dx * 2, y: c.y + dy * 2 },
-    { x: c.x + dx * 7, y: c.y + dy * 2 },
-    { x: c.x + dx * 2, y: c.y + dy * 7 },
-    { x: c.x + dx * 7, y: c.y + dy * 7 },
+    { x: c.x - 5, y: c.y - 5 }, { x: c.x + 5, y: c.y - 5 },
+    { x: c.x - 5, y: c.y + 5 }, { x: c.x + 5, y: c.y + 5 },
   ];
 }
 
