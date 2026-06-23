@@ -126,13 +126,28 @@ body {
 }
 .rh-flex { flex: 1; }
 .rh-shield {
-  width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; font-size: 17px;
+  position: relative; width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; font-size: 17px;
   background: linear-gradient(135deg, #3a3f6b, #20243f); border: 1px solid rgba(255,255,255,0.12);
+}
+.rh-shield-ic { line-height: 1; }
+.rh-shield-lv {
+  position: absolute; bottom: -5px; right: -5px; min-width: 16px; height: 16px; padding: 0 3px;
+  border-radius: 8px; background: linear-gradient(135deg, #f5c451, #d99b1f); color: #2a1c00;
+  font-size: 10px; font-weight: 900; display: grid; place-items: center; box-shadow: 0 0 6px rgba(245,196,81,0.7);
 }
 .rh-room {
   background: rgba(10,10,24,0.55); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 14px; padding: 5px 12px; text-align: center; min-width: 130px;
+  border-radius: 14px; padding: 5px 12px; text-align: center; min-width: 130px; cursor: pointer;
 }
+.rh-lvbar {
+  display: inline-block; width: 54px; height: 6px; border-radius: 4px; overflow: hidden;
+  background: rgba(255,255,255,0.14); margin-inline-start: 4px; vertical-align: middle;
+}
+.rh-lvbar-fill {
+  display: block; height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, #9b5cff, #f5c451); transition: width 0.4s ease;
+}
+.rh-id { color: var(--muted); }
 .rh-line1 { display: flex; align-items: center; justify-content: center; gap: 4px; font-weight: 800; font-size: 15px; color: var(--gold); }
 .rh-spark { font-size: 12px; filter: drop-shadow(0 0 4px rgba(245,196,81,0.8)); }
 .rh-month { letter-spacing: 0.5px; }

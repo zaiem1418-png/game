@@ -42,6 +42,19 @@
   width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer;
   background: rgba(255, 255, 255, 0.08); color: #f4ecef; font-size: 18px;
 }
+.vr-search.active { background: rgba(31, 208, 176, 0.35); }
+.vr-searchbar {
+  position: relative; margin: 8px 14px 0; display: flex; align-items: center; overflow: hidden;
+}
+.vr-search-input {
+  width: 100%; padding: 11px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(10,10,24,0.6); color: #f4ecef; font-size: 14px; outline: none;
+}
+.vr-search-input:focus { border-color: rgba(31,208,176,0.6); }
+.vr-search-clear {
+  position: absolute; inset-inline-end: 8px; width: 26px; height: 26px; border-radius: 50%;
+  border: none; cursor: pointer; background: rgba(255,255,255,0.12); color: #f4ecef; font-size: 13px;
+}
 .vr-tabs { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 18px; }
 .vr-tab {
   position: relative; background: none; border: none; cursor: pointer;
@@ -115,6 +128,11 @@
 .vr-room-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #c9b8ad; flex-wrap: wrap; }
 .vr-room-cat { background: rgba(31,170,140,0.25); color: #6fe0c0; padding: 2px 8px; border-radius: 999px; }
 .vr-room-count { color: #d8c8bd; }
+.vr-room-lv {
+  background: linear-gradient(135deg, #9b5cff, #6a2fd6); color: #fff; font-weight: 800;
+  padding: 2px 8px; border-radius: 999px; box-shadow: 0 0 6px rgba(155,92,255,0.5);
+}
+.vr-room-rid { color: #8a7a70; font-variant-numeric: tabular-nums; }
 .vr-room-tag { background: rgba(245,196,81,0.2); color: #ffce5a; padding: 2px 8px; border-radius: 999px; }
 .vr-room-go { color: #8a7a70; font-size: 22px; flex: 0 0 auto; }
 .vr-room-del {
@@ -291,3 +309,57 @@
 }
 .pf-row-gift { position: absolute; inset-inline-start: 40px; font-size: 22px; }
 .pf-sep { height: 8px; }
+
+/* ===== نافذة تفاصيل الغرفة + إدارة المشرفين (RoomInfoModal) ===== */
+.ri-sheet {
+  position: absolute; bottom: 0; left: 0; right: 0; max-height: 88vh; overflow-y: auto;
+  background: linear-gradient(180deg, #221634, #150f23); border-radius: 22px 22px 0 0;
+  padding: 10px 18px 24px; box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
+}
+.ri-sheet::-webkit-scrollbar { width: 0; }
+.ri-id-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+.ri-id-box {
+  flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 10px 14px;
+  background: rgba(10,10,24,0.55); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+}
+.ri-id-label { font-size: 11px; color: #9b8aa6; }
+.ri-id-val { font-size: 20px; font-weight: 900; letter-spacing: 2px; color: #f5c451; font-variant-numeric: tabular-nums; }
+.ri-copy {
+  padding: 10px 16px; border-radius: 12px; border: none; cursor: pointer; font-weight: 800;
+  background: linear-gradient(135deg, #1fd0b0, #14a98c); color: #04221c; font-size: 13px;
+}
+.ri-name { margin-top: 10px; font-size: 17px; font-weight: 800; color: #efe6f5; text-align: center; }
+.ri-level-card {
+  margin-top: 12px; padding: 14px; border-radius: 14px;
+  background: rgba(10,10,24,0.5); border: 1px solid rgba(255,255,255,0.1);
+}
+.ri-level-top { display: flex; justify-content: space-between; align-items: center; }
+.ri-level-badge {
+  font-weight: 900; font-size: 14px; color: #fff; padding: 3px 10px; border-radius: 999px;
+  background: linear-gradient(135deg, #9b5cff, #6a2fd6); box-shadow: 0 0 8px rgba(155,92,255,0.5);
+}
+.ri-level-pts { font-size: 13px; color: #f5c451; font-weight: 700; }
+.ri-level-bar { height: 9px; border-radius: 5px; background: rgba(255,255,255,0.12); overflow: hidden; margin: 10px 0 6px; }
+.ri-level-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #9b5cff, #f5c451); transition: width 0.4s ease; }
+.ri-level-hint { font-size: 11px; color: #b6a7c2; }
+.ri-level-note { color: #8a7c99; }
+.ri-section-title {
+  margin: 16px 0 8px; font-size: 14px; font-weight: 800; color: #d8c8e6;
+  display: flex; align-items: center; gap: 8px;
+}
+.ri-count { font-size: 12px; color: #9b8aa6; font-weight: 700; }
+.ri-empty { font-size: 12px; color: #8a7c99; padding: 6px 2px; }
+.ri-person {
+  display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 12px;
+  background: rgba(255,255,255,0.04); margin-bottom: 6px;
+}
+.ri-person.owner { background: rgba(245,196,81,0.1); border: 1px solid rgba(245,196,81,0.25); }
+.ri-ava { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; background: rgba(0,0,0,0.3); }
+.ri-person-name { flex: 1; font-size: 14px; font-weight: 700; color: #efe6f5; min-width: 0; }
+.ri-role-tag { font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 999px; }
+.ri-role-tag.owner { background: linear-gradient(135deg, #f5c451, #d99b1f); color: #2a1c00; }
+.ri-role-tag.admin { background: rgba(31,170,140,0.3); color: #6fe0c0; }
+.ri-btn { padding: 6px 14px; border-radius: 10px; border: none; cursor: pointer; font-size: 12px; font-weight: 800; }
+.ri-btn.promote { background: linear-gradient(135deg, #1fd0b0, #14a98c); color: #04221c; }
+.ri-btn.promote:disabled { opacity: 0.4; cursor: not-allowed; }
+.ri-btn.demote { background: rgba(192,57,43,0.3); color: #ffb4ab; }

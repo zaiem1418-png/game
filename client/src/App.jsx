@@ -4,6 +4,7 @@ import { VoiceManager } from "./voice.js";
 import Shell from "./lobby/Shell.jsx";
 import GameRoom from "./games/GameRoom.jsx";
 import RoomHeader from "./components/RoomHeader.jsx";
+import RoomInfoModal from "./components/RoomInfoModal.jsx";
 import SeatGrid from "./components/SeatGrid.jsx";
 import ChatPanel from "./components/ChatPanel.jsx";
 import BottomBar from "./components/BottomBar.jsx";
@@ -39,6 +40,8 @@ export default function App() {
   const [ownerOpen, setOwnerOpen] = useState(false); // نافذة دخول المالك
   const [bonusToast, setBonusToast] = useState(null); // مكافأة الترحيب للمستخدم الجديد
   const [needCoins, setNeedCoins] = useState(false); // الرصيد لا يكفي لإرسال الهدية
+  const [infoOpen, setInfoOpen] = useState(false); // نافذة تفاصيل الغرفة + إدارة المشرفين
+  const [adminErr, setAdminErr] = useState(""); // خطأ إدارة المشرفين
   const voiceRef = useRef(null);
   const giftStageRef = useRef(null); // محرك أنيميشن الهدايا
   const reactions = useReactions(); // طابور تفاعلات المقاعد
@@ -121,6 +124,13 @@ export default function App() {
       setTimeout(() => setNeedCoins(false), 4000);
     });
 
+    // خطأ في إدارة المشرفين (صلاحية/سقف المستوى)
+    socket.on("admin:error", ({ reason }) => {
+      const map = { forbidden: "لا تملك صلاحية إدارة المشرفين" };
+      setAdminErr(map[reason] || reason || "تعذّرت العملية");
+      setTimeout(() => setAdminErr(""), 4000);
+    });
+
     // رمز PIN خاطئ لغرفة خاصة → ارجع للغلاف واعرض تنبيهاً
     socket.on("room:join:error", () => {
       setPinError(true);
@@ -149,6 +159,7 @@ export default function App() {
       socket.off("reaction:new");
       socket.off("wallet:update");
       socket.off("wallet:insufficient");
+      socket.off("admin:error");
       socket.off("room:join:error");
       socket.off("room:closed");
       voice.destroy();
@@ -228,6 +239,12 @@ export default function App() {
   function sendReaction(type) {
     unlockAudio();
     socket.emit("reaction:send", { type });
+  }
+  function addAdmin(uid) {
+    socket.emit("admin:add", { uid });
+  }
+  function removeAdmin(uid) {
+    socket.emit("admin:remove", { uid });
   }
 
   if (isAdmin) return <AdminPanel />;
@@ -344,7 +361,7 @@ export default function App() {
         onRecharge={(tab) => setStoreTab(tab)}
         onOwnerTap={() => setOwnerOpen(true)}
       />
-      <RoomHeader room={room} memberCount={room.members.length} onBack={leaveRoom} />
+      <RoomHeader room={room} memberCount={room.members.length} onBack={leaveRoom} onOpenInfo={() => setInfoOpen(true)} />
 
       {micError && (
         <div className="mic-error">
@@ -424,6 +441,18 @@ export default function App() {
       {reactionPickerOpen && (
         <ReactionPicker onPick={sendReaction} onClose={() => setReactionPickerOpen(false)} />
       )}
+
+      {infoOpen && (
+        <RoomInfoModal
+          room={room}
+          selfUid={getUid()}
+          onAddAdmin={addAdmin}
+          onRemoveAdmin={removeAdmin}
+          onClose={() => setInfoOpen(false)}
+        />
+      )}
+
+      {adminErr && <div className="need-coins-toast">{adminErr}</div>}
 
       {walletOverlays}
 

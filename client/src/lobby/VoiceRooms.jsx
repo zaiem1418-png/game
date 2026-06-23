@@ -12,6 +12,8 @@ export default function VoiceRooms({ onEnterRoom }) {
   const [rooms, setRooms] = useState([]);
   const [topTab, setTopTab] = useState("الكل");
   const [cat, setCat] = useState("الكل");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [pinRoom, setPinRoom] = useState(null); // غرفة خاصة بانتظار إدخال الرمز
   const [pinVal, setPinVal] = useState("");
@@ -32,7 +34,11 @@ export default function VoiceRooms({ onEnterRoom }) {
     return () => clearInterval(t);
   }, []);
 
-  const list = rooms.filter((r) => cat === "الكل" || r.category === cat);
+  // البحث بالمعرّف أو الاسم — له الأولوية على فلتر التصنيف
+  const q = query.trim().toLowerCase();
+  const list = q
+    ? rooms.filter((r) => r.id.includes(q) || (r.name || "").toLowerCase().includes(q))
+    : rooms.filter((r) => cat === "الكل" || r.category === cat);
 
   function tapRoom(r) {
     if (r.locked) {
@@ -65,7 +71,16 @@ export default function VoiceRooms({ onEnterRoom }) {
           <motion.button className="vr-add" whileTap={{ scale: 0.9 }} onClick={() => setCreateOpen(true)} aria-label="إنشاء غرفة">
             ＋
           </motion.button>
-          <button className="vr-search" aria-label="بحث">🔍</button>
+          <button
+            className={`vr-search ${searchOpen ? "active" : ""}`}
+            aria-label="بحث"
+            onClick={() => {
+              setSearchOpen((v) => !v);
+              if (searchOpen) setQuery("");
+            }}
+          >
+            🔍
+          </button>
         </div>
         <div className="vr-tabs">
           {TOP_TABS.map((t) => (
@@ -76,6 +91,29 @@ export default function VoiceRooms({ onEnterRoom }) {
           ))}
         </div>
       </header>
+
+      {/* شريط البحث عن غرفة بالمعرّف أو الاسم */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            className="vr-searchbar"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            <input
+              className="vr-search-input"
+              placeholder="ابحث برقم الغرفة (ID) أو اسمها…"
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {query && (
+              <button className="vr-search-clear" onClick={() => setQuery("")}>✕</button>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="vr-scroll">
         {/* بانر ترويجي */}
@@ -130,8 +168,10 @@ export default function VoiceRooms({ onEnterRoom }) {
                   {r.name} <span className="vr-room-flag">{r.country}</span>
                 </span>
                 <span className="vr-room-meta">
+                  <span className="vr-room-lv">Lv.{r.level || 1}</span>
                   <span className="vr-room-cat">{r.category}</span>
                   <span className="vr-room-count">👥 {r.members}</span>
+                  <span className="vr-room-rid">ID {r.id}</span>
                   {r.tag && <span className="vr-room-tag">{r.tag}</span>}
                 </span>
               </span>
