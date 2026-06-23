@@ -19,8 +19,10 @@ import { attachGames } from "./games/tables.js";
 const PORT = process.env.PORT || 3001;
 const SEAT_COUNT = 12; // عدد المقاعد في كل غرفة
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "admin123"; // غيّره في الإنتاج
-// كلمة سر مالك اللعبة — من يدخلها يحصل على رصيد لانهائي. غيّرها في الإنتاج عبر متغير البيئة.
-const OWNER_KEY = process.env.OWNER_KEY || "owner-jackaroo-2026";
+// كلمة سر مالك اللعبة — من يدخلها يحصل على رصيد لانهائي + ملكية الغرفة الرسمية.
+// تُضبط سرّاً عبر متغير البيئة OWNER_KEY فقط (لا قيمة افتراضية في الكود).
+// إن لم تُضبط، يُعطَّل دخول المالك بالكامل.
+const OWNER_KEY = process.env.OWNER_KEY || "";
 
 // غرفة مالك اللعبة الرسمية — أي دي مميز لا مثيل له: كله أصفار. الغرف العادية تبدأ
 // دائماً من 100000 فأعلى، فهذا المعرّف لا يتولّد عشوائياً أبداً ويبقى فريداً.
@@ -177,6 +179,9 @@ app.post("/api/store/purchase", async (req, res) => {
 app.post("/api/owner/login", (req, res) => {
   const { uid, key } = req.body || {};
   if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  if (!OWNER_KEY) {
+    return res.status(503).json({ error: "دخول المالك غير مُفعّل (OWNER_KEY غير مضبوط)" });
+  }
   if (String(key || "") !== OWNER_KEY) {
     return res.status(401).json({ error: "كلمة سر المالك غير صحيحة" });
   }
