@@ -6,9 +6,10 @@ import { motion } from "framer-motion";
 export default function RoomInfoModal({ room, selfUid, onAddAdmin, onRemoveAdmin, onClose }) {
   const [copied, setCopied] = useState(false);
   const level = room.level || 1;
-  const per = room.pointsPerLevel || 5000;
+  const per = room.pointsPerLevel || 5000; // تكلفة الترقية الحالية (تزداد كل مستوى)
   const points = room.points || 0;
-  const into = points % per;
+  const start = room.levelStartPoints || 0;
+  const into = Math.max(0, points - start);
   const pct = Math.min(100, Math.round((into / per) * 100));
   const maxAdmins = room.maxAdmins || 2;
   const admins = room.admins || [];
@@ -68,7 +69,7 @@ export default function RoomInfoModal({ room, selfUid, onAddAdmin, onRemoveAdmin
           </div>
           <div className="ri-level-hint">
             {into.toLocaleString("en-US")} / {per.toLocaleString("en-US")} للوصول للمستوى {level + 1}
-            <span className="ri-level-note"> — تتجمّع النقاط من قيمة الهدايا داخل الغرفة</span>
+            <span className="ri-level-note"> — كل نقطة = {room.gemsPerPoint || 10} مجوهرات، وكل ترقية أغلى من سابقتها</span>
           </div>
         </div>
 

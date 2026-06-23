@@ -22,11 +22,33 @@ import { dirname, join } from "path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FILE = join(__dirname, "rooms.json");
 
-// كل 5000 نقطة يرتفع مستوى الغرفة بمقدار 1 (المستوى يبدأ من 1).
-export const POINTS_PER_LEVEL = 5000;
+// نظام ترقية تصاعدي: الترقية تزداد صعوبةً كلما ارتفع المستوى.
+// تكلفة الانتقال من المستوى L إلى L+1 = BASE_LEVEL_POINTS × L
+//   • من 1 إلى 2 = 5000 نقطة
+//   • من 2 إلى 3 = 10000 نقطة
+//   • من 3 إلى 4 = 15000 نقطة ... وهكذا (كل ترقية أغلى من سابقتها)
+// كل نقطة تعادل 10 مجوهرات من قيمة الهدايا.
+export const BASE_LEVEL_POINTS = 5000;
+export const GEMS_PER_POINT = 10;
 
+// تكلفة الانتقال من المستوى الحالي إلى التالي (بالنقاط).
+export function pointsToNextLevel(level) {
+  return BASE_LEVEL_POINTS * Math.max(1, Number(level) || 1);
+}
+
+// إجمالي النقاط التراكمية اللازمة للوصول إلى مستوى معيّن (انطلاقاً من الصفر).
+// = BASE × (1 + 2 + ... + (level-1)) = BASE × (level-1)·level / 2
+export function totalPointsForLevel(level) {
+  const n = Math.max(1, Number(level) || 1) - 1;
+  return (BASE_LEVEL_POINTS * n * (n + 1)) / 2;
+}
+
+// يحسب مستوى الغرفة من إجمالي نقاطها وفق المنحنى التصاعدي.
 export function levelForPoints(points) {
-  return 1 + Math.floor(Math.max(0, points) / POINTS_PER_LEVEL);
+  points = Math.max(0, Number(points) || 0);
+  let level = 1;
+  while (points >= totalPointsForLevel(level + 1)) level++;
+  return level;
 }
 
 // عدد المشرفين المسموح به حسب مستوى الغرفة — يزيد مشرفٌ كل مستويين، بسقف 15.

@@ -119,10 +119,12 @@ export default function CreateRoomModal({ onClose, onCreated }) {
           ))}
         </div>
 
+        <p className="cr-hint">فتح غرفة دردشة يكلّف 💎 5000 ألماسة تُخصم من رصيدك.</p>
+
         {err && <div className="cr-err">{err}</div>}
 
         <button className="cr-create" disabled={busy || !pinOk} onClick={submit}>
-          {busy ? "جارٍ الإنشاء..." : "إنشاء ودخول"}
+          {busy ? "جارٍ الإنشاء..." : "إنشاء ودخول (💎 5000)"}
         </button>
       </motion.div>
     </div>

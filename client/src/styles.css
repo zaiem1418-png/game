@@ -150,7 +150,6 @@ body {
 .rh-id { color: var(--muted); }
 .rh-line1 { display: flex; align-items: center; justify-content: center; gap: 4px; font-weight: 800; font-size: 15px; color: var(--gold); }
 .rh-spark { font-size: 12px; filter: drop-shadow(0 0 4px rgba(245,196,81,0.8)); }
-.rh-month { letter-spacing: 0.5px; }
 .rh-level {
   margin-inline-start: 2px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 6px;
   background: linear-gradient(135deg, #9b5cff, #6a2fd6); color: #fff; font-size: 11px;

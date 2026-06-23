@@ -11,7 +11,13 @@ import cors from "cors";
 import { AccessToken } from "livekit-server-sdk";
 import { giftStore } from "./giftStore.js";
 import { walletStore } from "./walletStore.js";
-import { roomStore, maxAdminsForLevel, POINTS_PER_LEVEL } from "./roomStore.js";
+import {
+  roomStore,
+  maxAdminsForLevel,
+  pointsToNextLevel,
+  totalPointsForLevel,
+  GEMS_PER_POINT,
+} from "./roomStore.js";
 import { storeCatalog, resolvePackage } from "./storeCatalog.js";
 import { processPayment } from "./payment.js";
 import { attachGames } from "./games/tables.js";
@@ -28,6 +34,9 @@ const OWNER_KEY = process.env.OWNER_KEY || "";
 // دائماً من 100000 فأعلى، فهذا المعرّف لا يتولّد عشوائياً أبداً ويبقى فريداً.
 const OWNER_ROOM_ID = "000000";
 const LEGACY_OWNER_ROOM_IDS = ["1000000"]; // معرّفات قديمة تُنظَّف عند الإقلاع
+
+// تكلفة فتح غرفة دردشة جديدة (ألماس) — تُخصم من المنشئ. المالك معفى (رصيد لانهائي).
+const ROOM_CREATE_COST = 5000;
 
 // ===== إعدادات LiveKit (الصوت) — تُقرأ من متغيرات البيئة فقط، لا تُكتب في الكود =====
 const LIVEKIT_URL = process.env.LIVEKIT_URL || "";
@@ -215,6 +224,29 @@ app.post("/api/rooms", (req, res) => {
   if (isPrivate && !/^\d{4,8}$/.test(String(pin || ""))) {
     return res.status(400).json({ error: "رمز PIN يجب أن يكون 4 إلى 8 أرقام" });
   }
+  // فتح غرفة دردشة يكلّف 5000 ألماسة تُخصم من رصيد المنشئ (المالك معفى/لانهائي).
+  const cleanUidStr = String(uid || "").trim();
+  if (!cleanUidStr) {
+    return res.status(400).json({ error: "uid مطلوب لفتح غرفة" });
+  }
+  const { wallet: balance } = walletStore.ensure(cleanUidStr);
+  if (!balance.owner && balance.diamonds < ROOM_CREATE_COST) {
+    return res.status(402).json({
+      error: `تحتاج ${ROOM_CREATE_COST} ألماسة لفتح غرفة دردشة`,
+      need: ROOM_CREATE_COST,
+      have: balance.diamonds,
+      kind: "diamonds",
+    });
+  }
+  const paid = walletStore.spend(cleanUidStr, { diamonds: ROOM_CREATE_COST });
+  if (!paid) {
+    return res.status(402).json({
+      error: `تحتاج ${ROOM_CREATE_COST} ألماسة لفتح غرفة دردشة`,
+      need: ROOM_CREATE_COST,
+      kind: "diamonds",
+    });
+  }
+  pushWalletUpdate(cleanUidStr);
   const id = genRoomId();
   roomStore.create({
     id,
@@ -228,7 +260,8 @@ app.post("/api/rooms", (req, res) => {
     createdAt: Date.now(),
   });
   io.emit("room:list", listRooms());
-  res.json({ ok: true, roomId: id });
+  const { wallet } = walletStore.ensure(cleanUidStr);
+  res.json({ ok: true, roomId: id, wallet, cost: ROOM_CREATE_COST });
 });
 
 // حذف غرفة — يسمح فقط لمنشئ الغرفة (بنفس uid)
@@ -346,8 +379,10 @@ function serializeRoom(room) {
     // بيانات الغرفة: المستوى/النقاط/الملكية/المشرفون
     level,
     points,
-    nextLevelPoints: level * POINTS_PER_LEVEL, // نقاط الوصول للمستوى التالي
-    pointsPerLevel: POINTS_PER_LEVEL,
+    nextLevelPoints: totalPointsForLevel(level + 1), // إجمالي النقاط للوصول للمستوى التالي
+    levelStartPoints: totalPointsForLevel(level), // النقاط التراكمية عند بداية المستوى الحالي
+    pointsPerLevel: pointsToNextLevel(level), // تكلفة هذه الترقية (تزداد كل مستوى)
+    gemsPerPoint: GEMS_PER_POINT,
     ownerUid: meta?.ownerUid || null,
     admins: meta?.admins || [],
     maxAdmins: maxAdminsForLevel(level),
