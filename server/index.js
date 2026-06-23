@@ -22,9 +22,10 @@ const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "admin123"; // غيّره في ا
 // كلمة سر مالك اللعبة — من يدخلها يحصل على رصيد لانهائي. غيّرها في الإنتاج عبر متغير البيئة.
 const OWNER_KEY = process.env.OWNER_KEY || "owner-jackaroo-2026";
 
-// غرفة مالك اللعبة الرسمية — أي دي مميز لا مثيل له (7 خانات، خارج نطاق الغرف العادية
-// 6 خانات فلا يتولّد عشوائياً أبداً). تُنشأ تلقائياً وتظهر دائماً في صدارة الدليل.
-const OWNER_ROOM_ID = "1000000";
+// غرفة مالك اللعبة الرسمية — أي دي مميز لا مثيل له: كله أصفار. الغرف العادية تبدأ
+// دائماً من 100000 فأعلى، فهذا المعرّف لا يتولّد عشوائياً أبداً ويبقى فريداً.
+const OWNER_ROOM_ID = "000000";
+const LEGACY_OWNER_ROOM_IDS = ["1000000"]; // معرّفات قديمة تُنظَّف عند الإقلاع
 
 // ===== إعدادات LiveKit (الصوت) — تُقرأ من متغيرات البيئة فقط، لا تُكتب في الكود =====
 const LIVEKIT_URL = process.env.LIVEKIT_URL || "";
@@ -37,6 +38,10 @@ roomStore.init();
 
 // أنشئ غرفة المالك الرسمية مرة واحدة إن لم تكن موجودة — أي دي مميز ثابت لا مثيل له.
 function ensureOwnerRoom() {
+  // نظّف أي غرفة مالك بمعرّف قديم (هجرة المعرّف إلى الأصفار)
+  for (const old of LEGACY_OWNER_ROOM_IDS) {
+    if (roomStore.has(old)) roomStore.remove(old);
+  }
   if (roomStore.has(OWNER_ROOM_ID)) return;
   roomStore.create({
     id: OWNER_ROOM_ID,
