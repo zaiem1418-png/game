@@ -14,6 +14,31 @@ export function getUid() {
   return uid;
 }
 
+// ملف الحساب المحلي: الاسم/الصورة/الإطار — يُستخدم للدخول التلقائي للغرف الصوتية.
+// الإطار يُكتسب من الهدايا أو المهام (لا يُختار يدوياً عند الدخول).
+const PROFILE_KEY = "jackaroo_profile";
+
+export function getProfile() {
+  try {
+    const p = JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}");
+    return {
+      name: p.name || "Mohammad",
+      avatar: p.avatar || "🧑🏻",
+      frame: p.frame || null,
+    };
+  } catch {
+    return { name: "Mohammad", avatar: "🧑🏻", frame: null };
+  }
+}
+
+export function setProfile(patch) {
+  const next = { ...getProfile(), ...patch };
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(next));
+  return next;
+}
+
+export const getUserName = () => getProfile().name;
+
 async function jget(path) {
   const r = await fetch(SERVER_URL + path);
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "خطأ في الخادم");

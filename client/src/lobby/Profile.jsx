@@ -75,7 +75,6 @@ export default function Profile({ user, wallet, onRecharge, onOwnerTap }) {
                 <span className="pf-row-go">‹</span>
                 <span className="pf-row-label">{r.label}</span>
                 <span className="pf-row-ico">{r.icon}</span>
-                {r.id === "achievements" && <span className="pf-row-gift">🎁</span>}
               </button>
             )
           )}

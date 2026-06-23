@@ -3,7 +3,6 @@ import { socket } from "./socket.js";
 import { VoiceManager } from "./voice.js";
 import Shell from "./lobby/Shell.jsx";
 import GameRoom from "./games/GameRoom.jsx";
-import JoinScreen from "./components/JoinScreen.jsx";
 import RoomHeader from "./components/RoomHeader.jsx";
 import SeatGrid from "./components/SeatGrid.jsx";
 import ChatPanel from "./components/ChatPanel.jsx";
@@ -17,7 +16,7 @@ import StoreModal from "./components/StoreModal.jsx";
 import OwnerLogin from "./components/OwnerLogin.jsx";
 import { unlockAudio } from "./giftEngine/core/SoundManager.js";
 import { useReactions } from "./useReactions.js";
-import { getUid, fetchWallet } from "./wallet.js";
+import { getUid, getProfile, fetchWallet } from "./wallet.js";
 
 export default function App() {
   // لوحة الإدارة: افتحها عبر ?admin في الرابط
@@ -176,14 +175,18 @@ export default function App() {
     voiceRef.current?.setMicEnabled(onMic && !muted);
   }, [onMic, muted]);
 
-  function handleJoin(user) {
+  // دخول مباشر للغرفة الصوتية باسم الحساب — بلا شاشة إدخال اسم.
+  // يُستدعى من نفس نقرة اختيار الغرفة للحفاظ على إيماءة فتح الصوت (مطلوبة على الموبايل).
+  function handleJoin(roomId, pin) {
     unlockAudio(); // فتح سياق الصوت ضمن تفاعل المستخدم (مطلوب على الموبايل)
     socket.connect();
+    // الاسم/الصورة/الإطار تأتي من ملف الحساب — الإطار يُكتسب من الهدايا أو المهام
+    const profile = getProfile();
     // أرفق uid الثابت ليربط الخادم العضو بمحفظته الدائمة + الغرفة المستهدفة ورمزها
     socket.emit("room:join", {
-      roomId: pendingRoom?.roomId || "130096",
-      pin: pendingRoom?.pin || undefined,
-      user: { ...user, uid: getUid() },
+      roomId: roomId || pendingRoom?.roomId || "130096",
+      pin: pin ?? pendingRoom?.pin ?? undefined,
+      user: { ...profile, uid: getUid() },
     });
     socket.emit("gift:list");
   }
@@ -280,12 +283,14 @@ export default function App() {
       <>
         <Shell
           wallet={wallet}
-          user={{ avatar: "🧑🏻", uid: getUid() }}
+          user={{ ...getProfile(), uid: getUid() }}
           onRecharge={(tab) => setStoreTab(tab)}
           onOwnerTap={() => setOwnerOpen(true)}
           onEnterRoom={(roomId, pin) => {
+            // دخول سلس وفوري باسم الحساب — بلا شاشة إدخال
             setPendingRoom(roomId ? { roomId, pin } : null);
             setView("app");
+            handleJoin(roomId, pin);
           }}
           onPlay={(game, mode) => {
             setActiveGame({ gameId: game.id, mode: mode?.id || "default" });
@@ -317,7 +322,16 @@ export default function App() {
   if (!joined)
     return (
       <>
-        <JoinScreen onJoin={handleJoin} onBack={() => setView("lobby")} />
+        <div className="join">
+          <div className="join-card join-connecting">
+            <button type="button" className="join-back" onClick={leaveRoom}>
+              ‹ الرئيسية
+            </button>
+            <h1>🎙️ الغرفة الصوتية</h1>
+            <p className="join-sub">جارٍ الدخول…</p>
+            <div className="join-spinner" />
+          </div>
+        </div>
         {bonusBanner}
       </>
     );
