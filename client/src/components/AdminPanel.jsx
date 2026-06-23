@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import GiftStage from "../giftEngine/GiftStage.jsx";
 import { BUILTIN_SOUNDS } from "../giftEngine/core/SoundManager.js";
 import { SCENARIOS } from "../giftEngine/scenarios.js";
+import { SERVER_URL } from "../serverUrl.js";
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3001";
 const RARITIES = ["common", "rare", "epic", "legendary"];
 const RENDERERS = ["scenario", "lottie", "rive", "video", "gif"];
 

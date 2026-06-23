@@ -181,6 +181,26 @@ app.post("/api/rooms", (req, res) => {
   res.json({ ok: true, roomId: id });
 });
 
+// حذف غرفة — يسمح فقط لمنشئ الغرفة (بنفس uid)
+app.delete("/api/rooms/:id", (req, res) => {
+  const id = String(req.params.id || "");
+  const uid = String(req.query.uid || req.body?.uid || "");
+  const meta = roomMeta.get(id);
+  if (!meta) return res.status(404).json({ error: "الغرفة غير موجودة" });
+  if (!meta.ownerUid || meta.ownerUid !== uid) {
+    return res.status(403).json({ error: "لا تملك صلاحية حذف هذه الغرفة" });
+  }
+  roomMeta.delete(id);
+  // أخرِج الأعضاء الحاليين وأغلق الغرفة الحيّة إن وُجدت
+  const live = rooms.get(id);
+  if (live) {
+    io.to(id).emit("room:closed", { roomId: id });
+    rooms.delete(id);
+  }
+  io.emit("room:list", listRooms());
+  res.json({ ok: true });
+});
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: "*", methods: ["GET", "POST"] },
@@ -234,23 +254,7 @@ function genRoomId() {
   return id;
 }
 
-// غرف افتراضية ليبدو دليل الغرف حيّاً
-function seedRooms() {
-  const demos = [
-    { name: "OVERLORD", category: "القبيلة", country: "🇦🇪", cover: "#5a1f24", tag: "الفائز الكبير", fakeMembers: 370 },
-    { name: "آلِـدُولة", category: "القبيلة", country: "🇴🇲", cover: "#6a521f", fakeMembers: 32 },
-    { name: "ÇUKUR", category: "جاكارو", country: "🇸🇦", cover: "#3a1f4a", tag: "وضع الموارد", fakeMembers: 48 },
-    { name: "Tranquility", category: "الموسيقى", country: "🇴🇲", cover: "#5a2a2a", fakeMembers: 5 },
-    { name: "حياكم الله", category: "الأصدقاء", country: "🇸🇦", cover: "#2a2f4a", fakeMembers: 4 },
-    { name: "جلسة بلوت", category: "بلوت", country: "🇰🇼", cover: "#6a3a1f", fakeMembers: 17 },
-    { name: "سهرة لودو", category: "لودو", country: "🇶🇦", cover: "#1f4a3a", fakeMembers: 23 },
-  ];
-  for (const d of demos) {
-    const id = genRoomId();
-    roomMeta.set(id, { id, type: "public", pin: null, createdAt: Date.now(), ...d });
-  }
-}
-seedRooms();
+// لا توجد غرف افتراضية — الدليل يعرض فقط الغرف الحقيقية التي ينشئها المستخدمون.
 
 // قائمة الغرف للعرض (تشمل الخاصة بعلامة قفل دون كشف الرمز)
 function listRooms() {
@@ -267,6 +271,7 @@ function listRooms() {
       tag: meta.tag || null,
       members,
       locked: meta.type === "private",
+      ownerUid: meta.ownerUid || null,
     });
   }
   return out.sort((a, b) => b.members - a.members);

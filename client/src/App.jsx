@@ -129,6 +129,17 @@ export default function App() {
       setTimeout(() => setPinError(false), 4000);
     });
 
+    // أغلق المالكُ الغرفة → أخرِج الجميع للغلاف
+    socket.on("room:closed", () => {
+      voice.destroy();
+      socket.disconnect();
+      setJoined(false);
+      setRoom(null);
+      setSelfId(null);
+      setPendingRoom(null);
+      setView("lobby");
+    });
+
     return () => {
       socket.off("room:joined");
       socket.off("room:update");
@@ -140,6 +151,7 @@ export default function App() {
       socket.off("wallet:update");
       socket.off("wallet:insufficient");
       socket.off("room:join:error");
+      socket.off("room:closed");
       voice.destroy();
     };
   }, []);
@@ -174,6 +186,19 @@ export default function App() {
       user: { ...user, uid: getUid() },
     });
     socket.emit("gift:list");
+  }
+
+  // الخروج من الغرفة الصوتية والعودة لدليل الغرف
+  function leaveRoom() {
+    voiceRef.current?.destroy();
+    socket.disconnect();
+    setJoined(false);
+    setRoom(null);
+    setSelfId(null);
+    setPendingRoom(null);
+    setGiftPickerOpen(false);
+    setReactionPickerOpen(false);
+    setView("lobby");
   }
 
   function takeSeat(index) {
@@ -305,7 +330,7 @@ export default function App() {
         onRecharge={(tab) => setStoreTab(tab)}
         onOwnerTap={() => setOwnerOpen(true)}
       />
-      <RoomHeader room={room} memberCount={room.members.length} />
+      <RoomHeader room={room} memberCount={room.members.length} onBack={leaveRoom} />
 
       {micError && (
         <div className="mic-error">

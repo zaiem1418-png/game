@@ -1,6 +1,6 @@
 // محفظة العميل — معرّف ثابت للمستخدم (uid) + نداءات REST للمحفظة/المتجر/المالك.
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3001";
+import { SERVER_URL } from "./serverUrl.js";
 
 // معرّف ثابت يُخزّن محلياً ليُربط بنفس المحفظة في كل مرة (نفس الجهاز/المتصفح)
 export function getUid() {

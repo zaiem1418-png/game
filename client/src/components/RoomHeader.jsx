@@ -4,7 +4,7 @@ const MONTHS_AR = [
   "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر",
 ];
 
-export default function RoomHeader({ room, memberCount }) {
+export default function RoomHeader({ room, memberCount, onBack }) {
   const month = MONTHS_AR[new Date().getMonth()];
   const level = room.level || 5;
 
@@ -14,7 +14,9 @@ export default function RoomHeader({ room, memberCount }) {
       <div className="rh-controls">
         <button className="rh-ctl" title="القائمة">⋯</button>
         <span className="rh-page">{memberCount || 1}</span>
-        <button className="rh-ctl" title="تصغير">－</button>
+        <button className="rh-ctl rh-back" title="خروج" aria-label="خروج من الغرفة" onClick={onBack}>
+          ✕
+        </button>
       </div>
 
       <div className="rh-flex" />

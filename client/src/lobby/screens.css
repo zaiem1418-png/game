@@ -117,6 +117,12 @@
 .vr-room-count { color: #d8c8bd; }
 .vr-room-tag { background: rgba(245,196,81,0.2); color: #ffce5a; padding: 2px 8px; border-radius: 999px; }
 .vr-room-go { color: #8a7a70; font-size: 22px; flex: 0 0 auto; }
+.vr-room-del {
+  flex: 0 0 auto; width: 34px; height: 34px; border-radius: 10px; cursor: pointer;
+  background: rgba(255,80,80,0.12); border: 1px solid rgba(255,80,80,0.35);
+  color: #ff6b6b; font-size: 16px; display: grid; place-items: center;
+}
+.vr-room-del:active { background: rgba(255,80,80,0.25); }
 .vr-empty { text-align: center; color: #b9a597; padding: 40px 20px; font-size: 14px; }
 
 /* صندوق إدخال رمز PIN */
@@ -135,6 +141,7 @@
 .vr-pin-cancel { background: rgba(255,255,255,0.1); color: #f4ecef; }
 .vr-pin-go { background: linear-gradient(90deg, #1fd0b0, #15a88d); color: #06231f; }
 .vr-pin-go:disabled { opacity: 0.45; cursor: not-allowed; }
+.vr-del-go { background: linear-gradient(90deg, #ff6b6b, #d6322f); color: #fff; }
 
 /* ===================== نافذة إنشاء غرفة ===================== */
 .cr-backdrop {

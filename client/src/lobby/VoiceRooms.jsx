@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { fetchRooms } from "./rooms.js";
+import { fetchRooms, deleteRoom } from "./rooms.js";
+import { getUid } from "../wallet.js";
 import CreateRoomModal from "./CreateRoomModal.jsx";
 
 const TOP_TABS = ["غرفتي", "الشائعة", "الكل"];
@@ -15,6 +16,9 @@ export default function VoiceRooms({ onEnterRoom }) {
   const [pinRoom, setPinRoom] = useState(null); // غرفة خاصة بانتظار إدخال الرمز
   const [pinVal, setPinVal] = useState("");
   const [loading, setLoading] = useState(true);
+  const [confirmDel, setConfirmDel] = useState(null); // الغرفة المراد حذفها
+  const [deleting, setDeleting] = useState(false);
+  const myUid = getUid();
 
   const load = () =>
     fetchRooms()
@@ -37,6 +41,18 @@ export default function VoiceRooms({ onEnterRoom }) {
     } else {
       onEnterRoom(r.id, null);
     }
+  }
+
+  function confirmDelete() {
+    if (!confirmDel) return;
+    setDeleting(true);
+    deleteRoom(confirmDel.id)
+      .then(() => {
+        setRooms((rs) => rs.filter((x) => x.id !== confirmDel.id));
+        setConfirmDel(null);
+      })
+      .catch((e) => alert(e.message || "تعذّر حذف الغرفة"))
+      .finally(() => setDeleting(false));
   }
 
   return (
@@ -95,9 +111,11 @@ export default function VoiceRooms({ onEnterRoom }) {
           {loading && <div className="vr-empty">جارٍ التحميل…</div>}
           {!loading && list.length === 0 && <div className="vr-empty">لا توجد غرف في هذا التصنيف بعد — أنشئ واحدة ＋</div>}
           {list.map((r, i) => (
-            <motion.button
+            <motion.div
               key={r.id}
               className="vr-room"
+              role="button"
+              tabIndex={0}
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: Math.min(i * 0.04, 0.4) }}
@@ -117,8 +135,21 @@ export default function VoiceRooms({ onEnterRoom }) {
                   {r.tag && <span className="vr-room-tag">{r.tag}</span>}
                 </span>
               </span>
+              {r.ownerUid && r.ownerUid === myUid && (
+                <button
+                  className="vr-room-del"
+                  aria-label="حذف الغرفة"
+                  title="حذف الغرفة"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDel(r);
+                  }}
+                >
+                  🗑️
+                </button>
+              )}
               <span className="vr-room-go">‹</span>
-            </motion.button>
+            </motion.div>
           ))}
         </div>
       </div>
@@ -134,6 +165,33 @@ export default function VoiceRooms({ onEnterRoom }) {
               onEnterRoom(roomId, pin);
             }}
           />
+        )}
+      </AnimatePresence>
+
+      {/* تأكيد حذف الغرفة */}
+      <AnimatePresence>
+        {confirmDel && (
+          <div className="cr-backdrop" onClick={() => !deleting && setConfirmDel(null)}>
+            <motion.div
+              className="vr-pin-box"
+              onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+            >
+              <div className="vr-pin-lock">🗑️</div>
+              <h3>حذف الغرفة</h3>
+              <p>هل تريد حذف «{confirmDel.name}» نهائياً؟</p>
+              <div className="vr-pin-actions">
+                <button className="vr-pin-cancel" disabled={deleting} onClick={() => setConfirmDel(null)}>
+                  إلغاء
+                </button>
+                <button className="vr-pin-go vr-del-go" disabled={deleting} onClick={confirmDelete}>
+                  {deleting ? "جارٍ الحذف…" : "حذف"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

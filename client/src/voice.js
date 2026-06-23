@@ -5,9 +5,9 @@
 // - كشف التحدّث يأتي جاهزاً من LiveKit (ActiveSpeakers).
 
 import { Room, RoomEvent, Track, ConnectionState } from "livekit-client";
+import { SERVER_URL } from "./serverUrl.js";
 
 // نطلب التوكن من سيرفر الحالة (Render) — المفاتيح السرية تبقى هناك.
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3001";
 
 export class VoiceManager {
   constructor() {
