@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchRooms, deleteRoom } from "./rooms.js";
 import { getUid } from "../wallet.js";
+import { getFavorites, toggleFavorite } from "./favorites.js";
 import CreateRoomModal from "./CreateRoomModal.jsx";
 
-const TOP_TABS = ["غرفتي", "الشائعة", "الكل"];
+const TOP_TABS = ["المفضلة", "الشائعة", "الكل"];
 const CATS = ["الكل", "الأصدقاء", "جاكارو", "بلوت", "لودو", "القبيلة", "الموسيقى"];
 
 // شاشة الغرف الصوتية — دليل الغرف + زر "+" لإنشاء غرفة (عامة/خاصة برمز PIN)
@@ -20,7 +21,12 @@ export default function VoiceRooms({ onEnterRoom }) {
   const [loading, setLoading] = useState(true);
   const [confirmDel, setConfirmDel] = useState(null); // الغرفة المراد حذفها
   const [deleting, setDeleting] = useState(false);
+  const [favs, setFavs] = useState(getFavorites); // معرّفات الغرف المفضّلة (محلياً)
   const myUid = getUid();
+
+  function onToggleFav(id) {
+    setFavs(toggleFavorite(id));
+  }
 
   const load = () =>
     fetchRooms()
@@ -34,11 +40,21 @@ export default function VoiceRooms({ onEnterRoom }) {
     return () => clearInterval(t);
   }, []);
 
-  // البحث بالمعرّف أو الاسم — له الأولوية على فلتر التصنيف
+  // البحث بالمعرّف أو الاسم — له الأولوية على التبويبات والتصنيف
   const q = query.trim().toLowerCase();
-  const list = q
-    ? rooms.filter((r) => r.id.includes(q) || (r.name || "").toLowerCase().includes(q))
-    : rooms.filter((r) => cat === "الكل" || r.category === cat);
+  let list;
+  if (q) {
+    list = rooms.filter((r) => r.id.includes(q) || (r.name || "").toLowerCase().includes(q));
+  } else {
+    list = rooms.filter((r) => cat === "الكل" || r.category === cat);
+    if (topTab === "المفضلة") {
+      // فقط الغرف التي أضافها المستخدم لمفضّلته
+      list = list.filter((r) => favs.includes(String(r.id)));
+    } else if (topTab === "الشائعة") {
+      // الأكثر أعضاءً أولاً
+      list = [...list].sort((a, b) => (b.members || 0) - (a.members || 0));
+    }
+  }
 
   function tapRoom(r) {
     if (r.locked) {
@@ -147,7 +163,13 @@ export default function VoiceRooms({ onEnterRoom }) {
         {/* قائمة الغرف */}
         <div className="vr-list">
           {loading && <div className="vr-empty">جارٍ التحميل…</div>}
-          {!loading && list.length === 0 && <div className="vr-empty">لا توجد غرف في هذا التصنيف بعد — أنشئ واحدة ＋</div>}
+          {!loading && list.length === 0 && (
+            <div className="vr-empty">
+              {topTab === "المفضلة"
+                ? "لا توجد غرف في مفضّلتك بعد — اضغط ⭐ على أي غرفة لإضافتها"
+                : "لا توجد غرف في هذا التصنيف بعد — أنشئ واحدة ＋"}
+            </div>
+          )}
           {list.map((r, i) => (
             <motion.div
               key={r.id}
@@ -175,6 +197,17 @@ export default function VoiceRooms({ onEnterRoom }) {
                   {r.tag && <span className="vr-room-tag">{r.tag}</span>}
                 </span>
               </span>
+              <button
+                className={`vr-room-fav ${favs.includes(String(r.id)) ? "on" : ""}`}
+                aria-label={favs.includes(String(r.id)) ? "إزالة من المفضلة" : "إضافة للمفضلة"}
+                title={favs.includes(String(r.id)) ? "إزالة من المفضلة" : "إضافة للمفضلة"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFav(r.id);
+                }}
+              >
+                {favs.includes(String(r.id)) ? "⭐" : "☆"}
+              </button>
               {r.ownerUid && r.ownerUid === myUid && (
                 <button
                   className="vr-room-del"

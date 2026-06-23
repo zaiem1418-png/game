@@ -141,6 +141,13 @@
   color: #ff6b6b; font-size: 16px; display: grid; place-items: center;
 }
 .vr-room-del:active { background: rgba(255,80,80,0.25); }
+.vr-room-fav {
+  flex: 0 0 auto; width: 34px; height: 34px; border-radius: 10px; cursor: pointer;
+  background: rgba(245,196,81,0.10); border: 1px solid rgba(245,196,81,0.30);
+  color: #f5c451; font-size: 16px; display: grid; place-items: center;
+}
+.vr-room-fav.on { background: rgba(245,196,81,0.22); border-color: rgba(245,196,81,0.6); }
+.vr-room-fav:active { transform: scale(0.9); }
 .vr-empty { text-align: center; color: #b9a597; padding: 40px 20px; font-size: 14px; }
 
 /* صندوق إدخال رمز PIN */
