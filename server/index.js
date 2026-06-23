@@ -11,6 +11,7 @@ import cors from "cors";
 import { AccessToken } from "livekit-server-sdk";
 import { giftStore } from "./giftStore.js";
 import { walletStore } from "./walletStore.js";
+import { roomStore, maxAdminsForLevel, POINTS_PER_LEVEL } from "./roomStore.js";
 import { storeCatalog, resolvePackage } from "./storeCatalog.js";
 import { processPayment } from "./payment.js";
 import { attachGames } from "./games/tables.js";
@@ -21,6 +22,10 @@ const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "admin123"; // غيّره في ا
 // كلمة سر مالك اللعبة — من يدخلها يحصل على رصيد لانهائي. غيّرها في الإنتاج عبر متغير البيئة.
 const OWNER_KEY = process.env.OWNER_KEY || "owner-jackaroo-2026";
 
+// غرفة مالك اللعبة الرسمية — أي دي مميز لا مثيل له (7 خانات، خارج نطاق الغرف العادية
+// 6 خانات فلا يتولّد عشوائياً أبداً). تُنشأ تلقائياً وتظهر دائماً في صدارة الدليل.
+const OWNER_ROOM_ID = "1000000";
+
 // ===== إعدادات LiveKit (الصوت) — تُقرأ من متغيرات البيئة فقط، لا تُكتب في الكود =====
 const LIVEKIT_URL = process.env.LIVEKIT_URL || "";
 const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "";
@@ -28,6 +33,25 @@ const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "";
 
 giftStore.init();
 walletStore.init();
+roomStore.init();
+
+// أنشئ غرفة المالك الرسمية مرة واحدة إن لم تكن موجودة — أي دي مميز ثابت لا مثيل له.
+function ensureOwnerRoom() {
+  if (roomStore.has(OWNER_ROOM_ID)) return;
+  roomStore.create({
+    id: OWNER_ROOM_ID,
+    name: "غرفة المالك 👑",
+    type: "public",
+    pin: null,
+    category: "الأصدقاء",
+    country: "🌍",
+    cover: "#f5c451", // ذهبي مميّز
+    tag: "👑 رسمية",
+    ownerUid: "", // تُسنَد لمالك اللعبة عند تسجيل دخوله بكلمة السر
+    createdAt: Date.now(),
+  });
+}
+ensureOwnerRoom();
 
 const app = express();
 app.use(cors());
@@ -152,12 +176,28 @@ app.post("/api/owner/login", (req, res) => {
     return res.status(401).json({ error: "كلمة سر المالك غير صحيحة" });
   }
   const wallet = walletStore.setOwner(uid, true);
+  // اربط الغرفة الرسمية بمالك اللعبة ليملك صلاحياتها كاملةً
+  roomStore.setOwner(OWNER_ROOM_ID, uid);
+  io.emit("room:list", listRooms());
   pushWalletUpdate(uid);
   res.json({ ok: true, wallet });
 });
 
 // ===== دليل الغرف الصوتية + إنشاء غرفة (عامة/خاصة برمز PIN) =====
-app.get("/api/rooms", (_req, res) => res.json(listRooms()));
+// يدعم البحث: /api/rooms?q=130096 (بالمعرّف أو الاسم)
+app.get("/api/rooms", (req, res) => {
+  const q = String(req.query.q || "").trim().toLowerCase();
+  let list = listRooms();
+  if (q) list = list.filter((r) => r.id.includes(q) || r.name.toLowerCase().includes(q));
+  res.json(list);
+});
+
+// جلب غرفة واحدة بالمعرّف (للبحث المباشر عن غرفة برقمها)
+app.get("/api/rooms/:id", (req, res) => {
+  const view = roomStore.publicView(String(req.params.id || ""), liveMemberCount(req.params.id));
+  if (!view) return res.status(404).json({ error: "الغرفة غير موجودة" });
+  res.json(view);
+});
 
 app.post("/api/rooms", (req, res) => {
   const { name, type, pin, category, country, cover, uid } = req.body || {};
@@ -166,15 +206,15 @@ app.post("/api/rooms", (req, res) => {
     return res.status(400).json({ error: "رمز PIN يجب أن يكون 4 إلى 8 أرقام" });
   }
   const id = genRoomId();
-  roomMeta.set(id, {
+  roomStore.create({
     id,
-    name: String(name || "غرفتي").slice(0, 40),
+    name,
     type: isPrivate ? "private" : "public",
-    pin: isPrivate ? String(pin).slice(0, 8) : null,
-    category: ROOM_CATEGORIES.includes(category) ? category : "الأصدقاء",
-    country: String(country || "🌍").slice(0, 8),
-    cover: String(cover || "#6a2f8f").slice(0, 16),
-    ownerUid: String(uid || "").slice(0, 64),
+    pin: isPrivate ? pin : null,
+    category,
+    country,
+    cover,
+    ownerUid: uid,
     createdAt: Date.now(),
   });
   io.emit("room:list", listRooms());
@@ -185,12 +225,15 @@ app.post("/api/rooms", (req, res) => {
 app.delete("/api/rooms/:id", (req, res) => {
   const id = String(req.params.id || "");
   const uid = String(req.query.uid || req.body?.uid || "");
-  const meta = roomMeta.get(id);
+  if (id === OWNER_ROOM_ID) {
+    return res.status(403).json({ error: "لا يمكن حذف الغرفة الرسمية" });
+  }
+  const meta = roomStore.get(id);
   if (!meta) return res.status(404).json({ error: "الغرفة غير موجودة" });
   if (!meta.ownerUid || meta.ownerUid !== uid) {
     return res.status(403).json({ error: "لا تملك صلاحية حذف هذه الغرفة" });
   }
-  roomMeta.delete(id);
+  roomStore.remove(id);
   // أخرِج الأعضاء الحاليين وأغلق الغرفة الحيّة إن وُجدت
   const live = rooms.get(id);
   if (live) {
@@ -241,47 +284,45 @@ function getRoom(roomId) {
   return rooms.get(roomId) || createRoom(roomId);
 }
 
-// ===== سجلّ بيانات الغرف (Meta) — يدعم الغرف العامة والخاصة برمز PIN =====
-// roomMeta[roomId] = { id, name, type:"public"|"private", pin, category, country, cover, tag, fakeMembers, ownerUid, createdAt }
-const roomMeta = new Map();
-const ROOM_CATEGORIES = ["الأصدقاء", "جاكارو", "بلوت", "لودو", "القبيلة", "الموسيقى"];
+// ===== سجلّ بيانات الغرف (Meta) — يُدار عبر roomStore (يُحفظ على القرص) =====
 
 function genRoomId() {
   let id;
   do {
     id = String(Math.floor(100000 + Math.random() * 900000));
-  } while (rooms.has(id) || roomMeta.has(id));
+  } while (rooms.has(id) || roomStore.has(id));
   return id;
+}
+
+// عدد الأعضاء المتصلين فعلياً في غرفة حيّة (أو 0)
+function liveMemberCount(id) {
+  const room = rooms.get(id);
+  return room ? room.members.size : null;
 }
 
 // لا توجد غرف افتراضية — الدليل يعرض فقط الغرف الحقيقية التي ينشئها المستخدمون.
 
 // قائمة الغرف للعرض (تشمل الخاصة بعلامة قفل دون كشف الرمز)
 function listRooms() {
-  const out = [];
-  for (const meta of roomMeta.values()) {
-    const room = rooms.get(meta.id);
-    const members = room ? room.members.size : meta.fakeMembers || 0;
-    out.push({
-      id: meta.id,
-      name: meta.name,
-      category: meta.category,
-      country: meta.country,
-      cover: meta.cover,
-      tag: meta.tag || null,
-      members,
-      locked: meta.type === "private",
-      ownerUid: meta.ownerUid || null,
+  return roomStore
+    .all()
+    .map((meta) => roomStore.publicView(meta.id, liveMemberCount(meta.id)))
+    .sort((a, b) => {
+      // غرفة المالك الرسمية تبقى دائماً في الصدارة
+      if (a.id === OWNER_ROOM_ID) return -1;
+      if (b.id === OWNER_ROOM_ID) return 1;
+      return b.members - a.members;
     });
-  }
-  return out.sort((a, b) => b.members - a.members);
 }
 
 // يحوّل حالة الغرفة لصيغة قابلة للإرسال (Map -> Array)
 function serializeRoom(room) {
+  const meta = roomStore.get(room.id);
+  const level = meta?.level || 1;
+  const points = meta?.points || 0;
   return {
     id: room.id,
-    name: room.name,
+    name: meta?.name || room.name,
     seatCount: SEAT_COUNT,
     members: [...room.members.values()],
     seats: room.seats.map((s) => ({
@@ -292,6 +333,14 @@ function serializeRoom(room) {
       user: s.userId ? room.members.get(s.userId) || null : null,
     })),
     messages: room.messages,
+    // بيانات الغرفة: المستوى/النقاط/الملكية/المشرفون
+    level,
+    points,
+    nextLevelPoints: level * POINTS_PER_LEVEL, // نقاط الوصول للمستوى التالي
+    pointsPerLevel: POINTS_PER_LEVEL,
+    ownerUid: meta?.ownerUid || null,
+    admins: meta?.admins || [],
+    maxAdmins: maxAdminsForLevel(level),
   };
 }
 
@@ -328,7 +377,7 @@ io.on("connection", (socket) => {
   socket.on("room:join", ({ roomId, user, pin }) => {
     roomId = roomId || "130096";
     // تحقّق رمز PIN للغرف الخاصة
-    const meta = roomMeta.get(roomId);
+    const meta = roomStore.get(roomId);
     if (meta && meta.type === "private" && meta.pin && String(pin || "") !== meta.pin) {
       socket.emit("room:join:error", { reason: "pin", roomId });
       return;
@@ -336,11 +385,15 @@ io.on("connection", (socket) => {
     currentRoomId = roomId;
     const room = getRoom(roomId);
     if (meta?.name) room.name = meta.name; // اسم الغرفة من السجلّ
-    // أول من يدخل الغرفة = صاحب الغرفة (owner)، والبقية أعضاء
-    const role = room.members.size === 0 ? "owner" : "member";
 
     // اربط المحفظة الدائمة عبر uid (يُنشئها مع مكافأة البداية إن كانت جديدة)
     currentUid = String(user?.uid || "").slice(0, 64);
+    // الدور داخل الغرفة: المالك (ownerUid) أو مشرف (admins) أو عضو عادي
+    const role = meta && currentUid && meta.ownerUid === currentUid
+      ? "owner"
+      : meta && currentUid && meta.admins.includes(currentUid)
+        ? "admin"
+        : "member";
     if (currentUid) uidSockets.set(currentUid, socket.id);
     const { wallet } = currentUid
       ? walletStore.ensure(currentUid)
@@ -494,12 +547,55 @@ io.on("connection", (socket) => {
       user: from,
     });
     io.to(room.id).emit("gift:new", payload);
+
+    // نقاط الغرفة تتجمّع من قيمة الهدايا (الكوينز × العدد) → الترقية كل 5000 نقطة
+    const prog = roomStore.addPoints(room.id, cost);
+    if (prog?.leveledUp) {
+      pushMessage(room, {
+        type: "system",
+        text: `🎉 ارتقت الغرفة إلى المستوى ${prog.level}!`,
+      });
+      io.to(room.id).emit("room:levelup", { roomId: room.id, level: prog.level });
+      io.emit("room:list", listRooms()); // حدّث ترتيب/مستوى الغرفة في الدليل
+    }
     broadcastRoom(room);
   });
 
   // قائمة الهدايا المتاحة (التعريفات الكاملة)
   socket.on("gift:list", () => {
     socket.emit("gift:list", giftStore.all());
+  });
+
+  // ===== إدارة المشرفين (للمالك فقط) =====
+  // يحدّث دور العضو المتصل داخل الغرفة فوراً ويعيد بثّ الحالة.
+  function applyRoleInRoom(room, uid, role) {
+    for (const m of room.members.values()) {
+      if (m.uid && m.uid === uid) m.role = role;
+    }
+  }
+
+  socket.on("admin:add", ({ uid }) => {
+    const room = rooms.get(currentRoomId);
+    const meta = room && roomStore.get(currentRoomId);
+    if (!room || !meta || !currentUid || meta.ownerUid !== currentUid) {
+      return socket.emit("admin:error", { reason: "forbidden" });
+    }
+    const r = roomStore.addAdmin(currentRoomId, uid);
+    if (!r.ok) return socket.emit("admin:error", { reason: r.error });
+    applyRoleInRoom(room, String(uid), "admin");
+    broadcastRoom(room);
+  });
+
+  socket.on("admin:remove", ({ uid }) => {
+    const room = rooms.get(currentRoomId);
+    const meta = room && roomStore.get(currentRoomId);
+    if (!room || !meta || !currentUid || meta.ownerUid !== currentUid) {
+      return socket.emit("admin:error", { reason: "forbidden" });
+    }
+    const r = roomStore.removeAdmin(currentRoomId, uid);
+    if (!r.ok) return socket.emit("admin:error", { reason: r.error });
+    applyRoleInRoom(room, String(uid), "member");
+    broadcastRoom(room);
   });
 
   // ===== التفاعلات السريعة (Reactions) =====
