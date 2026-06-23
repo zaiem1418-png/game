@@ -224,29 +224,32 @@ app.post("/api/rooms", (req, res) => {
   if (isPrivate && !/^\d{4,8}$/.test(String(pin || ""))) {
     return res.status(400).json({ error: "رمز PIN يجب أن يكون 4 إلى 8 أرقام" });
   }
-  // فتح غرفة دردشة يكلّف 5000 ألماسة تُخصم من رصيد المنشئ (المالك معفى/لانهائي).
+  // الغرفة الخاصة (PIN) مجانية. الغرفة العامة تكلّف 5000 ألماسة تُخصم من المنشئ
+  // (المالك معفى/لانهائي).
   const cleanUidStr = String(uid || "").trim();
   if (!cleanUidStr) {
     return res.status(400).json({ error: "uid مطلوب لفتح غرفة" });
   }
-  const { wallet: balance } = walletStore.ensure(cleanUidStr);
-  if (!balance.owner && balance.diamonds < ROOM_CREATE_COST) {
-    return res.status(402).json({
-      error: `تحتاج ${ROOM_CREATE_COST} ألماسة لفتح غرفة دردشة`,
-      need: ROOM_CREATE_COST,
-      have: balance.diamonds,
-      kind: "diamonds",
-    });
+  if (!isPrivate) {
+    const { wallet: balance } = walletStore.ensure(cleanUidStr);
+    if (!balance.owner && balance.diamonds < ROOM_CREATE_COST) {
+      return res.status(402).json({
+        error: `تحتاج ${ROOM_CREATE_COST} ألماسة لفتح غرفة عامة`,
+        need: ROOM_CREATE_COST,
+        have: balance.diamonds,
+        kind: "diamonds",
+      });
+    }
+    const paid = walletStore.spend(cleanUidStr, { diamonds: ROOM_CREATE_COST });
+    if (!paid) {
+      return res.status(402).json({
+        error: `تحتاج ${ROOM_CREATE_COST} ألماسة لفتح غرفة عامة`,
+        need: ROOM_CREATE_COST,
+        kind: "diamonds",
+      });
+    }
+    pushWalletUpdate(cleanUidStr);
   }
-  const paid = walletStore.spend(cleanUidStr, { diamonds: ROOM_CREATE_COST });
-  if (!paid) {
-    return res.status(402).json({
-      error: `تحتاج ${ROOM_CREATE_COST} ألماسة لفتح غرفة دردشة`,
-      need: ROOM_CREATE_COST,
-      kind: "diamonds",
-    });
-  }
-  pushWalletUpdate(cleanUidStr);
   const id = genRoomId();
   roomStore.create({
     id,
@@ -261,7 +264,7 @@ app.post("/api/rooms", (req, res) => {
   });
   io.emit("room:list", listRooms());
   const { wallet } = walletStore.ensure(cleanUidStr);
-  res.json({ ok: true, roomId: id, wallet, cost: ROOM_CREATE_COST });
+  res.json({ ok: true, roomId: id, wallet, cost: isPrivate ? 0 : ROOM_CREATE_COST });
 });
 
 // حذف غرفة — يسمح فقط لمنشئ الغرفة (بنفس uid)
