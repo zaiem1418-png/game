@@ -593,8 +593,10 @@ io.on("connection", (socket) => {
     });
     io.to(room.id).emit("gift:new", payload);
 
-    // نقاط الغرفة تتجمّع من قيمة الهدايا (الكوينز × العدد) → الترقية كل 5000 نقطة
-    const prog = roomStore.addPoints(room.id, cost);
+    // نقاط الغرفة تتجمّع من قيمة الهدايا: كل 10 مجوهرات (كوينز) = نقطة واحدة،
+    // والترقية تصاعدية (5000 نقطة للمستوى 2، ثم تزداد كل مستوى).
+    const earned = Math.floor(cost / GEMS_PER_POINT);
+    const prog = roomStore.addPoints(room.id, earned);
     if (prog?.leveledUp) {
       pushMessage(room, {
         type: "system",
