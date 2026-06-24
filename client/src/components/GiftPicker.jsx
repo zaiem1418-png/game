@@ -16,8 +16,13 @@ const PAGE_SIZE = 8;
 
 const RAR_LABEL = { rare: "نادرة", epic: "ملحمية", legendary: "أسطورية" };
 
+// عتبة عملة الهدايا (مطابقة للخادم): < 100 بالكوينز، >= 100 بالمجوهرات.
+const GIFT_GEM_THRESHOLD = 100;
+// أيقونة العملة حسب سعر الهدية
+const priceIcon = (price) => ((price || 0) >= GIFT_GEM_THRESHOLD ? "💎" : "🪙");
+
 // نافذة اختيار الهدية والمستلم — تصميم Drawer احترافي
-export default function GiftPicker({ gifts, members, selfCoins = 0, onSend, onClose }) {
+export default function GiftPicker({ gifts, members, selfCoins = 0, selfDiamonds = 0, onSend, onClose }) {
   const [cat, setCat] = useState("gift");
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -91,7 +96,7 @@ export default function GiftPicker({ gifts, members, selfCoins = 0, onSend, onCl
                 {RAR_LABEL[g.rarity] && <span className="gd-rar">{RAR_LABEL[g.rarity]}</span>}
                 <span className="gd-emoji">{g.emoji}</span>
                 <span className="gd-name">{g.name}</span>
-                <span className="gd-price">{g.coins.toLocaleString("en-US")} 💎</span>
+                <span className="gd-price">{g.coins.toLocaleString("en-US")} {priceIcon(g.coins)}</span>
               </button>
             ))}
           </div>

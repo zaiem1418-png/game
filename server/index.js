@@ -12,6 +12,7 @@ import { AccessToken } from "livekit-server-sdk";
 import { giftStore } from "./giftStore.js";
 import { walletStore } from "./walletStore.js";
 import { socialStore } from "./socialStore.js";
+import { taskStore } from "./taskStore.js";
 import {
   roomStore,
   maxAdminsForLevel,
@@ -39,6 +40,10 @@ const LEGACY_OWNER_ROOM_IDS = ["1000000"]; // معرّفات قديمة تُنظ
 // تكلفة فتح غرفة دردشة جديدة (ألماس) — تُخصم من المنشئ. المالك معفى (رصيد لانهائي).
 const ROOM_CREATE_COST = 5000;
 
+// عتبة عملة الهدايا: الهدايا التي سعرها < 100 تُدفع بالكوينز،
+// و >= 100 تُدفع بالمجوهرات (الألماس).
+const GIFT_GEM_THRESHOLD = 100;
+
 // ===== إعدادات LiveKit (الصوت) — تُقرأ من متغيرات البيئة فقط، لا تُكتب في الكود =====
 const LIVEKIT_URL = process.env.LIVEKIT_URL || "";
 const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || "";
@@ -48,6 +53,7 @@ giftStore.init();
 walletStore.init();
 roomStore.init();
 socialStore.init();
+taskStore.init();
 
 // أنشئ غرفة المالك الرسمية مرة واحدة إن لم تكن موجودة — أي دي مميز ثابت لا مثيل له.
 function ensureOwnerRoom() {
@@ -428,6 +434,27 @@ app.post("/api/social/moments/like", (req, res) =>
   send(res, socialStore.likeMoment(uidOf(req), req.body?.momentId))
 );
 
+// ----- المهام اليومية -----
+// جلب حالة المهام. زيارة الصفحة تُكمل مهمة «تسجيل الدخول اليومي» تلقائياً.
+app.get("/api/tasks", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  taskStore.progress(uid, "daily_login");
+  res.json(taskStore.status(uid));
+});
+
+// استلام مكافأة مهمة مكتملة — يُضيف الألماس للمحفظة ويبثّ الرصيد المحدّث
+app.post("/api/tasks/claim", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  const result = taskStore.claim(uid, req.body?.taskId);
+  if (!result.ok) return res.status(400).json({ error: result.error });
+  walletStore.credit(uid, { diamonds: result.reward });
+  pushWalletUpdate(uid);
+  const { wallet } = walletStore.ensure(uid);
+  res.json({ ok: true, reward: result.reward, wallet, status: taskStore.status(uid) });
+});
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: "*", methods: ["GET", "POST"] },
@@ -710,12 +737,17 @@ io.on("connection", (socket) => {
     const gift = giftStore.get(giftId);
     if (!gift) return;
     const qty = Math.max(1, Math.min(1314, Number(combo) || 1));
-    const cost = (gift.coins || 0) * qty;
-    // اخصم الكوينز من المرسِل. المالك لانهائي. غيره يُرفض إن لم يكفِ الرصيد.
+    const price = gift.coins || 0; // سعر الهدية الواحدة
+    const cost = price * qty;
+    // عملة الدفع حسب سعر الهدية: الهدايا العادية (< 100) بالكوينز،
+    // والهدايا الغالية (>= 100) بالمجوهرات (الألماس).
+    const payWithGems = price >= GIFT_GEM_THRESHOLD;
+    const kind = payWithGems ? "diamonds" : "coins";
+    // اخصم من المرسِل. المالك لانهائي. غيره يُرفض إن لم يكفِ الرصيد.
     if (currentUid) {
-      const ok = walletStore.spend(currentUid, { coins: cost });
+      const ok = walletStore.spend(currentUid, payWithGems ? { diamonds: cost } : { coins: cost });
       if (!ok) {
-        socket.emit("wallet:insufficient", { need: cost, kind: "coins" });
+        socket.emit("wallet:insufficient", { need: cost, kind });
         return;
       }
       pushWalletUpdate(currentUid);

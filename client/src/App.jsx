@@ -436,6 +436,7 @@ export default function App() {
           gifts={gifts}
           members={room.members.filter((m) => m.id !== selfId)}
           selfCoins={wallet?.coins ?? 0}
+          selfDiamonds={wallet?.diamonds ?? 0}
           onSend={sendGift}
           onClose={() => setGiftPickerOpen(false)}
         />
