@@ -1,6 +1,11 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import CourtModal from "./CourtModal.jsx";
+import FriendsModal from "./FriendsModal.jsx";
+import TribeModal from "./TribeModal.jsx";
+import MomentsModal from "./MomentsModal.jsx";
 
-// أيقونات الوصول السريع أعلى الرسائل
+// أيقونات الوصول السريع أعلى الرسائل — كل واحدة تفتح نظامها الاجتماعي
 const QUICK = [
   { id: "gamefriend", label: "صديق اللعب", icon: "👥", tint: "#1f8a6e" },
   { id: "court", label: "المحكمة", icon: "🏛️", tint: "#9a3a5a" },
@@ -11,7 +16,9 @@ const QUICK = [
 // قائمة المحادثات (فارغة — تُملأ بالرسائل الواردة)
 const THREADS = [];
 
-export default function Messages() {
+export default function Messages({ onRecharge }) {
+  const [open, setOpen] = useState(null); // أي نظام مفتوح: court|gamefriend|tribe|moments
+
   return (
     <div className="ms">
       <div className="gl-bg vr-bg" />
@@ -28,7 +35,12 @@ export default function Messages() {
         {/* وصول سريع */}
         <div className="ms-quick">
           {QUICK.map((q) => (
-            <motion.button key={q.id} className="ms-quick-btn" whileTap={{ scale: 0.92 }}>
+            <motion.button
+              key={q.id}
+              className="ms-quick-btn"
+              whileTap={{ scale: 0.92 }}
+              onClick={() => setOpen(q.id)}
+            >
               <span className="ms-quick-ico" style={{ background: `radial-gradient(circle at 50% 30%, ${q.tint}, #15101f)` }}>
                 {q.icon}
               </span>
@@ -71,6 +83,14 @@ export default function Messages() {
           ))}
         </div>
       </div>
+
+      {/* الأنظمة الاجتماعية */}
+      <AnimatePresence>
+        {open === "court" && <CourtModal key="court" onClose={() => setOpen(null)} />}
+        {open === "gamefriend" && <FriendsModal key="friends" onClose={() => setOpen(null)} />}
+        {open === "tribe" && <TribeModal key="tribe" onClose={() => setOpen(null)} onRecharge={onRecharge} />}
+        {open === "moments" && <MomentsModal key="moments" onClose={() => setOpen(null)} />}
+      </AnimatePresence>
     </div>
   );
 }

@@ -18,6 +18,7 @@ import OwnerLogin from "./components/OwnerLogin.jsx";
 import { unlockAudio } from "./giftEngine/core/SoundManager.js";
 import { useReactions } from "./useReactions.js";
 import { getUid, getProfile, fetchWallet } from "./wallet.js";
+import { registerSocial } from "./lobby/social.js";
 
 export default function App() {
   // لوحة الإدارة: افتحها عبر ?admin في الرابط
@@ -174,6 +175,8 @@ export default function App() {
         if (isNew) setBonusToast(starter); // اعرض رسالة الترحيب بالمكافأة
       })
       .catch(() => {});
+    // سجّل ملفك في الدليل الاجتماعي ليجدك الآخرون برقمك القصير (للمحكمة/الأصدقاء)
+    registerSocial();
   }, []);
 
   const mySeatIndex = room?.seats.findIndex((s) => s.user?.id === selfId) ?? -1;

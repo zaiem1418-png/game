@@ -370,3 +370,119 @@
 .ri-btn.promote { background: linear-gradient(135deg, #1fd0b0, #14a98c); color: #04221c; }
 .ri-btn.promote:disabled { opacity: 0.4; cursor: not-allowed; }
 .ri-btn.demote { background: rgba(192,57,43,0.3); color: #ffb4ab; }
+
+/* ===== الأنظمة الاجتماعية: المحكمة/الأصدقاء/القبيلة/اللحظات ===== */
+.soc-backdrop {
+  position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end;
+  justify-content: center; background: rgba(6, 4, 14, 0.6); backdrop-filter: blur(3px);
+}
+.soc-sheet {
+  width: 100%; max-width: 460px; max-height: 88vh; display: flex; flex-direction: column;
+  background: linear-gradient(180deg, #221636, #160e26);
+  border-radius: 22px 22px 0 0; border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.5); overflow: hidden;
+}
+.soc-sheet.court { background: linear-gradient(180deg, #2c1530, #170d22); }
+.soc-head {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0;
+}
+.soc-head h2 { margin: 0; font-size: 18px; font-weight: 900; color: #f1e7fb; }
+.soc-close {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(255,255,255,0.1); color: #efe6f5; font-size: 15px;
+}
+.soc-myid {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 11px; font-weight: 800; color: #f5c451; font-variant-numeric: tabular-nums;
+}
+.soc-head-act {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  padding: 6px 12px; border-radius: 999px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, #1fd0b0, #14a98c); color: #04221c; font-weight: 800; font-size: 12px;
+}
+.soc-body { padding: 16px; overflow-y: auto; }
+.soc-empty, .soc-hint { color: #9b8aa6; font-size: 13px; text-align: center; padding: 12px 4px; }
+.soc-hint { line-height: 1.7; }
+.soc-sub { display: block; font-size: 11px; color: #9b8aa6; font-weight: 600; margin-top: 2px; }
+.soc-link { background: none; border: none; color: #1fd0b0; font-weight: 800; cursor: pointer; padding: 0 4px; }
+
+.soc-alert { padding: 10px 12px; border-radius: 12px; font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+.soc-alert.err { background: rgba(192,57,43,0.2); color: #ffb4ab; }
+.soc-alert.ok { background: rgba(31,170,140,0.2); color: #7ce6cb; }
+
+.soc-form { display: flex; gap: 8px; margin-bottom: 14px; }
+.soc-input {
+  flex: 1; min-width: 0; padding: 11px 14px; border-radius: 12px; font-size: 14px;
+  background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); color: #f1e7fb; outline: none;
+}
+.soc-input::placeholder { color: #8a7c99; }
+
+.soc-btn {
+  padding: 10px 16px; border-radius: 12px; border: none; cursor: pointer;
+  font-weight: 800; font-size: 13px; white-space: nowrap; transition: filter 0.15s, opacity 0.15s;
+}
+.soc-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.soc-btn.sm { padding: 6px 12px; font-size: 12px; }
+.soc-btn.ok { background: linear-gradient(135deg, #1fd0b0, #14a98c); color: #04221c; }
+.soc-btn.warn { background: linear-gradient(135deg, #f5a623, #d9831f); color: #2a1600; }
+.soc-btn.danger { background: linear-gradient(135deg, #e0524a, #b5342c); color: #fff; }
+.soc-btn.ghost { background: rgba(255,255,255,0.1); color: #d8c8e6; }
+
+.soc-section { margin-top: 18px; }
+.soc-section h3 { margin: 0 0 8px; font-size: 13px; font-weight: 800; color: #d8c8e6; }
+.soc-ava { width: 30px; height: 30px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 16px; background: rgba(0,0,0,0.3); vertical-align: middle; }
+
+.soc-req {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+  padding: 11px 12px; border-radius: 12px; margin-bottom: 8px; font-size: 13px; color: #e9def5;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+}
+.soc-req.hot { background: rgba(224,82,74,0.14); border-color: rgba(224,82,74,0.3); }
+.soc-req-actions { display: flex; gap: 6px; }
+
+.soc-friend { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 12px; background: rgba(255,255,255,0.04); margin-bottom: 6px; }
+.soc-friend-name { flex: 1; font-size: 14px; font-weight: 700; color: #efe6f5; }
+.soc-friend-id { display: block; font-size: 11px; color: #9b8aa6; font-weight: 600; }
+
+/* المحكمة */
+.court-couple { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 8px 0 4px; }
+.court-ava { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 34px; background: radial-gradient(circle at 50% 30%, #9a3a5a, #15101f); border: 2px solid rgba(255,255,255,0.15); }
+.court-heart { font-size: 28px; animation: court-beat 1.2s ease-in-out infinite; }
+@keyframes court-beat { 0%,100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+.court-status { text-align: center; font-size: 15px; color: #f1e7fb; margin: 8px 0 16px; }
+.court-status b { color: #ff9ec2; }
+.court-sub { display: block; font-size: 12px; color: #9b8aa6; margin-top: 3px; }
+.court-single { text-align: center; font-size: 18px; font-weight: 900; color: #f1e7fb; margin: 6px 0 14px; }
+.court-divorce { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.court-confirm { margin-top: 10px; padding: 14px; border-radius: 14px; background: rgba(224,82,74,0.12); border: 1px solid rgba(224,82,74,0.3); }
+.court-confirm p { margin: 0 0 12px; font-size: 13px; color: #ffd1cc; text-align: center; }
+
+/* القبيلة */
+.tribe-mine { padding: 14px; border-radius: 16px; background: rgba(181,115,31,0.12); border: 1px solid rgba(245,196,81,0.25); margin-bottom: 8px; }
+.tribe-emblem { font-size: 40px; text-align: center; }
+.tribe-emblem.sm { font-size: 26px; }
+.tribe-mine-info { text-align: center; margin: 6px 0; }
+.tribe-mine-info b { font-size: 17px; color: #f5c451; }
+.tribe-members { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; justify-content: center; }
+.tribe-member { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 56px; }
+.tribe-member-name { font-size: 10px; color: #cbbcd9; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
+.tribe-create { padding: 14px; border-radius: 16px; background: rgba(255,255,255,0.04); margin-bottom: 14px; display: flex; flex-direction: column; gap: 12px; }
+.tribe-emblem-pick { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.tribe-emblem-opt { width: 42px; height: 42px; border-radius: 12px; border: 2px solid transparent; background: rgba(0,0,0,0.3); font-size: 22px; cursor: pointer; }
+.tribe-emblem-opt.on { border-color: #f5c451; background: rgba(245,196,81,0.18); }
+.tribe-row { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.04); margin-bottom: 6px; }
+.tribe-rank { width: 22px; text-align: center; font-weight: 900; color: #f5c451; }
+.tribe-row-info { flex: 1; min-width: 0; }
+.tribe-row-info b { font-size: 14px; color: #efe6f5; }
+
+/* اللحظات */
+.moment-compose { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 16px; }
+.moment-input { flex: 1; resize: none; padding: 11px 14px; border-radius: 14px; font-size: 14px; font-family: inherit; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); color: #f1e7fb; outline: none; }
+.moment-card { padding: 13px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); margin-bottom: 10px; }
+.moment-top { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
+.moment-author { font-size: 14px; font-weight: 800; color: #efe6f5; }
+.moment-text { margin: 0 0 10px; font-size: 14px; line-height: 1.6; color: #e3d6f0; white-space: pre-wrap; word-break: break-word; }
+.moment-like { background: rgba(255,255,255,0.08); border: none; border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 800; color: #d8c8e6; cursor: pointer; }
+.moment-like.on { background: rgba(224,82,74,0.18); color: #ff9ec2; }

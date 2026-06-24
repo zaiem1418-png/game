@@ -7,5 +7,7 @@ dist/
 .DS_Store
 *.log
 
-# بيانات محافظ المستخدمين (تُنشأ وقت التشغيل)
+# بيانات تُنشأ وقت التشغيل (محافظ/غرف/بيانات اجتماعية)
 server/wallets.json
+server/rooms.json
+server/social.json

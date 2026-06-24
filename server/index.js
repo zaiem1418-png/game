@@ -11,6 +11,7 @@ import cors from "cors";
 import { AccessToken } from "livekit-server-sdk";
 import { giftStore } from "./giftStore.js";
 import { walletStore } from "./walletStore.js";
+import { socialStore } from "./socialStore.js";
 import {
   roomStore,
   maxAdminsForLevel,
@@ -46,6 +47,7 @@ const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || "";
 giftStore.init();
 walletStore.init();
 roomStore.init();
+socialStore.init();
 
 // أنشئ غرفة المالك الرسمية مرة واحدة إن لم تكن موجودة — أي دي مميز ثابت لا مثيل له.
 function ensureOwnerRoom() {
@@ -290,6 +292,142 @@ app.delete("/api/rooms/:id", (req, res) => {
   res.json({ ok: true });
 });
 
+// ===== الأنظمة الاجتماعية (المحكمة/الأصدقاء/القبيلة/اللحظات) =====
+// كلها عبر REST. تُعرّف المستخدمين بمعرّفهم الثابت (uid) وتمنحهم رقماً قصيراً
+// (shortId) يبحث به الآخرون عنهم لإرسال طلبات الزواج/الصداقة.
+
+// تكلفة إنشاء قبيلة (ألماس) — تُخصم من المنشئ (المالك معفى).
+const CLAN_CREATE_COST = 2000;
+
+// يقرأ uid من جسم الطلب أو الكويري ويُرجعه منظَّفاً (أو "")
+function uidOf(req) {
+  return String(req.body?.uid || req.query.uid || "").trim().slice(0, 64);
+}
+
+// غلاف موحّد: نتيجة المخزن { ok, error? } → استجابة HTTP
+function send(res, result, extra = {}) {
+  if (!result || !result.ok) {
+    return res.status(400).json({ error: result?.error || "تعذّرت العملية" });
+  }
+  res.json({ ...result, ...extra });
+}
+
+// تسجيل/تحديث ملف المستخدم (الاسم/الصورة) — يُستدعى عند فتح التطبيق.
+// يُرجع ملفه العام مع رقمه القصير (shortId) ليشاركه.
+app.post("/api/social/register", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  const { name, avatar } = req.body || {};
+  const u = socialStore.registerUser(uid, name, avatar);
+  res.json({ ok: true, me: socialStore.publicUser(uid), shortId: u.shortId });
+});
+
+// بحث عن مستخدم برقمه القصير (لإرسال طلب زواج/صداقة)
+app.get("/api/social/lookup", (req, res) => {
+  const u = socialStore.getUserByShortId(req.query.id);
+  if (!u) return res.status(404).json({ error: "لا يوجد مستخدم بهذا المعرّف" });
+  res.json({ user: socialStore.publicUser(u.uid) });
+});
+
+// ----- المحكمة: الزواج والطلاق -----
+app.get("/api/social/marriage", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  res.json(socialStore.marriageStatus(uid));
+});
+
+// طلب زواج (toId = الرقم القصير للطرف الآخر)
+app.post("/api/social/marriage/propose", (req, res) => {
+  const uid = uidOf(req);
+  const target = socialStore.getUserByShortId(req.body?.toId);
+  if (!target) return res.status(404).json({ error: "لا يوجد مستخدم بهذا المعرّف" });
+  send(res, socialStore.proposeMarriage(uid, target.uid));
+});
+
+app.post("/api/social/marriage/accept", (req, res) =>
+  send(res, socialStore.acceptMarriage(uidOf(req), req.body?.reqId))
+);
+app.post("/api/social/marriage/reject", (req, res) =>
+  send(res, socialStore.rejectMarriage(uidOf(req), req.body?.reqId))
+);
+
+// طلاق إجباري (خلع) — يفسخ الزواج فوراً
+app.post("/api/social/divorce/force", (req, res) =>
+  send(res, socialStore.forcedDivorce(uidOf(req)))
+);
+// طلاق بالتراضي — يُرسل طلباً للشريك
+app.post("/api/social/divorce/propose", (req, res) =>
+  send(res, socialStore.proposeDivorce(uidOf(req)))
+);
+app.post("/api/social/divorce/accept", (req, res) =>
+  send(res, socialStore.acceptDivorce(uidOf(req), req.body?.reqId))
+);
+app.post("/api/social/divorce/reject", (req, res) =>
+  send(res, socialStore.rejectDivorce(uidOf(req), req.body?.reqId))
+);
+
+// ----- صديق اللعب: الصداقة -----
+app.get("/api/social/friends", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  res.json(socialStore.friendStatus(uid));
+});
+app.post("/api/social/friends/request", (req, res) => {
+  const uid = uidOf(req);
+  const target = socialStore.getUserByShortId(req.body?.toId);
+  if (!target) return res.status(404).json({ error: "لا يوجد مستخدم بهذا المعرّف" });
+  send(res, socialStore.friendRequest(uid, target.uid));
+});
+app.post("/api/social/friends/accept", (req, res) =>
+  send(res, socialStore.acceptFriend(uidOf(req), req.body?.reqId))
+);
+app.post("/api/social/friends/reject", (req, res) =>
+  send(res, socialStore.rejectFriend(uidOf(req), req.body?.reqId))
+);
+app.post("/api/social/friends/remove", (req, res) =>
+  send(res, socialStore.removeFriend(uidOf(req), String(req.body?.otherUid || "")))
+);
+
+// ----- القبيلة: القبائل -----
+app.get("/api/social/clans", (req, res) => {
+  res.json({ mine: socialStore.myClan(uidOf(req)), clans: socialStore.listClans() });
+});
+app.post("/api/social/clans/create", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  // تكلفة الإنشاء بالألماس (المالك معفى). يُتحقق قبل الإنشاء.
+  const { wallet } = walletStore.ensure(uid);
+  if (!wallet.owner && wallet.diamonds < CLAN_CREATE_COST) {
+    return res.status(402).json({
+      error: `تحتاج ${CLAN_CREATE_COST} ألماسة لتأسيس قبيلة`,
+      need: CLAN_CREATE_COST,
+      kind: "diamonds",
+    });
+  }
+  const result = socialStore.createClan(uid, req.body?.name, req.body?.emblem);
+  if (!result.ok) return res.status(400).json({ error: result.error });
+  walletStore.spend(uid, { diamonds: CLAN_CREATE_COST });
+  pushWalletUpdate(uid);
+  res.json(result);
+});
+app.post("/api/social/clans/join", (req, res) =>
+  send(res, socialStore.joinClan(uidOf(req), req.body?.clanId))
+);
+app.post("/api/social/clans/leave", (req, res) =>
+  send(res, socialStore.leaveClan(uidOf(req)))
+);
+
+// ----- اللحظات: المنشورات -----
+app.get("/api/social/moments", (req, res) => {
+  res.json({ moments: socialStore.listMoments(uidOf(req)) });
+});
+app.post("/api/social/moments", (req, res) =>
+  send(res, socialStore.postMoment(uidOf(req), req.body?.text))
+);
+app.post("/api/social/moments/like", (req, res) =>
+  send(res, socialStore.likeMoment(uidOf(req), req.body?.momentId))
+);
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: "*", methods: ["GET", "POST"] },
@@ -442,7 +580,11 @@ io.on("connection", (socket) => {
       : meta && currentUid && meta.admins.includes(currentUid)
         ? "admin"
         : "member";
-    if (currentUid) uidSockets.set(currentUid, socket.id);
+    if (currentUid) {
+      uidSockets.set(currentUid, socket.id);
+      // سجّل ملف المستخدم في الدليل الاجتماعي (اسم/صورة) ليجده الآخرون
+      socialStore.registerUser(currentUid, user?.name, user?.avatar);
+    }
     const { wallet } = currentUid
       ? walletStore.ensure(currentUid)
       : { wallet: { coins: 0, diamonds: 0, owner: false } };
