@@ -306,6 +306,7 @@ export default function App() {
           user={{ ...getProfile(), uid: getUid() }}
           onRecharge={(tab) => setStoreTab(tab)}
           onOwnerTap={() => setOwnerOpen(true)}
+          onWalletUpdate={setWallet}
           onEnterRoom={(roomId, pin) => {
             // دخول سلس وفوري باسم الحساب — بلا شاشة إدخال
             setPendingRoom(roomId ? { roomId, pin } : null);

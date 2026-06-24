@@ -7,7 +7,7 @@ import BottomNav from "./BottomNav.jsx";
 import "./screens.css";
 
 // الغلاف الرئيسي: يبدّل بين الشاشات الأربع ويعرض شريط التنقّل المشترك
-export default function Shell({ user, wallet, onRecharge, onOwnerTap, onEnterRoom, onPlay }) {
+export default function Shell({ user, wallet, onRecharge, onOwnerTap, onEnterRoom, onPlay, onWalletUpdate }) {
   const [tab, setTab] = useState("home");
 
   return (
@@ -21,6 +21,7 @@ export default function Shell({ user, wallet, onRecharge, onOwnerTap, onEnterRoo
             onOwnerTap={onOwnerTap}
             onOpenRooms={() => setTab("rooms")}
             onPlay={onPlay}
+            onWalletUpdate={onWalletUpdate}
           />
         )}
         {tab === "rooms" && <VoiceRooms onEnterRoom={onEnterRoom} />}

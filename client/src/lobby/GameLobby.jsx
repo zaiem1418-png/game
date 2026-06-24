@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GAMES } from "./games.js";
 import GameArt from "./art/GameArt.jsx";
+import TasksModal from "./TasksModal.jsx";
 import "./gameLobby.css";
 
 /* عدّاد تنازلي حي بصيغة HH:MM:SS أو "Nd Nh" */
@@ -40,7 +41,8 @@ function fmtNum(n) {
   return String(n);
 }
 
-export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharge, onOwnerTap }) {
+export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharge, onOwnerTap, onWalletUpdate }) {
+  const [tasksOpen, setTasksOpen] = useState(false); // نافذة المهام اليومية
   // [page, direction] — صفحة لانهائية (تلتف) مع اتجاه السحب
   const [[page, dir], setPage] = useState([0, 0]);
   const n = GAMES.length;
@@ -161,7 +163,7 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
           {/* أيقونات يمين */}
           <div className="gl-side gl-side-right">
             <SideIcon icon="🧑‍🤝‍🧑" label="الأصدقاء" />
-            <SideIcon icon="✅" label="المهام" dot />
+            <SideIcon icon="✅" label="المهام" dot onClick={() => setTasksOpen(true)} />
             <SideIcon icon="🏅" label="بطاقة المجد" timer={fmtDays(gloryLeft)} dot />
           </div>
         </div>
@@ -222,6 +224,12 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
           ))}
         </div>
       </div>
+
+      <AnimatePresence>
+        {tasksOpen && (
+          <TasksModal key="tasks" onClose={() => setTasksOpen(false)} onWallet={onWalletUpdate} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -287,7 +295,7 @@ function RankCard({ icon, main, sub, highlight }) {
   );
 }
 
-function SideIcon({ icon, label, dot, timer }) {
+function SideIcon({ icon, label, dot, timer, onClick }) {
   return (
     <motion.button
       className="gl-sideicon"
@@ -295,6 +303,7 @@ function SideIcon({ icon, label, dot, timer }) {
       whileTap={{ scale: 0.92 }}
       animate={{ y: [0, -4, 0] }}
       transition={{ y: { duration: 3, repeat: Infinity, ease: "easeInOut" } }}
+      onClick={onClick}
     >
       <span className="gl-side-badge">
         {icon}

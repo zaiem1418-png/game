@@ -446,6 +446,31 @@
 .soc-friend-name { flex: 1; font-size: 14px; font-weight: 700; color: #efe6f5; }
 .soc-friend-id { display: block; font-size: 11px; color: #9b8aa6; font-weight: 600; }
 
+/* المهام اليومية */
+.task-row {
+  position: relative; display: flex; align-items: center; gap: 11px;
+  padding: 12px; border-radius: 14px; margin-bottom: 9px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+}
+.task-row.done { opacity: 0.72; }
+.task-ico {
+  width: 42px; height: 42px; flex-shrink: 0; border-radius: 12px; display: grid; place-items: center;
+  font-size: 22px; background: radial-gradient(circle at 50% 30%, #3a2a55, #15101f);
+}
+.task-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.task-title { font-size: 14px; font-weight: 800; color: #f1e7fb; }
+.task-desc { font-size: 11px; color: #9b8aa6; }
+.task-bar { height: 6px; border-radius: 999px; background: rgba(0,0,0,0.35); overflow: hidden; margin-top: 4px; }
+.task-bar-fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #1fd0b0, #36c5f0); transition: width 0.4s ease; }
+.task-prog { font-size: 10px; color: #8a7c99; font-variant-numeric: tabular-nums; }
+.task-end { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+.task-reward { font-size: 13px; font-weight: 900; color: #36c5f0; white-space: nowrap; }
+.task-claimed { font-size: 11px; font-weight: 800; color: #7ce6cb; }
+.task-pop {
+  position: absolute; right: 16px; top: 50%; pointer-events: none;
+  font-size: 16px; font-weight: 900; color: #7ce6cb; text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+
 /* المحكمة */
 .court-couple { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 8px 0 4px; }
 .court-ava { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 34px; background: radial-gradient(circle at 50% 30%, #9a3a5a, #15101f); border: 2px solid rgba(255,255,255,0.15); }

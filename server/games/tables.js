@@ -5,6 +5,7 @@
 // - يسجّل معالج اتصال مستقل حتى لا يلمس منطق الغرفة الصوتية.
 
 import { getGameModule } from "./registry.js";
+import { taskStore } from "../taskStore.js";
 
 const BOT_NAMES = ["نورة", "سعد", "ليان", "خالد", "ريم", "فهد", "جود", "ماجد"];
 const BOT_AVATARS = ["🦊", "🐼", "🐯", "🦉", "🐧", "🐵", "🐸", "🦁"];
@@ -118,6 +119,10 @@ export function attachGames(io) {
     }
     table.started = true;
     table.state = table.mod.create({ players: table.players, mode: table.mode });
+    // مهمة: «العب لعبة واحدة» — تُحتسب لكل لاعب بشري عند بدء اللعبة
+    for (const p of table.players) {
+      if (!p.bot && p.uid) taskStore.progress(p.uid, "play_game");
+    }
     broadcastState(table);
     maybeRunBots(table);
   }
@@ -196,6 +201,7 @@ export function attachGames(io) {
 
       const player = {
         id: socket.id,
+        uid: String(user?.uid || "").slice(0, 64), // معرّف ثابت — لتقدّم المهام
         name: (user?.name || "زائر").slice(0, 20),
         avatar: user?.avatar || "🧑",
         bot: false,

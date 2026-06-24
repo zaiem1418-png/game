@@ -427,9 +427,12 @@ app.post("/api/social/clans/leave", (req, res) =>
 app.get("/api/social/moments", (req, res) => {
   res.json({ moments: socialStore.listMoments(uidOf(req)) });
 });
-app.post("/api/social/moments", (req, res) =>
-  send(res, socialStore.postMoment(uidOf(req), req.body?.text))
-);
+app.post("/api/social/moments", (req, res) => {
+  const uid = uidOf(req);
+  const result = socialStore.postMoment(uid, req.body?.text);
+  if (result.ok) taskStore.progress(uid, "post_moment"); // مهمة: انشر لحظة
+  send(res, result);
+});
 app.post("/api/social/moments/like", (req, res) =>
   send(res, socialStore.likeMoment(uidOf(req), req.body?.momentId))
 );
@@ -582,6 +585,17 @@ io.on("connection", (socket) => {
   let currentUser = null;
 
   let currentUid = null; // معرّف المستخدم الثابت (للمحفظة)
+  let seatSince = null; // طابع زمني لبدء الجلوس على المقعد (لمهمة وقت الجلوس)
+
+  // يحتسب الوقت المنقضي على المقعد ويضيفه لتقدّم مهمة الجلوس (نصف ساعة).
+  // يُستدعى عند ترك المقعد/تبديله/قطع الاتصال. reset=true يعيد بدء العدّاد (للتبديل).
+  function flushSeatTime(reset = false) {
+    if (seatSince && currentUid) {
+      const secs = Math.floor((Date.now() - seatSince) / 1000);
+      if (secs > 0) taskStore.progress(currentUid, "sit_seat", secs);
+    }
+    seatSince = reset ? Date.now() : null;
+  }
 
   // قائمة الغرف لحظياً عبر السوكِت
   socket.on("room:list", () => socket.emit("room:list", listRooms()));
@@ -611,6 +625,7 @@ io.on("connection", (socket) => {
       uidSockets.set(currentUid, socket.id);
       // سجّل ملف المستخدم في الدليل الاجتماعي (اسم/صورة) ليجده الآخرون
       socialStore.registerUser(currentUid, user?.name, user?.avatar);
+      taskStore.progress(currentUid, "join_room"); // مهمة: ادخل غرفة صوتية
     }
     const { wallet } = currentUid
       ? walletStore.ensure(currentUid)
@@ -661,6 +676,8 @@ io.on("connection", (socket) => {
       room.seats[old].userId = null;
       room.seats[old].speaking = false;
     }
+    // ابدأ/أعد عدّاد وقت الجلوس على المقعد (لمهمة نصف الساعة)
+    flushSeatTime(true);
 
     target.userId = currentUser.id;
     target.muted = false;
@@ -677,6 +694,7 @@ io.on("connection", (socket) => {
     if (!room || !currentUser) return;
     const idx = seatOf(room, currentUser.id);
     if (idx === -1) return;
+    flushSeatTime(); // احتسب وقت الجلوس قبل النزول
     room.seats[idx].userId = null;
     room.seats[idx].speaking = false;
     room.seats[idx].muted = false;
@@ -751,6 +769,7 @@ io.on("connection", (socket) => {
         return;
       }
       pushWalletUpdate(currentUid);
+      taskStore.progress(currentUid, "send_gift"); // مهمة: أرسل هدية
     }
     const to = toUserId ? room.members.get(toUserId) : null;
     // الإرسال المجهول يُخفي اسم المرسِل
@@ -847,6 +866,8 @@ io.on("connection", (socket) => {
   // ملاحظة: لم نعد نمرّر إشارات WebRTC هنا — الصوت ينتقل عبر LiveKit Cloud (SFU).
 
   socket.on("disconnect", () => {
+    // احتسب آخر فترة جلوس على المقعد قبل الخروج (لمهمة نصف الساعة)
+    flushSeatTime();
     // نظّف ربط uid->socket إن كان يخصّ هذه الجلسة
     if (currentUid && uidSockets.get(currentUid) === socket.id) {
       uidSockets.delete(currentUid);
