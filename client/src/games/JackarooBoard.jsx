@@ -97,6 +97,9 @@ export default function JackarooBoard({ game, you, action, onExit }) {
   if (!st) return <div className="grm-loading">جاري التحميل…</div>;
 
   const players = st.players;
+  // فهرسة اللاعبين حسب المقعد (في 1ضد1 المقاعد 0 و2 وليست 0 و1)
+  const bySeat = {};
+  players.forEach((p) => { bySeat[p.seat] = p; });
   const me = players.find((p) => p.id === you);
   const myTurn = game.turn === you && st.phase === "play";
   const turnPlayer = players.find((p) => p.id === game.turn);
@@ -163,18 +166,21 @@ export default function JackarooBoard({ game, you, action, onExit }) {
         className={`jak-board ${tableReady ? "has-photo" : ""}`}
         style={tableReady ? { "--jak-table": `url(${TABLE_IMG})` } : undefined}
       >
-        {/* قواعد بهيئة زهرة في الزوايا: قرص خافت + 4 ثقوب ملوّنة */}
-        {CORNERS.map((c, seat) => (
-          <div
-            key={seat}
-            className="jak-base"
-            style={{
-              left: `${c.x}%`, top: `${c.y}%`,
-              background: hexA(players[seat]?.color || "#555", 0.14),
-              borderColor: players[seat]?.color || "#555",
-            }}
-          />
-        ))}
+        {/* قواعد بهيئة زهرة في زوايا اللاعبين الموجودين فقط */}
+        {players.map((p) => {
+          const c = CORNERS[p.seat] || CORNERS[0];
+          return (
+            <div
+              key={`base${p.seat}`}
+              className="jak-base"
+              style={{
+                left: `${c.x}%`, top: `${c.y}%`,
+                background: hexA(p.color, 0.14),
+                borderColor: p.color,
+              }}
+            />
+          );
+        })}
         {players.map((p) =>
           yardSlots(p.seat).map((s, k) => (
             <span
@@ -188,13 +194,14 @@ export default function JackarooBoard({ game, you, action, onExit }) {
         {/* خانات المسار */}
         {ring.map((cell) => {
           const startSeat = START_INDEX.indexOf(cell.i);
+          const startP = startSeat >= 0 ? bySeat[startSeat] : null;
           return (
             <span
               key={cell.i}
               className="jak-cell"
               style={{
                 left: `${cell.x}%`, top: `${cell.y}%`,
-                ...(startSeat >= 0 ? { background: players[startSeat]?.color, borderColor: "#fff" } : {}),
+                ...(startP ? { background: startP.color, borderColor: "#fff" } : {}),
               }}
             />
           );

@@ -14,6 +14,12 @@ function rid() {
   return Math.random().toString(36).slice(2, 9);
 }
 
+// عدد المقاعد الفعلي للطاولة حسب النمط (تتحكم به اللعبة عبر seatsForMode)
+function seatCount(mod, mode) {
+  if (typeof mod.seatsForMode === "function") return mod.seatsForMode(mode);
+  return mod.defaultSeats || mod.maxSeats;
+}
+
 export function attachGames(io) {
   /** tables: Map<tableId, table> */
   const tables = new Map();
@@ -28,7 +34,7 @@ export function attachGames(io) {
     for (const t of tables.values()) {
       if (t.gameId === gameId && t.mode === mode && !t.started) {
         const humans = t.players.filter((p) => !p.bot).length;
-        if (humans < t.mod.maxSeats) return t;
+        if (humans < seatCount(t.mod, t.mode)) return t;
       }
     }
     return null;
@@ -60,7 +66,7 @@ export function attachGames(io) {
       gameId: table.gameId,
       mode: table.mode,
       hostId: table.hostId,
-      maxSeats: table.mod.maxSeats,
+      maxSeats: seatCount(table.mod, table.mode),
       minHumans: table.mod.minHumans,
       players: table.players.map((p) => ({
         id: p.id,
@@ -95,8 +101,8 @@ export function attachGames(io) {
 
   function startGame(table) {
     if (table.started) return;
-    // املأ المقاعد الفارغة ببوتات حتى defaultSeats
-    const target = table.mod.defaultSeats || table.mod.maxSeats;
+    // املأ المقاعد الفارغة ببوتات حتى العدد المطلوب للنمط (2 في 1ضد1، 4 في 2ضد2)
+    const target = seatCount(table.mod, table.mode);
     let bi = 0;
     while (table.players.length < target) {
       const name = BOT_NAMES[bi % BOT_NAMES.length];
@@ -111,7 +117,7 @@ export function attachGames(io) {
       bi++;
     }
     table.started = true;
-    table.state = table.mod.create({ players: table.players });
+    table.state = table.mod.create({ players: table.players, mode: table.mode });
     broadcastState(table);
     maybeRunBots(table);
   }

@@ -92,7 +92,7 @@ export const GAMES = [
 // شريط التنقّل السفلي
 export const NAV = [
   { id: "me", label: "أنا", icon: "🧑" },
-  { id: "messages", label: "الرسائل", icon: "💬", dot: true },
+  { id: "messages", label: "الرسائل", icon: "💬" },
   { id: "rooms", label: "الغرف الصوتية", icon: "🎙️" },
   { id: "home", label: "الرئيسية", icon: "⬢" },
 ];

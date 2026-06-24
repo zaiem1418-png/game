@@ -28,6 +28,17 @@ function teamOf(seat) {
   return seat % 2;
 }
 
+// ===== تخطيط المقاعد/الفرق حسب عدد اللاعبين =====
+// - لاعبان (1ضد1): مقعدان متقابلان (0 و 2)، كل لاعب في فريق مستقل = خصمان.
+// - أربعة (2ضد2): الشركاء المتقابلون 0&2 (فريق A) ضد 1&3 (فريق B).
+const SEAT_LAYOUTS = {
+  2: [{ seat: 0, team: 0 }, { seat: 2, team: 1 }],
+  4: [{ seat: 0, team: 0 }, { seat: 1, team: 1 }, { seat: 2, team: 0 }, { seat: 3, team: 1 }],
+};
+function seatLayout(n) {
+  return SEAT_LAYOUTS[n] || SEAT_LAYOUTS[4];
+}
+
 function buildDeck() {
   const d = [];
   let id = 0;
@@ -51,22 +62,32 @@ export default {
   maxSeats: 4,
   defaultSeats: 4,
 
-  create({ players }) {
+  // عدد اللاعبين حسب النمط: «1ضد1» = لاعبان، غير ذلك = أربعة (2ضد2)
+  seatsForMode(mode) {
+    return mode === "1v1" ? 2 : 4;
+  },
+
+  create({ players, mode }) {
     const deck = buildDeck();
+    const layout = seatLayout(players.length);
     const st = {
       game: "jackaroo",
-      players: players.map((p, i) => ({
-        id: p.id,
-        name: p.name,
-        avatar: p.avatar || "🧑",
-        bot: !!p.bot,
-        seat: i,
-        team: teamOf(i),
-        color: COLORS[i],
-        marbles: [0, 0, 0, 0], // 0=البيت(القاعدة)، 1..64 مسار، 65..68 بيت النهاية
-        hand: [],
-        homeCount: 0,
-      })),
+      mode: mode || (players.length <= 2 ? "1v1" : "normal"),
+      players: players.map((p, i) => {
+        const slot = layout[i] || { seat: i, team: teamOf(i) };
+        return {
+          id: p.id,
+          name: p.name,
+          avatar: p.avatar || "🧑",
+          bot: !!p.bot,
+          seat: slot.seat,
+          team: slot.team,
+          color: COLORS[slot.seat],
+          marbles: [0, 0, 0, 0], // 0=البيت(القاعدة)، 1..64 مسار، 65..68 بيت النهاية
+          hand: [],
+          homeCount: 0,
+        };
+      }),
       deck,
       turn: 0,
       phase: "play",
@@ -212,7 +233,7 @@ function occupiedByAlly(state, p, seat, step) {
   const c = absCell(seat, step);
   if (c == null) return false;
   for (const q of state.players) {
-    if (teamOf(q.seat) !== teamOf(p.seat)) continue;
+    if (q.team !== p.team) continue;
     for (let i = 0; i < 4; i++) {
       const s = q.marbles[i];
       if (s >= 1 && s <= LOOP && absCell(q.seat, s) === c) return true;
@@ -231,7 +252,7 @@ function captureAt(state, p, seat, step) {
   const c = absCell(seat, step);
   if (c == null) return null;
   for (const q of state.players) {
-    if (teamOf(q.seat) === teamOf(p.seat)) continue; // لا يُؤكل الفريق نفسه
+    if (q.team === p.team) continue; // لا يُؤكل الفريق نفسه
     for (let i = 0; i < 4; i++) {
       const s = q.marbles[i];
       if (s >= 1 && s <= LOOP && absCell(q.seat, s) === c) return { seat: q.seat, marble: i };
@@ -258,10 +279,11 @@ function applyMove(state, p, move) {
 }
 
 function finishTurn(state, p) {
-  // فوز فريق: كل بيادق الشريكين (8) في بيت النهاية
-  for (const team of [0, 1]) {
+  // فوز فريق: كل بيادق أعضائه في بيت النهاية (لاعب واحد في 1ضد1، شريكان في 2ضد2)
+  const teams = [...new Set(state.players.map((q) => q.team))];
+  for (const team of teams) {
     const mates = state.players.filter((q) => q.team === team);
-    const allHome = mates.every((q) => q.marbles.every((s) => s >= HOME_FIRST));
+    const allHome = mates.length > 0 && mates.every((q) => q.marbles.every((s) => s >= HOME_FIRST));
     if (allHome) {
       state.winnerTeam = team;
       state.phase = "over";
