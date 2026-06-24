@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GAMES } from "./games.js";
 import GameArt from "./art/GameArt.jsx";
 import TasksModal from "./TasksModal.jsx";
+import CompetitionsModal from "./CompetitionsModal.jsx";
 import "./gameLobby.css";
 
 /* عدّاد تنازلي حي بصيغة HH:MM:SS أو "Nd Nh" */
@@ -43,6 +44,7 @@ function fmtNum(n) {
 
 export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharge, onOwnerTap, onWalletUpdate }) {
   const [tasksOpen, setTasksOpen] = useState(false); // نافذة المهام اليومية
+  const [compOpen, setCompOpen] = useState(false);   // نافذة المنافسات
   // [page, direction] — صفحة لانهائية (تلتف) مع اتجاه السحب
   const [[page, dir], setPage] = useState([0, 0]);
   const n = GAMES.length;
@@ -194,7 +196,11 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
               className="gl-sec-btn"
               style={{ "--tint": s.tint }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => (s.id === "vip" || s.id === "rooms" ? onOpenRooms?.() : onPlay?.(game, s))}
+              onClick={() => {
+                if (s.id === "vip" || s.id === "rooms") onOpenRooms?.();
+                else if (s.id === "tournaments") setCompOpen(true);
+                else onPlay?.(game, s);
+              }}
             >
               <span className="gl-sec-ico">{s.icon}</span>
               <span>{s.label}</span>
@@ -228,6 +234,9 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
       <AnimatePresence>
         {tasksOpen && (
           <TasksModal key="tasks" onClose={() => setTasksOpen(false)} onWallet={onWalletUpdate} />
+        )}
+        {compOpen && (
+          <CompetitionsModal key="comp" onClose={() => setCompOpen(false)} />
         )}
       </AnimatePresence>
     </div>

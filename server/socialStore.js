@@ -433,6 +433,14 @@ function listClans() {
     .sort((a, b) => b.points - a.points || b.memberCount - a.memberCount);
 }
 
+// مثل listClans لكن مع أعضاء كل قبيلة (uid + الملف العام) — يستخدمه مخزن المنافسات
+// لتجميع نقاط الأعضاء في ترتيب القبائل.
+function listClansDetailed() {
+  return Object.values(state.clans)
+    .map((c) => clanView(c, true))
+    .sort((a, b) => b.points - a.points || b.memberCount - a.memberCount);
+}
+
 function myClan(uid) {
   const me = getUser(uid);
   if (!me || !me.clanId) return null;
@@ -505,6 +513,7 @@ export const socialStore = {
   joinClan,
   leaveClan,
   listClans,
+  listClansDetailed,
   myClan,
   // اللحظات
   postMoment,

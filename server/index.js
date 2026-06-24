@@ -13,6 +13,7 @@ import { giftStore } from "./giftStore.js";
 import { walletStore } from "./walletStore.js";
 import { socialStore } from "./socialStore.js";
 import { taskStore } from "./taskStore.js";
+import { competitionStore } from "./competitionStore.js";
 import {
   roomStore,
   maxAdminsForLevel,
@@ -54,6 +55,7 @@ walletStore.init();
 roomStore.init();
 socialStore.init();
 taskStore.init();
+competitionStore.init();
 
 // أنشئ غرفة المالك الرسمية مرة واحدة إن لم تكن موجودة — أي دي مميز ثابت لا مثيل له.
 function ensureOwnerRoom() {
@@ -456,6 +458,23 @@ app.post("/api/tasks/claim", (req, res) => {
   pushWalletUpdate(uid);
   const { wallet } = walletStore.ensure(uid);
   res.json({ ok: true, reward: result.reward, wallet, status: taskStore.status(uid) });
+});
+
+// ----- المنافسات (الأفراد + القبائل) -----
+// لوحتا صدارة موسميّتان: الأفراد بنقاط مبارياتهم، والقبائل بمجموع نقاط أعضائها.
+app.get("/api/competitions", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  res.json(competitionStore.overview(uid));
+});
+
+// خوض مباراة — يكسب نقاطاً ويُحدّث الترتيب (مع مهلة بين المباريات)
+app.post("/api/competitions/play", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  const result = competitionStore.play(uid);
+  if (!result.ok) return res.status(400).json({ error: result.error, waitMs: result.waitMs });
+  res.json({ ...result, overview: competitionStore.overview(uid) });
 });
 
 const httpServer = createServer(app);

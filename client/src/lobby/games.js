@@ -46,6 +46,7 @@ export const GAMES = [
       { id: "arrow", label: "سهم", icon: "🏹", size: "lg", tint: "#8a6bff" },
     ],
     secondary: [
+      { id: "tournaments", label: "منافسات", icon: "🏆", tint: "#caa23a" },
       { id: "friends", label: "العب مع الأصدقاء", icon: "🧑‍🤝‍🧑", tint: "#5a5f8a" },
     ],
   },
@@ -64,6 +65,7 @@ export const GAMES = [
       { id: "baloot", label: "بلوت", icon: "🃏", size: "wide", tint: "#ff7a3a" },
     ],
     secondary: [
+      { id: "tournaments", label: "منافسات", icon: "🏆", tint: "#caa23a" },
       { id: "vip", label: "غرفة VIP", icon: "👑", tint: "#3a86c8" },
       { id: "friends", label: "العب مع الأصدقاء", icon: "🧑‍🤝‍🧑", tint: "#5a5f8a" },
     ],
@@ -84,6 +86,7 @@ export const GAMES = [
       { id: "fast", label: "سريع", icon: "⚡", size: "lg", tint: "#f0a93a" },
     ],
     secondary: [
+      { id: "tournaments", label: "منافسات", icon: "🏆", tint: "#caa23a" },
       { id: "friends", label: "العب مع الأصدقاء", icon: "🧑‍🤝‍🧑", tint: "#5a5f8a" },
     ],
   },
