@@ -16,6 +16,8 @@ import { profileStore } from "./profileStore.js";
 import { vipIdPrice, vipIdTier, vipIdSuggestions } from "./vipId.js";
 import { taskStore } from "./taskStore.js";
 import { competitionStore } from "./competitionStore.js";
+import { shopStore } from "./shopStore.js";
+import { vipStore } from "./vipStore.js";
 import {
   roomStore,
   maxAdminsForLevel,
@@ -59,6 +61,8 @@ socialStore.init();
 profileStore.init();
 taskStore.init();
 competitionStore.init();
+shopStore.init();
+vipStore.init();
 
 // أنشئ غرفة المالك الرسمية مرة واحدة إن لم تكن موجودة — أي دي مميز ثابت لا مثيل له.
 function ensureOwnerRoom() {
@@ -567,6 +571,144 @@ app.post("/api/competitions/play", (req, res) => {
   const result = competitionStore.play(uid);
   if (!result.ok) return res.status(400).json({ error: result.error, waitMs: result.waitMs });
   res.json({ ...result, overview: competitionStore.overview(uid) });
+});
+
+// ===== متجر الإطارات والخواتم =====
+// كتالوج العناصر مع علم الملكية + المخزون (المُجهَّز حالياً).
+app.get("/api/shop", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  res.json({
+    items: shopStore.catalogFor(uid),
+    inventory: shopStore.inventory(uid),
+    vip: vipStore.isVip(uid),
+  });
+});
+
+// شراء عنصر — يتحقّق من الرصيد والعملة وحصريّة VIP، يخصم ثم يمنح ويُجهّز
+app.post("/api/shop/buy", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  const item = shopStore.catalogFor(uid).find((x) => x.id === req.body?.itemId);
+  if (!item) return res.status(400).json({ error: "عنصر غير معروف" });
+  if (item.owned) return res.status(409).json({ error: "تملك هذا العنصر بالفعل" });
+  if (item.vipOnly && !vipStore.isVip(uid)) {
+    return res.status(403).json({ error: "هذا العنصر حصريّ لمشتركي VIP", vipOnly: true });
+  }
+  if (!socialStore.getUser(uid)) socialStore.registerUser(uid, null, null);
+  const { wallet } = walletStore.ensure(uid);
+  const have = item.currency === "diamonds" ? wallet.diamonds : wallet.coins;
+  if (!wallet.owner && have < item.price) {
+    return res.status(402).json({
+      error: `تحتاج ${item.price.toLocaleString("en-US")} ${item.currency === "diamonds" ? "ألماسة" : "كوين"}`,
+      need: item.price,
+      have,
+      kind: item.currency,
+    });
+  }
+  const paid = walletStore.spend(uid, { [item.currency]: item.price });
+  if (!paid) return res.status(402).json({ error: "الرصيد غير كافٍ", kind: item.currency });
+  const result = shopStore.grant(uid, item.id);
+  pushWalletUpdate(uid);
+  const { wallet: updated } = walletStore.ensure(uid);
+  res.json({ ...result, wallet: updated });
+});
+
+// تجهيز عنصر مملوك (إطار/خاتم)
+app.post("/api/shop/equip", (req, res) =>
+  send(res, shopStore.equip(uidOf(req), req.body?.itemId))
+);
+// إلغاء تجهيز نوع (frame|ring)
+app.post("/api/shop/unequip", (req, res) =>
+  send(res, shopStore.unequip(uidOf(req), req.body?.kind))
+);
+
+// ===== نظام VIP =====
+// حالة العضوية + الخطط المتاحة
+app.get("/api/vip", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  res.json(vipStore.status(uid));
+});
+
+// الاشتراك في VIP — يخصم الألماس ويُفعّل/يجدّد العضوية
+app.post("/api/vip/subscribe", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  const plan = vipStore.VIP_PLANS.find((p) => p.id === req.body?.planId);
+  if (!plan) return res.status(400).json({ error: "خطّة غير معروفة" });
+  if (!socialStore.getUser(uid)) socialStore.registerUser(uid, null, null);
+  const { wallet } = walletStore.ensure(uid);
+  if (!wallet.owner && wallet.diamonds < plan.price) {
+    return res.status(402).json({
+      error: `تحتاج ${plan.price.toLocaleString("en-US")} ألماسة للاشتراك`,
+      need: plan.price,
+      have: wallet.diamonds,
+      kind: "diamonds",
+    });
+  }
+  walletStore.spend(uid, { diamonds: plan.price });
+  const result = vipStore.subscribe(uid, plan.id);
+  pushWalletUpdate(uid);
+  const { wallet: updated } = walletStore.ensure(uid);
+  res.json({ ...result, wallet: updated });
+});
+
+// مسابقة VIP — نظرة عامة على اللوحة والجوائز
+app.get("/api/vip/competition", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  res.json(vipStore.compOverview(uid));
+});
+
+// جولة في مسابقة VIP (للمشتركين فقط)
+app.post("/api/vip/competition/play", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  const result = vipStore.play(uid);
+  if (!result.ok) return res.status(400).json({ error: result.error, waitMs: result.waitMs });
+  res.json({ ...result, overview: vipStore.compOverview(uid) });
+});
+
+// استلام جائزة الأسبوع — يُضيف الألماس للمحفظة
+app.post("/api/vip/competition/claim", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  const result = vipStore.claimPrize(uid);
+  if (!result.ok) return res.status(400).json({ error: result.error });
+  walletStore.credit(uid, { diamonds: result.diamonds });
+  pushWalletUpdate(uid);
+  const { wallet } = walletStore.ensure(uid);
+  res.json({ ...result, wallet, overview: vipStore.compOverview(uid) });
+});
+
+// ===== إنجازات اللعب =====
+// تُحتسب من نشاط المستخدم (المباريات/الفوز/الاجتماعيات/المقتنيات/VIP).
+app.get("/api/achievements", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  const comp = competitionStore.overview(uid).me || {};
+  const friendCount = socialStore.friendStatus(uid).friends.length;
+  const mar = socialStore.marriageStatus(uid);
+  const myClan = socialStore.myClan(uid);
+  const inv = shopStore.inventory(uid);
+  const vip = vipStore.isVip(uid);
+  const owner = walletStore.isOwner(uid);
+
+  const ach = [
+    { id: "first_match", icon: "🎮", title: "أول مباراة", desc: "خُض مباراتك الأولى", goal: 1, progress: comp.matches || 0 },
+    { id: "veteran",     icon: "⚔️", title: "محارب", desc: "خُض 10 مباريات", goal: 10, progress: comp.matches || 0 },
+    { id: "champion",    icon: "🏆", title: "بطل", desc: "حقّق 5 انتصارات", goal: 5, progress: comp.wins || 0 },
+    { id: "scorer",      icon: "💯", title: "جامع النقاط", desc: "اجمع 1000 نقطة منافسة", goal: 1000, progress: comp.points || 0 },
+    { id: "social",      icon: "🤝", title: "اجتماعي", desc: "أضف 3 أصدقاء", goal: 3, progress: friendCount },
+    { id: "married",     icon: "💍", title: "ارتباط", desc: "تزوّج في المحكمة", goal: 1, progress: mar.partner ? 1 : 0 },
+    { id: "tribe",       icon: "🛡️", title: "ابن القبيلة", desc: "انضم لقبيلة", goal: 1, progress: myClan ? 1 : 0 },
+    { id: "collector",   icon: "💍", title: "هاوي المقتنيات", desc: "امتلك إطاراً أو خاتماً", goal: 1, progress: inv.owned.length ? 1 : 0 },
+    { id: "vip",         icon: "💎", title: "عضو VIP", desc: "اشترك في VIP", goal: 1, progress: vip ? 1 : 0 },
+    { id: "owner",       icon: "👑", title: "المالك", desc: "مالك اللعبة", goal: 1, progress: owner ? 1 : 0 },
+  ].map((a) => ({ ...a, done: a.progress >= a.goal, progress: Math.min(a.progress, a.goal) }));
+
+  res.json({ achievements: ach, unlocked: ach.filter((a) => a.done).length, total: ach.length });
 });
 
 const httpServer = createServer(app);

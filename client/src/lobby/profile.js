@@ -41,3 +41,25 @@ export const songs = {
   add: (title, artist) => jpost("/api/songs", { title, artist }),
   vote: (songId) => jpost("/api/songs/vote", { songId }),
 };
+
+// ===== إنجازات اللعب =====
+export const achievements = {
+  list: () => jget("/api/achievements"),
+};
+
+// ===== متجر الإطارات والخواتم =====
+export const shop = {
+  list: () => jget("/api/shop"),
+  buy: (itemId) => jpost("/api/shop/buy", { itemId }),
+  equip: (itemId) => jpost("/api/shop/equip", { itemId }),
+  unequip: (kind) => jpost("/api/shop/unequip", { kind }),
+};
+
+// ===== نظام VIP =====
+export const vip = {
+  status: () => jget("/api/vip"),
+  subscribe: (planId) => jpost("/api/vip/subscribe", { planId }),
+  competition: () => jget("/api/vip/competition"),
+  play: () => jpost("/api/vip/competition/play"),
+  claim: () => jpost("/api/vip/competition/claim"),
+};

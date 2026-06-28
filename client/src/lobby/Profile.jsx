@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getMyShortId } from "./social.js";
+import { vip as vipApi, shop as shopApi } from "./profile.js";
 import VipIdModal from "./VipIdModal.jsx";
 import VisitorsModal from "./VisitorsModal.jsx";
 import SongsModal from "./SongsModal.jsx";
@@ -9,19 +10,22 @@ import BadgeModal from "./BadgeModal.jsx";
 import BagModal from "./BagModal.jsx";
 import HomeModal from "./HomeModal.jsx";
 import MomentsModal from "./MomentsModal.jsx";
-import CompetitionsModal from "./CompetitionsModal.jsx";
+import AchievementsModal from "./AchievementsModal.jsx";
+import ShopModal from "./ShopModal.jsx";
+import VipModal from "./VipModal.jsx";
 
 // أيقونات الوصول السريع في الملف الشخصي — كل واحدة تفتح نظامها
 const QUICK = [
   { id: "visitors", label: "الزوار", icon: "🔷", tint: "#2bb3e0" },
   { id: "home", label: "المنزل", icon: "🏠", tint: "#e0563a" },
   { id: "store", label: "المتجر", icon: "🏪", tint: "#2bbf8e", action: "store" },
-  { id: "vip", label: "مركز VIP", icon: "💎", tint: "#f5c451", action: "vip" },
+  { id: "vip", label: "مركز VIP", icon: "💎", tint: "#f5c451" },
 ];
 
 const ROWS = [
   { id: "moments", label: "لحظاتي", icon: "📖" },
   { id: "achievements", label: "إنجازات اللعب", icon: "🏆" },
+  { id: "shop", label: "الإطارات والخواتم", icon: "🛍️" },
   { id: "bag", label: "الحقيبة", icon: "🎒" },
   { sep: true },
   { id: "vipid", label: "أي دي مميز", icon: "🆔" },
@@ -34,12 +38,26 @@ export default function Profile({ user, wallet, onRecharge, onOwnerTap, onWallet
   const name = user?.name || "Mohammad";
   const id = getMyShortId() || "52117491";
   const [open, setOpen] = useState(null); // أي نظام مفتوح
+  const [isVip, setIsVip] = useState(false);
+  const [worn, setWorn] = useState({ frame: null, ring: null }); // emoji المُجهَّز
+
+  // اجلب حالة VIP والمقتنيات المُجهَّزة (إطار/خاتم) لعرضها في رأس الملف
+  function refresh() {
+    vipApi.status().then((s) => setIsVip(!!s.vip)).catch(() => {});
+    shopApi.list().then((d) => {
+      const byId = Object.fromEntries((d.items || []).map((it) => [it.id, it.emoji]));
+      setWorn({ frame: byId[d.inventory?.frame] || null, ring: byId[d.inventory?.ring] || null });
+    }).catch(() => {});
+  }
+  useEffect(() => { refresh(); }, []);
 
   function handleQuick(q) {
     if (q.action === "store") return onRecharge?.("coins");
-    if (q.action === "vip") return onRecharge?.("diamonds");
-    setOpen(q.id); // visitors | home
+    setOpen(q.id); // visitors | home | vip
   }
+
+  // عند إغلاق أي نظام، أعد تحميل الحالة (قد يكون اشترك VIP أو جهّز إطاراً)
+  const close = () => { setOpen(null); refresh(); };
 
   return (
     <div className="pf">
@@ -51,17 +69,20 @@ export default function Profile({ user, wallet, onRecharge, onOwnerTap, onWallet
         <div className="pf-id-block">
           <div className="pf-name">
             <span className="pf-spark">✨</span>
-            <span className="pf-frame-ico">🦌</span>
+            {worn.ring && <span className="pf-ring-ico">{worn.ring}</span>}
+            <span className="pf-frame-ico">{worn.frame || "🦌"}</span>
             <span className="pf-name-text">{name}</span>
+            {isVip && <span className="vip-badge">VIP</span>}
           </div>
           <div className="pf-id">🆔 ID: {id}</div>
         </div>
         <motion.button
-          className="pf-avatar"
+          className={`pf-avatar ${worn.frame ? "framed" : ""}`}
           whileTap={{ scale: 0.93 }}
           onClick={(e) => { if (e.detail >= 2) onOwnerTap?.(); }}
         >
           <span>{wallet?.infinite ? "👑" : user?.avatar || "🧑🏻"}</span>
+          {worn.frame && <span className="pf-avatar-frame">{worn.frame}</span>}
         </motion.button>
       </header>
 
@@ -100,16 +121,24 @@ export default function Profile({ user, wallet, onRecharge, onOwnerTap, onWallet
       <AnimatePresence>
         {open === "vipid" && (
           <VipIdModal key="vipid" wallet={wallet} onWalletUpdate={onWalletUpdate}
-            onRecharge={onRecharge} onClose={() => setOpen(null)} />
+            onRecharge={onRecharge} onClose={close} />
         )}
-        {open === "visitors" && <VisitorsModal key="visitors" onClose={() => setOpen(null)} />}
-        {open === "home" && <HomeModal key="home" user={user} onRecharge={onRecharge} onClose={() => setOpen(null)} />}
-        {open === "songs" && <SongsModal key="songs" onClose={() => setOpen(null)} />}
-        {open === "invite" && <InviteModal key="invite" onClose={() => setOpen(null)} />}
-        {open === "badge" && <BadgeModal key="badge" wallet={wallet} onClose={() => setOpen(null)} />}
-        {open === "bag" && <BagModal key="bag" wallet={wallet} onClose={() => setOpen(null)} />}
-        {open === "moments" && <MomentsModal key="moments" onClose={() => setOpen(null)} />}
-        {open === "achievements" && <CompetitionsModal key="ach" onClose={() => setOpen(null)} />}
+        {open === "visitors" && <VisitorsModal key="visitors" onClose={close} />}
+        {open === "home" && <HomeModal key="home" user={user} onRecharge={onRecharge} onClose={close} />}
+        {open === "songs" && <SongsModal key="songs" onClose={close} />}
+        {open === "invite" && <InviteModal key="invite" onClose={close} />}
+        {open === "badge" && <BadgeModal key="badge" wallet={wallet} onClose={close} />}
+        {open === "bag" && <BagModal key="bag" wallet={wallet} onClose={close} />}
+        {open === "moments" && <MomentsModal key="moments" onClose={close} />}
+        {open === "achievements" && <AchievementsModal key="ach" onClose={close} />}
+        {open === "shop" && (
+          <ShopModal key="shop" wallet={wallet} onWalletUpdate={onWalletUpdate}
+            onRecharge={onRecharge} onClose={close} />
+        )}
+        {open === "vip" && (
+          <VipModal key="vip" wallet={wallet} onWalletUpdate={onWalletUpdate}
+            onRecharge={onRecharge} onClose={close} />
+        )}
       </AnimatePresence>
     </div>
   );

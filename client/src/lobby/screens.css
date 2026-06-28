@@ -619,3 +619,67 @@
 .home-host-ava { width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; font-size: 32px; background: radial-gradient(circle at 50% 30%, #e0563a, #15101f); border: 2px solid rgba(255,255,255,0.15); }
 .home-host-name { font-size: 15px; font-weight: 800; color: #f1e7fb; }
 .home-deco { display: flex; justify-content: center; gap: 16px; font-size: 26px; margin-top: 6px; }
+
+/* ===== الإطار/الخاتم المُجهَّز على رأس الملف ===== */
+.pf-ring-ico { font-size: 18px; }
+.pf-avatar.framed { border-color: #f5c451; box-shadow: 0 0 0 2px rgba(245,196,81,0.35), 0 6px 18px rgba(0,0,0,0.5); }
+.pf-avatar { position: relative; }
+.pf-avatar-frame { position: absolute; bottom: -4px; right: -4px; font-size: 22px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+
+/* ===== إنجازات اللعب ===== */
+.ach-list { display: flex; flex-direction: column; gap: 9px; }
+.ach-card {
+  display: flex; align-items: center; gap: 11px; padding: 11px 12px; border-radius: 14px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09);
+}
+.ach-card.done { background: rgba(245,196,81,0.1); border-color: rgba(245,196,81,0.28); }
+.ach-ico { font-size: 26px; line-height: 1; flex: 0 0 auto; }
+.ach-info { flex: 1; min-width: 0; }
+.ach-title { font-size: 14px; font-weight: 800; color: #f1e7fb; display: flex; align-items: center; gap: 7px; }
+.ach-tag { font-size: 9px; font-weight: 900; color: #04221c; background: linear-gradient(135deg, #1fd0b0, #14a98c); padding: 1px 6px; border-radius: 6px; }
+.ach-desc { font-size: 11px; color: #b9a8c7; margin: 2px 0 6px; }
+.ach-bar { height: 5px; border-radius: 4px; background: rgba(0,0,0,0.35); overflow: hidden; }
+.ach-bar-fill { height: 100%; background: linear-gradient(90deg, #f5c451, #d9a72f); border-radius: 4px; }
+.ach-prog { font-size: 11px; font-weight: 800; color: #d8c8e6; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+
+/* ===== متجر الإطارات والخواتم ===== */
+.shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.shop-card {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px;
+  padding: 14px 6px 10px; border-radius: 14px; text-align: center;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+}
+.shop-card.equipped { background: rgba(245,196,81,0.12); border-color: rgba(245,196,81,0.4); }
+.shop-card.vip-locked { opacity: 0.85; }
+.shop-emoji { font-size: 34px; line-height: 1; }
+.shop-name { font-size: 11px; font-weight: 800; color: #f1e7fb; }
+.shop-vip-tag { position: absolute; top: 6px; left: 6px; font-size: 8px; font-weight: 900; color: #04221c; background: linear-gradient(135deg, #f5c451, #d9a72f); padding: 1px 5px; border-radius: 5px; }
+.shop-price.locked { font-size: 11px; font-weight: 800; color: #f5c451; }
+
+/* ===== مركز VIP ===== */
+.vip-status {
+  margin: 0 14px 4px; padding: 10px 14px; border-radius: 14px; text-align: center;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+}
+.vip-status.on { background: linear-gradient(135deg, rgba(245,196,81,0.18), rgba(176,107,255,0.12)); border-color: rgba(245,196,81,0.35); }
+.vip-status-badge { font-size: 14px; font-weight: 900; color: #f5c451; }
+.vip-status-sub { display: block; font-size: 12px; color: #cdbcd8; margin-top: 3px; }
+
+.vip-perks { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.vip-perk { display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 12px; font-size: 12px; color: #e8dcf2; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); font-size: 20px; }
+.vip-perk span { font-size: 12px; font-weight: 700; }
+
+.vip-plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.vip-plan {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px;
+  padding: 14px 6px; border-radius: 14px; text-align: center;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+}
+.vip-plan.popular { border-color: rgba(245,196,81,0.45); background: rgba(245,196,81,0.08); }
+.vip-plan-tag { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 8px; font-weight: 900; color: #04221c; background: linear-gradient(135deg, #f5c451, #d9a72f); padding: 2px 7px; border-radius: 6px; }
+.vip-plan-name { font-size: 13px; font-weight: 900; }
+.vip-plan-days { font-size: 11px; color: #b9a8c7; font-weight: 700; }
+
+.vip-prizes { display: flex; flex-direction: column; gap: 6px; }
+.vip-prize { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-radius: 11px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); font-size: 13px; font-weight: 800; color: #e8dcf2; }
+.vip-prize-amt { color: #36c5f0; font-weight: 900; font-variant-numeric: tabular-nums; }

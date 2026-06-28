@@ -14,3 +14,5 @@ server/social.json
 server/songs.json
 server/tasks.json
 server/competitions.json
+server/shop.json
+server/vip.json
