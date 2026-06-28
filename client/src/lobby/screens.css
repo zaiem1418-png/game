@@ -652,6 +652,21 @@
 .shop-card.equipped { background: rgba(245,196,81,0.12); border-color: rgba(245,196,81,0.4); }
 .shop-card.vip-locked { opacity: 0.85; }
 .shop-emoji { font-size: 34px; line-height: 1; }
+/* خاتم مزخرف: هالة لونية متوهّجة حول الرمز */
+.shop-emoji.ring {
+  display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--glow, #fff) 38%, transparent), transparent 70%);
+  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--glow, #fff) 55%, transparent),
+              inset 0 0 8px color-mix(in srgb, var(--glow, #fff) 30%, transparent);
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--glow, #fff) 70%, transparent));
+  animation: shopRingGlow 2.4s ease-in-out infinite;
+}
+@keyframes shopRingGlow {
+  0%, 100% { box-shadow: 0 0 8px 1px color-mix(in srgb, var(--glow, #fff) 45%, transparent),
+                          inset 0 0 6px color-mix(in srgb, var(--glow, #fff) 25%, transparent); }
+  50%      { box-shadow: 0 0 16px 3px color-mix(in srgb, var(--glow, #fff) 70%, transparent),
+                          inset 0 0 10px color-mix(in srgb, var(--glow, #fff) 40%, transparent); }
+}
 .shop-name { font-size: 11px; font-weight: 800; color: #f1e7fb; }
 .shop-vip-tag { position: absolute; top: 6px; left: 6px; font-size: 8px; font-weight: 900; color: #04221c; background: linear-gradient(135deg, #f5c451, #d9a72f); padding: 1px 5px; border-radius: 5px; }
 .shop-price.locked { font-size: 11px; font-weight: 800; color: #f5c451; }

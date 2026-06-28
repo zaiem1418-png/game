@@ -69,7 +69,12 @@ export default function ShopModal({ wallet, onWalletUpdate, onRecharge, onClose 
               return (
                 <div key={it.id} className={`shop-card ${it.equipped ? "equipped" : ""} ${locked ? "vip-locked" : ""}`}>
                   {it.vipOnly && <span className="shop-vip-tag">VIP</span>}
-                  <span className="shop-emoji">{it.emoji}</span>
+                  <span
+                    className={`shop-emoji ${it.kind === "ring" ? "ring" : ""}`}
+                    style={it.glow ? { "--glow": it.glow } : undefined}
+                  >
+                    {it.emoji}
+                  </span>
                   <span className="shop-name">{it.name}</span>
                   {it.owned ? (
                     <button className={`soc-btn sm ${it.equipped ? "ghost" : "ok"}`} disabled={busy === it.id}
