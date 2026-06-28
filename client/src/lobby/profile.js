@@ -35,6 +35,12 @@ export const visitors = {
   list: () => jget("/api/profile/visitors"),
 };
 
+// ===== دفتر الزوّار (اشتراك شهري يفتح قائمة الزوّار) =====
+export const guestbook = {
+  status: () => jget("/api/profile/guestbook"),
+  buy: () => jpost("/api/profile/guestbook/buy"),
+};
+
 // ===== مساهمة الأغاني =====
 export const songs = {
   list: () => jget("/api/songs"),

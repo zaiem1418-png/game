@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getMyShortId } from "./social.js";
-import { vip as vipApi, shop as shopApi } from "./profile.js";
+import { vip as vipApi, shop as shopApi, guestbook as guestbookApi } from "./profile.js";
 import VipIdModal from "./VipIdModal.jsx";
 import VisitorsModal from "./VisitorsModal.jsx";
 import SongsModal from "./SongsModal.jsx";
@@ -40,10 +40,12 @@ export default function Profile({ user, wallet, onRecharge, onOwnerTap, onWallet
   const [open, setOpen] = useState(null); // أي نظام مفتوح
   const [isVip, setIsVip] = useState(false);
   const [worn, setWorn] = useState({ frame: null, ring: null }); // emoji المُجهَّز
+  const [gbActive, setGbActive] = useState(true); // هل دفتر الزوّار مفعّل؟ (لإظهار علامة القفل)
 
   // اجلب حالة VIP والمقتنيات المُجهَّزة (إطار/خاتم) لعرضها في رأس الملف
   function refresh() {
     vipApi.status().then((s) => setIsVip(!!s.vip)).catch(() => {});
+    guestbookApi.status().then((g) => setGbActive(!!g.active)).catch(() => {});
     shopApi.list().then((d) => {
       const byId = Object.fromEntries((d.items || []).map((it) => [it.id, it.emoji]));
       setWorn({ frame: byId[d.inventory?.frame] || null, ring: byId[d.inventory?.ring] || null });
@@ -95,7 +97,10 @@ export default function Profile({ user, wallet, onRecharge, onOwnerTap, onWallet
             whileTap={{ scale: 0.92 }}
             onClick={() => handleQuick(q)}
           >
-            <span className="pf-quick-ico" style={{ color: q.tint }}>{q.icon}</span>
+            <span className="pf-quick-ico" style={{ color: q.tint }}>
+              {q.icon}
+              {q.id === "visitors" && !gbActive && <span className="pf-quick-lock">🔒</span>}
+            </span>
             <span className="pf-quick-lbl">{q.label}</span>
           </motion.button>
         ))}
@@ -123,7 +128,10 @@ export default function Profile({ user, wallet, onRecharge, onOwnerTap, onWallet
           <VipIdModal key="vipid" wallet={wallet} onWalletUpdate={onWalletUpdate}
             onRecharge={onRecharge} onClose={close} />
         )}
-        {open === "visitors" && <VisitorsModal key="visitors" onClose={close} />}
+        {open === "visitors" && (
+          <VisitorsModal key="visitors" wallet={wallet} onWalletUpdate={onWalletUpdate}
+            onRecharge={onRecharge} onClose={close} />
+        )}
         {open === "home" && <HomeModal key="home" user={user} onRecharge={onRecharge} onClose={close} />}
         {open === "songs" && <SongsModal key="songs" onClose={close} />}
         {open === "invite" && <InviteModal key="invite" onClose={close} />}

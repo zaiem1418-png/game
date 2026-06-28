@@ -298,8 +298,19 @@
 
 .pf-quick { position: relative; z-index: 2; display: flex; justify-content: space-around; padding: 8px 12px 16px; }
 .pf-quick-btn { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #e8dcd5; }
-.pf-quick-ico { font-size: 30px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)); }
+.pf-quick-ico { position: relative; font-size: 30px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)); }
 .pf-quick-lbl { font-size: 12px; }
+/* علامة القفل فوق أيقونة الزوّار قبل شراء دفتر الزوّار */
+.pf-quick-lock { position: absolute; right: -6px; bottom: -2px; font-size: 14px; filter: none;
+  background: rgba(0,0,0,0.45); border-radius: 50%; padding: 1px 2px; line-height: 1; }
+
+/* شاشة فتح دفتر الزوّار (تظهر داخل نافذة الزوّار عندما يكون مقفلاً) */
+.gb-lock { display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: 12px; padding: 26px 18px; }
+.gb-lock-ico { font-size: 56px; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.4)); }
+.gb-lock-title { margin: 0; font-size: 18px; color: #f3ece7; }
+.gb-lock-desc { margin: 0; font-size: 13px; line-height: 1.7; color: #b9ada4; max-width: 320px; }
+.gb-buy { margin-top: 6px; min-width: 220px; }
 
 .pf-rows { display: flex; flex-direction: column; padding: 0 6px; }
 .pf-row {
@@ -539,8 +550,27 @@
 .comp-pts { font-size: 15px; font-weight: 900; color: #36c5f0; font-variant-numeric: tabular-nums; }
 
 /* اللحظات */
-.moment-compose { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 16px; }
-.moment-input { flex: 1; resize: none; padding: 11px 14px; border-radius: 14px; font-size: 14px; font-family: inherit; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); color: #f1e7fb; outline: none; }
+.moment-compose { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.moment-input { width: 100%; resize: none; padding: 11px 14px; border-radius: 14px; font-size: 14px; font-family: inherit; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); color: #f1e7fb; outline: none; }
+/* شريط أزرار الإرفاق + النشر */
+.moment-actions { display: flex; align-items: center; gap: 8px; }
+.moment-attach {
+  display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+  color: #e3d6f0; font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 12px;
+}
+.moment-attach:active { transform: scale(0.95); background: rgba(255,255,255,0.12); }
+.moment-actions .soc-btn { margin-inline-start: auto; }
+/* معاينة الوسائط قبل النشر */
+.moment-preview { position: relative; align-self: flex-start; max-width: 200px; }
+.moment-preview-media { display: block; max-width: 200px; max-height: 200px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); }
+.moment-preview-x {
+  position: absolute; top: 6px; inset-inline-end: 6px; width: 26px; height: 26px; border-radius: 50%;
+  border: none; cursor: pointer; background: rgba(0,0,0,0.6); color: #fff; font-size: 13px; line-height: 1;
+}
+/* الوسائط داخل بطاقة اللحظة */
+.moment-media { margin: 0 0 10px; }
+.moment-media-el { display: block; width: 100%; max-height: 340px; object-fit: cover; border-radius: 12px; background: #000; border: 1px solid rgba(255,255,255,0.08); }
 .moment-card { padding: 13px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); margin-bottom: 10px; }
 .moment-top { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
 .moment-author { font-size: 14px; font-weight: 800; color: #efe6f5; }

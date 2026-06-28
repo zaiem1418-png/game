@@ -74,6 +74,6 @@ export const clans = {
 // ===== اللحظات =====
 export const moments = {
   list: () => jget("/api/social/moments"),
-  post: (text) => jpost("/api/social/moments", { text }),
+  post: (text, media) => jpost("/api/social/moments", { text, media }),
   like: (momentId) => jpost("/api/social/moments/like", { momentId }),
 };

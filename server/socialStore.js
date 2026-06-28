@@ -500,12 +500,28 @@ function myClan(uid) {
 
 // ===== اللحظات: المنشورات =====
 
-function postMoment(uid, text) {
+// يتحقّق من وسائط اللحظة (صورة/فيديو) المُرسلة كـ data URL ويُرجعها بعد التنقية،
+// أو null إن لم تكن صالحة. حدود الحجم تمنع تضخّم ملف الحفظ.
+function cleanMedia(media) {
+  if (!media || typeof media !== "object") return null;
+  const type = media.type === "video" ? "video" : media.type === "image" ? "image" : null;
+  const data = typeof media.data === "string" ? media.data : "";
+  if (!type || !data) return null;
+  const prefix = type === "video" ? "data:video/" : "data:image/";
+  if (!data.startsWith(prefix)) return null;
+  // حدود تقريبية لطول الـ base64 (الفيديو أكبر) — تتوافق مع حدّ الجسم 12mb
+  const maxLen = type === "video" ? 11_000_000 : 4_000_000;
+  if (data.length > maxLen) return null;
+  return { type, data };
+}
+
+function postMoment(uid, text, media) {
   uid = cleanUid(uid);
   if (!getUser(uid)) return { ok: false, error: "سجّل دخولك أولاً" };
   text = cleanText(text, 280);
-  if (!text) return { ok: false, error: "اكتب شيئاً لنشره" };
-  const m = { id: rid(), uid, text, ts: Date.now(), likes: [] };
+  const safeMedia = cleanMedia(media);
+  if (!text && !safeMedia) return { ok: false, error: "اكتب شيئاً أو أضف صورة/فيديو لنشره" };
+  const m = { id: rid(), uid, text, media: safeMedia, ts: Date.now(), likes: [] };
   state.moments.unshift(m);
   if (state.moments.length > 300) state.moments.length = 300; // سقف بسيط
   persist();
@@ -516,6 +532,7 @@ function momentView(m, viewerUid) {
   return {
     id: m.id,
     text: m.text,
+    media: m.media || null,
     ts: m.ts,
     author: publicUser(m.uid),
     likeCount: m.likes.length,

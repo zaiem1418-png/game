@@ -18,6 +18,7 @@ import { taskStore } from "./taskStore.js";
 import { competitionStore } from "./competitionStore.js";
 import { shopStore } from "./shopStore.js";
 import { vipStore } from "./vipStore.js";
+import { guestbookStore } from "./guestbookStore.js";
 import {
   roomStore,
   maxAdminsForLevel,
@@ -63,6 +64,7 @@ taskStore.init();
 competitionStore.init();
 shopStore.init();
 vipStore.init();
+guestbookStore.init();
 
 // أنشئ غرفة المالك الرسمية مرة واحدة إن لم تكن موجودة — أي دي مميز ثابت لا مثيل له.
 function ensureOwnerRoom() {
@@ -88,7 +90,14 @@ ensureOwnerRoom();
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: "256kb" }));
+// محلّل JSON: حدّ صغير افتراضي، وحدّ أكبر لنشر اللحظات (صور/فيديو base64)
+const jsonSmall = express.json({ limit: "256kb" });
+const jsonMedia = express.json({ limit: "12mb" });
+app.use((req, res, next) =>
+  req.method === "POST" && req.path === "/api/social/moments"
+    ? jsonMedia(req, res, next)
+    : jsonSmall(req, res, next)
+);
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 // ===== إصدار توكن الدخول لـ LiveKit (الصوت) =====
@@ -440,7 +449,7 @@ app.get("/api/social/moments", (req, res) => {
 });
 app.post("/api/social/moments", (req, res) => {
   const uid = uidOf(req);
-  const result = socialStore.postMoment(uid, req.body?.text);
+  const result = socialStore.postMoment(uid, req.body?.text, req.body?.media);
   if (result.ok) taskStore.progress(uid, "post_moment"); // مهمة: انشر لحظة
   send(res, result);
 });
@@ -514,10 +523,43 @@ app.post("/api/vip-id/buy", (req, res) => {
 });
 
 // ----- زوّار الملف الشخصي -----
+// تظهر القائمة فقط لمن اشترى «دفتر الزوّار»؛ غير ذلك تُرجَع مقفلة دون كشف الزوّار.
 app.get("/api/profile/visitors", (req, res) => {
   const uid = uidOf(req);
   if (!uid) return res.status(400).json({ error: "uid مطلوب" });
-  res.json({ visitors: socialStore.listVisitors(uid) });
+  const gb = guestbookStore.status(uid);
+  if (!gb.active) return res.json({ locked: true, guestbook: gb, visitors: [] });
+  res.json({ locked: false, guestbook: gb, visitors: socialStore.listVisitors(uid) });
+});
+
+// ----- دفتر الزوّار (اشتراك شهري بالألماس يفتح قائمة الزوّار) -----
+app.get("/api/profile/guestbook", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  res.json(guestbookStore.status(uid));
+});
+
+// شراء/تجديد دفتر الزوّار — يخصم 1000 ألماسة ويُفعّل الاشتراك لمدّة شهر
+app.post("/api/profile/guestbook/buy", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  if (!socialStore.getUser(uid)) socialStore.registerUser(uid, null, null);
+  const price = guestbookStore.GUESTBOOK_PRICE;
+  const { wallet } = walletStore.ensure(uid);
+  if (!wallet.owner && wallet.diamonds < price) {
+    return res.status(402).json({
+      error: `تحتاج ${price.toLocaleString("en-US")} ألماسة`,
+      need: price,
+      have: wallet.diamonds,
+      kind: "diamonds",
+    });
+  }
+  const paid = walletStore.spend(uid, { diamonds: price });
+  if (!paid) return res.status(402).json({ error: "الرصيد غير كافٍ", kind: "diamonds" });
+  const sub = guestbookStore.subscribe(uid);
+  pushWalletUpdate(uid);
+  const { wallet: updated } = walletStore.ensure(uid);
+  res.json({ ok: true, price, wallet: updated, status: sub.status });
 });
 
 // ----- مساهمة الأغاني -----
