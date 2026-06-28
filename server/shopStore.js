@@ -17,12 +17,19 @@ const FILE = join(__dirname, "shop.json");
 // currency: "diamonds" | "coins"
 // glow: لون الهالة المزخرفة حول الخاتم في الواجهة (اختياري)
 export const SHOP_ITEMS = [
-  // ---- الإطارات ----
-  { id: "f_leaf",   kind: "frame", name: "إطار الغزال",   emoji: "🦌", price: 1500,  currency: "diamonds" },
-  { id: "f_flame",  kind: "frame", name: "إطار اللهب",    emoji: "🔥", price: 3000,  currency: "diamonds" },
-  { id: "f_galaxy", kind: "frame", name: "إطار المجرّة",  emoji: "🌌", price: 6000,  currency: "diamonds" },
-  { id: "f_crown",  kind: "frame", name: "إطار التاج",    emoji: "👑", price: 12000, currency: "diamonds", vipOnly: true },
-  { id: "f_phoenix",kind: "frame", name: "إطار العنقاء",  emoji: "🕊️", price: 20000, currency: "diamonds", vipOnly: true },
+  // ---- الإطارات المزخرفة ----
+  { id: "f_leaf",    kind: "frame", name: "إطار الغزال",   emoji: "🦌", price: 60000,  currency: "coins",    glow: "#19e08a" },
+  { id: "f_rose",    kind: "frame", name: "إطار الورد",    emoji: "🌹", price: 1500,   currency: "diamonds", glow: "#ff7eb3" },
+  { id: "f_ocean",   kind: "frame", name: "إطار المحيط",   emoji: "🌊", price: 2200,   currency: "diamonds", glow: "#3a7bff" },
+  { id: "f_flame",   kind: "frame", name: "إطار اللهب",    emoji: "🔥", price: 3000,   currency: "diamonds", glow: "#ff6a00" },
+  { id: "f_ice",     kind: "frame", name: "إطار الجليد",   emoji: "❄️", price: 3600,   currency: "diamonds", glow: "#7fd8ff" },
+  { id: "f_star",    kind: "frame", name: "إطار النجوم",   emoji: "✨", price: 4800,   currency: "diamonds", glow: "#ffe45e" },
+  { id: "f_galaxy",  kind: "frame", name: "إطار المجرّة",  emoji: "🌌", price: 6000,   currency: "diamonds", glow: "#7a5cff" },
+  { id: "f_rainbow", kind: "frame", name: "إطار قوس قزح",  emoji: "🌈", price: 8000,   currency: "diamonds", glow: "#ff5cc8" },
+  { id: "f_crown",   kind: "frame", name: "إطار التاج",    emoji: "👑", price: 12000,  currency: "diamonds", glow: "#ffd700", vipOnly: true },
+  { id: "f_dragon",  kind: "frame", name: "إطار التنّين",  emoji: "🐉", price: 16000,  currency: "diamonds", glow: "#19e08a", vipOnly: true },
+  { id: "f_phoenix", kind: "frame", name: "إطار العنقاء",  emoji: "🕊️", price: 20000,  currency: "diamonds", glow: "#ff6a00", vipOnly: true },
+  { id: "f_diamond", kind: "frame", name: "إطار الألماس",  emoji: "💎", price: 28000,  currency: "diamonds", glow: "#bff0ff", vipOnly: true },
 
   // ---- الخواتم المزخرفة ----
   { id: "r_silver",  kind: "ring", name: "خاتم فضّي",            emoji: "💍", price: 80000, currency: "coins",    glow: "#d8e0ec" },

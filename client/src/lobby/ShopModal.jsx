@@ -70,7 +70,7 @@ export default function ShopModal({ wallet, onWalletUpdate, onRecharge, onClose 
                 <div key={it.id} className={`shop-card ${it.equipped ? "equipped" : ""} ${locked ? "vip-locked" : ""}`}>
                   {it.vipOnly && <span className="shop-vip-tag">VIP</span>}
                   <span
-                    className={`shop-emoji ${it.kind === "ring" ? "ring" : ""}`}
+                    className={`shop-emoji ${it.glow ? "glow" : ""} ${it.kind}`}
                     style={it.glow ? { "--glow": it.glow } : undefined}
                   >
                     {it.emoji}

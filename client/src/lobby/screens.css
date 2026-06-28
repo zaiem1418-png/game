@@ -652,15 +652,17 @@
 .shop-card.equipped { background: rgba(245,196,81,0.12); border-color: rgba(245,196,81,0.4); }
 .shop-card.vip-locked { opacity: 0.85; }
 .shop-emoji { font-size: 34px; line-height: 1; }
-/* خاتم مزخرف: هالة لونية متوهّجة حول الرمز */
-.shop-emoji.ring {
-  display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%;
+/* عنصر مزخرف: هالة لونية متوهّجة حول الرمز (خاتم أو إطار) */
+.shop-emoji.glow {
+  display: grid; place-items: center; width: 52px; height: 52px;
   background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--glow, #fff) 38%, transparent), transparent 70%);
   box-shadow: 0 0 10px 1px color-mix(in srgb, var(--glow, #fff) 55%, transparent),
               inset 0 0 8px color-mix(in srgb, var(--glow, #fff) 30%, transparent);
   filter: drop-shadow(0 0 4px color-mix(in srgb, var(--glow, #fff) 70%, transparent));
   animation: shopRingGlow 2.4s ease-in-out infinite;
 }
+.shop-emoji.glow.ring  { border-radius: 50%; }
+.shop-emoji.glow.frame { border-radius: 16px; border: 2px solid color-mix(in srgb, var(--glow, #fff) 60%, transparent); }
 @keyframes shopRingGlow {
   0%, 100% { box-shadow: 0 0 8px 1px color-mix(in srgb, var(--glow, #fff) 45%, transparent),
                           inset 0 0 6px color-mix(in srgb, var(--glow, #fff) 25%, transparent); }
