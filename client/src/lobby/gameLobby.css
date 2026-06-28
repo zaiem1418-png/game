@@ -59,12 +59,18 @@
   display: flex; align-items: center; gap: 8px; padding: 8px 12px 4px;
 }
 .gl-activities {
+  position: relative;
   display: flex; flex-direction: column; align-items: center; gap: 2px;
   background: linear-gradient(135deg, #f5c451, #e09a2a); color: #3a1d00;
   border: none; cursor: pointer; border-radius: 12px; padding: 5px 8px;
   font-size: 10px; font-weight: 800; box-shadow: 0 4px 12px rgba(245, 196, 81, 0.4);
 }
 .gl-act-ico { font-size: 18px; }
+.gl-act-dot {
+  position: absolute; top: -3px; inset-inline-end: -3px; width: 10px; height: 10px;
+  border-radius: 50%; background: #ff3b50; border: 2px solid #1f0e2e;
+  animation: glDotPulse 1.4s ease-in-out infinite;
+}
 
 .gl-currencies {
   flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;

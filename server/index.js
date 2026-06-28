@@ -19,6 +19,8 @@ import { competitionStore } from "./competitionStore.js";
 import { shopStore } from "./shopStore.js";
 import { vipStore } from "./vipStore.js";
 import { guestbookStore } from "./guestbookStore.js";
+import { gloryStore } from "./gloryStore.js";
+import { PACKAGES, getPackage } from "./packagesStore.js";
 import {
   roomStore,
   maxAdminsForLevel,
@@ -65,6 +67,7 @@ competitionStore.init();
 shopStore.init();
 vipStore.init();
 guestbookStore.init();
+gloryStore.init();
 
 // أنشئ غرفة المالك الرسمية مرة واحدة إن لم تكن موجودة — أي دي مميز ثابت لا مثيل له.
 function ensureOwnerRoom() {
@@ -583,6 +586,7 @@ app.get("/api/tasks", (req, res) => {
   const uid = uidOf(req);
   if (!uid) return res.status(400).json({ error: "uid مطلوب" });
   taskStore.progress(uid, "daily_login");
+  gloryStore.dailyLogin(uid); // مكافأة مجد يومية لتسجيل الدخول
   res.json(taskStore.status(uid));
 });
 
@@ -593,9 +597,45 @@ app.post("/api/tasks/claim", (req, res) => {
   const result = taskStore.claim(uid, req.body?.taskId);
   if (!result.ok) return res.status(400).json({ error: result.error });
   walletStore.credit(uid, { diamonds: result.reward });
+  gloryStore.addPoints(uid, 10); // استلام مهمة يمنح نقاط مجد
   pushWalletUpdate(uid);
   const { wallet } = walletStore.ensure(uid);
   res.json({ ok: true, reward: result.reward, wallet, status: taskStore.status(uid) });
+});
+
+// ----- بطاقة المجد (Glory Pass) -----
+app.get("/api/glory", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  res.json(gloryStore.status(uid));
+});
+app.post("/api/glory/claim", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  const result = gloryStore.claim(uid, req.body?.level);
+  if (!result.ok) return res.status(400).json({ error: result.error });
+  walletStore.credit(uid, result.reward);
+  pushWalletUpdate(uid);
+  const { wallet } = walletStore.ensure(uid);
+  res.json({ ok: true, reward: result.reward, wallet, status: gloryStore.status(uid) });
+});
+
+// ----- الحزم الحصرية (باقات تُشترى بالألماس) -----
+app.get("/api/packages", (_req, res) => {
+  res.json({ packages: PACKAGES });
+});
+app.post("/api/packages/buy", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  const pkg = getPackage(req.body?.packageId);
+  if (!pkg) return res.status(400).json({ error: "باقة غير معروفة" });
+  const paid = walletStore.spend(uid, { diamonds: pkg.priceDiamonds });
+  if (!paid) return res.status(400).json({ error: "رصيد الألماس غير كافٍ" });
+  walletStore.credit(uid, pkg.grant || {});
+  if (pkg.grantItem) shopStore.grant(uid, pkg.grantItem); // عنصر حصري مع الباقة
+  pushWalletUpdate(uid);
+  const { wallet } = walletStore.ensure(uid);
+  res.json({ ok: true, package: pkg, wallet });
 });
 
 // ----- المنافسات (الأفراد + القبائل) -----

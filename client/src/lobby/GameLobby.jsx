@@ -4,6 +4,10 @@ import { GAMES } from "./games.js";
 import GameArt from "./art/GameArt.jsx";
 import TasksModal from "./TasksModal.jsx";
 import CompetitionsModal from "./CompetitionsModal.jsx";
+import GloryModal from "./GloryModal.jsx";
+import PackagesModal from "./PackagesModal.jsx";
+import ActivitiesModal from "./ActivitiesModal.jsx";
+import { tasks as tasksApi, glory as gloryApi } from "./tasks.js";
 import "./gameLobby.css";
 
 /* عدّاد تنازلي حي بصيغة HH:MM:SS أو "Nd Nh" */
@@ -43,8 +47,29 @@ function fmtNum(n) {
 }
 
 export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharge, onOwnerTap, onWalletUpdate }) {
-  const [tasksOpen, setTasksOpen] = useState(false); // نافذة المهام اليومية
-  const [compOpen, setCompOpen] = useState(false);   // نافذة المنافسات
+  const [tasksOpen, setTasksOpen] = useState(false);       // نافذة المهام اليومية
+  const [compOpen, setCompOpen] = useState(false);         // نافذة المنافسات
+  const [gloryOpen, setGloryOpen] = useState(false);       // بطاقة المجد
+  const [packagesOpen, setPackagesOpen] = useState(false); // الحزم الحصرية
+  const [activitiesOpen, setActivitiesOpen] = useState(false); // مركز الأنشطة
+  const [badges, setBadges] = useState({ tasks: 0, glory: 0 }); // عدّادات النقطة الحمراء (جاهز للاستلام)
+
+  // يجلب عدد العناصر القابلة للاستلام لإظهار النقطة الحمراء وإخفائها بعد الاستلام
+  const loadBadges = () => {
+    tasksApi.status().then((s) => setBadges((b) => ({ ...b, tasks: s.claimable || 0 }))).catch(() => {});
+    gloryApi.status().then((s) => setBadges((b) => ({ ...b, glory: s.claimable || 0 }))).catch(() => {});
+  };
+  useEffect(() => { loadBadges(); }, []);
+
+  // فتح نشاط من مركز الأنشطة
+  const openActivity = (key) => {
+    setActivitiesOpen(false);
+    if (key === "tasks") setTasksOpen(true);
+    else if (key === "glory") setGloryOpen(true);
+    else if (key === "packages") setPackagesOpen(true);
+    else if (key === "comp") setCompOpen(true);
+  };
+
   // [page, direction] — صفحة لانهائية (تلتف) مع اتجاه السحب
   const [[page, dir], setPage] = useState([0, 0]);
   const n = GAMES.length;
@@ -88,9 +113,10 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
       <div className="gl-scroll">
         {/* ===== رأس: أنشطة | العملات | البروفايل ===== */}
         <header className="gl-top">
-          <button className="gl-activities">
+          <button className="gl-activities" onClick={() => setActivitiesOpen(true)}>
             <span className="gl-act-ico">🎁</span>
             <span>الأنشطة</span>
+            {(badges.tasks > 0 || badges.glory > 0) && <span className="gl-act-dot" />}
           </button>
 
           <div className="gl-currencies">
@@ -133,7 +159,7 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
           <div className="gl-side gl-side-left">
             <SideIcon icon="🌙" label="رأس السنة الهجرية" />
             <SideIcon icon="🏆" label="كأس العالم" />
-            <GiftBox seconds={giftLeft} />
+            <GiftBox seconds={giftLeft} onClick={() => setPackagesOpen(true)} />
           </div>
 
           {/* المشهد + الشعار (ينزلق عند السحب) */}
@@ -165,8 +191,9 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
           {/* أيقونات يمين */}
           <div className="gl-side gl-side-right">
             <SideIcon icon="🧑‍🤝‍🧑" label="الأصدقاء" />
-            <SideIcon icon="✅" label="المهام" dot onClick={() => setTasksOpen(true)} />
-            <SideIcon icon="🏅" label="بطاقة المجد" timer={fmtDays(gloryLeft)} dot />
+            <SideIcon icon="✅" label="المهام" dot={badges.tasks > 0} onClick={() => setTasksOpen(true)} />
+            <SideIcon icon="🏅" label="بطاقة المجد" timer={fmtDays(gloryLeft)} dot={badges.glory > 0}
+              onClick={() => setGloryOpen(true)} />
           </div>
         </div>
 
@@ -232,8 +259,21 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
       </div>
 
       <AnimatePresence>
+        {activitiesOpen && (
+          <ActivitiesModal key="activities" badges={badges}
+            onOpen={openActivity} onClose={() => setActivitiesOpen(false)} />
+        )}
         {tasksOpen && (
-          <TasksModal key="tasks" onClose={() => setTasksOpen(false)} onWallet={onWalletUpdate} />
+          <TasksModal key="tasks" onWallet={onWalletUpdate}
+            onClose={() => { setTasksOpen(false); loadBadges(); }} />
+        )}
+        {gloryOpen && (
+          <GloryModal key="glory" onWallet={onWalletUpdate}
+            onClose={() => { setGloryOpen(false); loadBadges(); }} />
+        )}
+        {packagesOpen && (
+          <PackagesModal key="packages" wallet={wallet} onWalletUpdate={onWalletUpdate}
+            onRecharge={onRecharge} onClose={() => setPackagesOpen(false)} />
         )}
         {compOpen && (
           <CompetitionsModal key="comp" onClose={() => setCompOpen(false)} />
@@ -324,13 +364,14 @@ function SideIcon({ icon, label, dot, timer, onClick }) {
   );
 }
 
-function GiftBox({ seconds }) {
+function GiftBox({ seconds, onClick }) {
   return (
     <motion.button
       className="gl-sideicon gl-giftbox"
       whileTap={{ scale: 0.92 }}
       animate={{ rotate: [0, -4, 4, -3, 0], scale: [1, 1.06, 1] }}
       transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+      onClick={onClick}
     >
       <span className="gl-side-badge gl-gift-badge">🎁</span>
       <span className="gl-side-lbl">حزمة حصرية</span>

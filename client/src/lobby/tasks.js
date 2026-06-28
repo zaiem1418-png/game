@@ -29,3 +29,15 @@ export const tasks = {
   // استلام مكافأة مهمة مكتملة — يُرجع { reward, wallet, status }
   claim: (taskId) => jpost("/api/tasks/claim", { taskId }),
 };
+
+// بطاقة المجد — مسار مكافآت تراكمي
+export const glory = {
+  status: () => jget("/api/glory"),
+  claim: (level) => jpost("/api/glory/claim", { level }),
+};
+
+// الحزم الحصرية — باقات تُشترى بالألماس
+export const packages = {
+  list: () => jget("/api/packages"),
+  buy: (packageId) => jpost("/api/packages/buy", { packageId }),
+};
