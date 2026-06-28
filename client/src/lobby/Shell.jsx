@@ -27,7 +27,7 @@ export default function Shell({ user, wallet, onRecharge, onOwnerTap, onEnterRoo
         {tab === "rooms" && <VoiceRooms onEnterRoom={onEnterRoom} />}
         {tab === "messages" && <Messages onRecharge={onRecharge} />}
         {tab === "me" && (
-          <Profile user={user} wallet={wallet} onRecharge={onRecharge} onOwnerTap={onOwnerTap} />
+          <Profile user={user} wallet={wallet} onRecharge={onRecharge} onOwnerTap={onOwnerTap} onWalletUpdate={onWalletUpdate} />
         )}
       </div>
 

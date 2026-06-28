@@ -32,8 +32,9 @@ function rid() {
 // الحالة الافتراضية الفارغة
 function emptyState() {
   return {
-    users: {},          // uid -> { uid, shortId, name, avatar, partnerUid, partnerSince, clanId }
+    users: {},          // uid -> { uid, shortId, name, avatar, partnerUid, partnerSince, clanId, vip }
     seq: { user: 100000, clan: 1000 },
+    visits: {},         // uid -> [{ uid, ts }]  (آخر من زار ملفك الشخصي)
     marriageReqs: [],   // { id, fromUid, toUid, ts }
     divorceReqs: [],    // { id, fromUid, toUid, ts }  (طلاق بالتراضي)
     friendReqs: [],     // { id, fromUid, toUid, ts }
@@ -106,6 +107,7 @@ function registerUser(uid, name, avatar) {
       partnerUid: null,
       partnerSince: null,
       clanId: null,
+      vip: false, // معرّف مميّز مشترى؟
     };
     state.users[uid] = u;
   } else {
@@ -128,7 +130,56 @@ function getUserByShortId(shortId) {
 function publicUser(uid) {
   const u = getUser(uid);
   if (!u) return null;
-  return { uid: u.uid, shortId: u.shortId, name: u.name, avatar: u.avatar };
+  return { uid: u.uid, shortId: u.shortId, name: u.name, avatar: u.avatar, vip: !!u.vip };
+}
+
+// ===== الأي دي المميّز (Vanity ID) =====
+
+// يتحقّق أن المعرّف القصير متاح (غير محجوز لمستخدم آخر)
+function isShortIdAvailable(newId, exceptUid = "") {
+  newId = String(newId || "").trim();
+  exceptUid = cleanUid(exceptUid);
+  return !Object.values(state.users).some(
+    (u) => u.uid !== exceptUid && u.shortId === newId
+  );
+}
+
+// يضبط معرّفاً قصيراً مميّزاً للمستخدم (بعد الدفع في الخادم). يرفع علم vip.
+function setShortId(uid, newId) {
+  uid = cleanUid(uid);
+  const me = getUser(uid);
+  if (!me) return { ok: false, error: "سجّل دخولك أولاً" };
+  newId = String(newId || "").trim();
+  if (!/^\d{4,8}$/.test(newId)) return { ok: false, error: "المعرّف يجب أن يكون من 4 إلى 8 أرقام" };
+  if (newId === me.shortId && me.vip) return { ok: false, error: "هذا معرّفك المميّز الحالي" };
+  if (!isShortIdAvailable(newId, uid)) return { ok: false, error: "هذا المعرّف محجوز لمستخدم آخر" };
+  me.shortId = newId;
+  me.vip = true;
+  persist();
+  return { ok: true, user: publicUser(uid) };
+}
+
+// ===== زوّار الملف الشخصي =====
+
+// يسجّل زيارة viewerUid لصاحب المعرّف القصير shortId (لا يسجّل زيارة المرء لنفسه)
+function recordVisit(viewerUid, shortId) {
+  viewerUid = cleanUid(viewerUid);
+  const target = getUserByShortId(shortId);
+  if (!target || !viewerUid || target.uid === viewerUid) return;
+  if (!getUser(viewerUid)) return; // الزائر يجب أن يكون مسجَّلاً ليُعرض
+  const list = state.visits[target.uid] || (state.visits[target.uid] = []);
+  // أزل زيارة سابقة لنفس الزائر ثم أضفه في المقدّمة (أحدث زيارة)
+  const filtered = list.filter((v) => v.uid !== viewerUid);
+  filtered.unshift({ uid: viewerUid, ts: Date.now() });
+  state.visits[target.uid] = filtered.slice(0, 50);
+  persist();
+}
+
+function listVisitors(uid) {
+  uid = cleanUid(uid);
+  return (state.visits[uid] || [])
+    .map((v) => ({ ...publicUser(v.uid), ts: v.ts }))
+    .filter((v) => v.uid);
 }
 
 // ===== المحكمة: الزواج =====
@@ -493,6 +544,11 @@ export const socialStore = {
   getUser,
   getUserByShortId,
   publicUser,
+  // الأي دي المميّز + الزوّار
+  isShortIdAvailable,
+  setShortId,
+  recordVisit,
+  listVisitors,
   // المحكمة
   proposeMarriage,
   acceptMarriage,

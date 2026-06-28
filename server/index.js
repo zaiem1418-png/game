@@ -12,6 +12,8 @@ import { AccessToken } from "livekit-server-sdk";
 import { giftStore } from "./giftStore.js";
 import { walletStore } from "./walletStore.js";
 import { socialStore } from "./socialStore.js";
+import { profileStore } from "./profileStore.js";
+import { vipIdPrice, vipIdTier, vipIdSuggestions } from "./vipId.js";
 import { taskStore } from "./taskStore.js";
 import { competitionStore } from "./competitionStore.js";
 import {
@@ -54,6 +56,7 @@ giftStore.init();
 walletStore.init();
 roomStore.init();
 socialStore.init();
+profileStore.init();
 taskStore.init();
 competitionStore.init();
 
@@ -334,6 +337,8 @@ app.post("/api/social/register", (req, res) => {
 app.get("/api/social/lookup", (req, res) => {
   const u = socialStore.getUserByShortId(req.query.id);
   if (!u) return res.status(404).json({ error: "لا يوجد مستخدم بهذا المعرّف" });
+  // سجّل أن الباحث زار ملف هذا المستخدم (يظهر في «الزوار»)
+  socialStore.recordVisit(uidOf(req), u.shortId);
   res.json({ user: socialStore.publicUser(u.uid) });
 });
 
@@ -437,6 +442,93 @@ app.post("/api/social/moments", (req, res) => {
 });
 app.post("/api/social/moments/like", (req, res) =>
   send(res, socialStore.likeMoment(uidOf(req), req.body?.momentId))
+);
+
+// ----- الأي دي المميّز (Vanity ID) — يُشترى بالألماس -----
+// يجلب المعرّف الحالي + اقتراحات معرّفات متاحة بأسعارها.
+app.get("/api/vip-id", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  const me = socialStore.getUser(uid);
+  // استبعد المعرّفات المحجوزة من الاقتراحات
+  const taken = new Set();
+  // (الاقتراحات تُولّد محلياً؛ نمرّر مجموعة فارغة ونفلتر المحجوز عبر isShortIdAvailable)
+  const suggestions = vipIdSuggestions(taken).filter((s) =>
+    socialStore.isShortIdAvailable(s.id, uid)
+  );
+  res.json({
+    current: me?.shortId || null,
+    vip: !!me?.vip,
+    suggestions,
+  });
+});
+
+// تسعير معرّف يكتبه المستخدم + توفّره
+app.post("/api/vip-id/quote", (req, res) => {
+  const uid = uidOf(req);
+  const id = String(req.body?.id || "").trim();
+  if (!/^\d{4,8}$/.test(id)) {
+    return res.status(400).json({ error: "المعرّف يجب أن يكون من 4 إلى 8 أرقام" });
+  }
+  res.json({
+    id,
+    price: vipIdPrice(id),
+    tier: vipIdTier(id),
+    available: socialStore.isShortIdAvailable(id, uid),
+  });
+});
+
+// شراء معرّف مميّز — يخصم الألماس ويضبطه كرقم قصير للمستخدم
+app.post("/api/vip-id/buy", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  const id = String(req.body?.id || "").trim();
+  if (!/^\d{4,8}$/.test(id)) {
+    return res.status(400).json({ error: "المعرّف يجب أن يكون من 4 إلى 8 أرقام" });
+  }
+  if (!socialStore.isShortIdAvailable(id, uid)) {
+    return res.status(409).json({ error: "هذا المعرّف محجوز لمستخدم آخر" });
+  }
+  const price = vipIdPrice(id);
+  const { wallet } = walletStore.ensure(uid);
+  if (!wallet.owner && wallet.diamonds < price) {
+    return res.status(402).json({
+      error: `تحتاج ${price.toLocaleString("en-US")} ألماسة لهذا المعرّف`,
+      need: price,
+      have: wallet.diamonds,
+      kind: "diamonds",
+    });
+  }
+  // اضمن أن المستخدم مسجّل في الدليل قبل ضبط معرّفه
+  if (!socialStore.getUser(uid)) socialStore.registerUser(uid, null, null);
+  const set = socialStore.setShortId(uid, id);
+  if (!set.ok) return res.status(400).json({ error: set.error });
+  walletStore.spend(uid, { diamonds: price });
+  pushWalletUpdate(uid);
+  const { wallet: updated } = walletStore.ensure(uid);
+  res.json({ ok: true, id, price, wallet: updated, user: set.user });
+});
+
+// ----- زوّار الملف الشخصي -----
+app.get("/api/profile/visitors", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  res.json({ visitors: socialStore.listVisitors(uid) });
+});
+
+// ----- مساهمة الأغاني -----
+app.get("/api/songs", (req, res) => {
+  res.json({ songs: profileStore.list(uidOf(req)) });
+});
+app.post("/api/songs", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  const result = profileStore.add(uid, req.body?.title, req.body?.artist);
+  if (!result.ok) return res.status(400).json({ error: result.error });
+  res.json({ ...result, songs: profileStore.list(uid) });
+});
+app.post("/api/songs/vote", (req, res) =>
+  send(res, profileStore.vote(uidOf(req), req.body?.songId))
 );
 
 // ----- المهام اليومية -----

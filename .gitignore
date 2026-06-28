@@ -11,3 +11,6 @@ dist/
 server/wallets.json
 server/rooms.json
 server/social.json
+server/songs.json
+server/tasks.json
+server/competitions.json
