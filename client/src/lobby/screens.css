@@ -652,22 +652,79 @@
 .shop-card.equipped { background: rgba(245,196,81,0.12); border-color: rgba(245,196,81,0.4); }
 .shop-card.vip-locked { opacity: 0.85; }
 .shop-emoji { font-size: 34px; line-height: 1; }
-/* عنصر مزخرف: هالة لونية متوهّجة حول الرمز (خاتم أو إطار) */
-.shop-emoji.glow {
-  display: grid; place-items: center; width: 52px; height: 52px;
-  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--glow, #fff) 38%, transparent), transparent 70%);
-  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--glow, #fff) 55%, transparent),
-              inset 0 0 8px color-mix(in srgb, var(--glow, #fff) 30%, transparent);
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--glow, #fff) 70%, transparent));
-  animation: shopRingGlow 2.4s ease-in-out infinite;
+
+/* ====== مجسّمات واقعية للخواتم والإطارات (CSS 3D) ====== */
+.shop-art { width: 58px; height: 58px; display: grid; place-items: center; perspective: 240px; }
+
+/* ---- خاتم واقعي: حلقة معدنية لامعة + فصّ كريستالي يلمع ---- */
+.ring3d { position: relative; width: 58px; height: 58px; }
+.ring3d-band {
+  position: absolute; bottom: 5px; left: 50%; width: 44px; height: 44px; margin-left: -22px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #fff7d9, #e9c25a, #9c7a22, #fbe9a3, #c99a2e, #8a6a17, #fff7d9);
+  -webkit-mask: radial-gradient(circle, #0000 54%, #000 56%);
+          mask: radial-gradient(circle, #0000 54%, #000 56%);
+  transform: rotateX(60deg) rotateZ(0deg);
+  transform-origin: 50% 50%;
+  box-shadow: 0 7px 9px -5px rgba(0,0,0,0.65);
+  animation: ring3dSpin 5s linear infinite;
 }
-.shop-emoji.glow.ring  { border-radius: 50%; }
-.shop-emoji.glow.frame { border-radius: 16px; border: 2px solid color-mix(in srgb, var(--glow, #fff) 60%, transparent); }
-@keyframes shopRingGlow {
-  0%, 100% { box-shadow: 0 0 8px 1px color-mix(in srgb, var(--glow, #fff) 45%, transparent),
-                          inset 0 0 6px color-mix(in srgb, var(--glow, #fff) 25%, transparent); }
-  50%      { box-shadow: 0 0 16px 3px color-mix(in srgb, var(--glow, #fff) 70%, transparent),
-                          inset 0 0 10px color-mix(in srgb, var(--glow, #fff) 40%, transparent); }
+.ring3d[data-metal="silver"] .ring3d-band {
+  background: conic-gradient(from 0deg, #ffffff, #cfd8e6, #8794a8, #eef2f8, #aab6c8, #79899e, #ffffff);
+}
+.ring3d-gem {
+  position: absolute; top: 3px; left: 50%; transform: translateX(-50%);
+  width: 23px; height: 23px; display: grid; place-items: center;
+  font-size: 12px; font-style: normal; line-height: 1;
+  background: radial-gradient(circle at 34% 26%, #ffffff, var(--gem) 52%, color-mix(in srgb, var(--gem) 55%, #000) 100%);
+  clip-path: polygon(22% 0, 78% 0, 100% 36%, 50% 100%, 0 36%);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--gem) 75%, transparent);
+  animation: gemTwinkle 2.2s ease-in-out infinite;
+}
+.ring3d-gem::after {
+  content: ""; position: absolute; top: -4px; right: -1px; width: 7px; height: 7px;
+  background:
+    radial-gradient(circle, #fff 0 1px, #0000 2px),
+    linear-gradient(#fff, #fff) center/1.5px 100% no-repeat,
+    linear-gradient(#fff, #fff) center/100% 1.5px no-repeat;
+  opacity: 0; animation: gemSparkle 2.2s ease-in-out infinite;
+}
+
+/* ---- إطار حديث: حلقة شيمر دوّارة حول الوجه ---- */
+.frame3d { position: relative; width: 56px; height: 56px; display: grid; place-items: center; }
+.frame3d-ring {
+  position: absolute; inset: 1px; border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    var(--c), #ffffff, var(--c),
+    color-mix(in srgb, var(--c) 45%, #000), var(--c), #ffffff, var(--c));
+  -webkit-mask: radial-gradient(circle, #0000 60%, #000 63%);
+          mask: radial-gradient(circle, #0000 60%, #000 63%);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 70%, transparent));
+  animation: frame3dSpin 4s linear infinite;
+}
+.frame3d-face {
+  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 19px; font-style: normal; line-height: 1;
+  background: radial-gradient(circle at 50% 32%, rgba(255,255,255,0.20), rgba(0,0,0,0.30));
+  border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  box-shadow: inset 0 0 8px color-mix(in srgb, var(--c) 25%, transparent);
+}
+
+@keyframes ring3dSpin {
+  from { transform: rotateX(60deg) rotateZ(0deg); }
+  to   { transform: rotateX(60deg) rotateZ(360deg); }
+}
+@keyframes frame3dSpin { to { transform: rotate(360deg); } }
+@keyframes gemTwinkle {
+  0%, 100% { filter: brightness(1);    box-shadow: 0 0 8px  color-mix(in srgb, var(--gem) 55%, transparent); }
+  50%      { filter: brightness(1.4);  box-shadow: 0 0 18px color-mix(in srgb, var(--gem) 90%, transparent); }
+}
+@keyframes gemSparkle {
+  0%, 70%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  85%           { opacity: 1; transform: scale(1)   rotate(20deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ring3d-band, .frame3d-ring, .ring3d-gem, .ring3d-gem::after { animation: none; }
 }
 .shop-name { font-size: 11px; font-weight: 800; color: #f1e7fb; }
 .shop-vip-tag { position: absolute; top: 6px; left: 6px; font-size: 8px; font-weight: 900; color: #04221c; background: linear-gradient(135deg, #f5c451, #d9a72f); padding: 1px 5px; border-radius: 5px; }

@@ -69,11 +69,18 @@ export default function ShopModal({ wallet, onWalletUpdate, onRecharge, onClose 
               return (
                 <div key={it.id} className={`shop-card ${it.equipped ? "equipped" : ""} ${locked ? "vip-locked" : ""}`}>
                   {it.vipOnly && <span className="shop-vip-tag">VIP</span>}
-                  <span
-                    className={`shop-emoji ${it.glow ? "glow" : ""} ${it.kind}`}
-                    style={it.glow ? { "--glow": it.glow } : undefined}
-                  >
-                    {it.emoji}
+                  <span className="shop-art">
+                    {it.kind === "ring" ? (
+                      <span className="ring3d" data-metal={it.metal || "gold"} style={{ "--gem": it.glow || "#bff0ff" }}>
+                        <i className="ring3d-band" />
+                        <i className="ring3d-gem">{it.emoji}</i>
+                      </span>
+                    ) : (
+                      <span className="frame3d" style={{ "--c": it.glow || "#ffffff" }}>
+                        <i className="frame3d-ring" />
+                        <i className="frame3d-face">{it.emoji}</i>
+                      </span>
+                    )}
                   </span>
                   <span className="shop-name">{it.name}</span>
                   {it.owned ? (
