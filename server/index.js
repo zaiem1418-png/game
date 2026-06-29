@@ -531,8 +531,22 @@ app.get("/api/profile/visitors", (req, res) => {
   const uid = uidOf(req);
   if (!uid) return res.status(400).json({ error: "uid مطلوب" });
   const gb = guestbookStore.status(uid);
-  if (!gb.active) return res.json({ locked: true, guestbook: gb, visitors: [] });
-  res.json({ locked: false, guestbook: gb, visitors: socialStore.listVisitors(uid) });
+  const all = socialStore.listVisitors(uid);
+  if (!gb.active) {
+    // قبل شراء الدفتر: نكشف صور بروفايل الزوّار فقط (بدون أسماء) مع العدّادات.
+    const DAY = 86_400_000;
+    return res.json({
+      locked: true,
+      guestbook: gb,
+      visitors: [],
+      preview: {
+        total: all.length,
+        recent: all.filter((v) => Date.now() - v.ts < DAY).length,
+        avatars: all.slice(0, 3).map((v) => v.avatar || "🧑🏻"),
+      },
+    });
+  }
+  res.json({ locked: false, guestbook: gb, visitors: all });
 });
 
 // ----- دفتر الزوّار (اشتراك شهري بالألماس يفتح قائمة الزوّار) -----

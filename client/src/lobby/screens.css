@@ -312,6 +312,24 @@
 .gb-lock-desc { margin: 0; font-size: 13px; line-height: 1.7; color: #b9ada4; max-width: 320px; }
 .gb-buy { margin-top: 6px; min-width: 220px; }
 
+/* معاينة الزوّار قبل الشراء — صور بروفايل بلا أسماء + عدّادات */
+.gb-preview { display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: 14px; padding: 28px 18px 24px; }
+.gb-pv-hi { margin: 0; font-size: 18px; color: #f3ece7; }
+.gb-pv-hi strong { color: #2bbf8e; font-weight: 800; }
+.gb-pv-avatars { display: flex; justify-content: center; margin: 6px 0; }
+.gb-pv-ava { width: 76px; height: 76px; border-radius: 50%; overflow: hidden;
+  display: grid; place-items: center; font-size: 36px; background: rgba(0,0,0,0.3);
+  border: 3px solid rgba(255,255,255,0.12); box-shadow: 0 6px 14px rgba(0,0,0,0.35);
+  margin-inline-start: -16px; }
+.gb-pv-ava:first-child { margin-inline-start: 0; }
+.gb-pv-ava img { width: 100%; height: 100%; object-fit: cover; }
+.gb-pv-total { margin: 0; font-size: 15px; color: #cfc6bd; }
+.gb-pv-total strong { color: #2bbf8e; font-weight: 800; }
+.gb-pv-recent { margin: 0; font-size: 15px; color: #cfc6bd; }
+.gb-pv-recent strong { color: #f5a623; font-weight: 800; }
+.gb-pv-buy { margin-top: 14px; min-width: 280px; border-radius: 26px; }
+
 .pf-rows { display: flex; flex-direction: column; padding: 0 6px; }
 .pf-row {
   position: relative; display: flex; align-items: center; gap: 12px; cursor: pointer;

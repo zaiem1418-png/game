@@ -129,7 +129,7 @@ export default function Profile({ user, wallet, onRecharge, onOwnerTap, onWallet
             onRecharge={onRecharge} onClose={close} />
         )}
         {open === "visitors" && (
-          <VisitorsModal key="visitors" wallet={wallet} onWalletUpdate={onWalletUpdate}
+          <VisitorsModal key="visitors" user={user} wallet={wallet} onWalletUpdate={onWalletUpdate}
             onRecharge={onRecharge} onClose={close} />
         )}
         {open === "home" && <HomeModal key="home" user={user} onRecharge={onRecharge} onClose={close} />}

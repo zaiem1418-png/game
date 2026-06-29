@@ -5,10 +5,11 @@ import { visitors, guestbook } from "./profile.js";
 // الزوّار 🔷 — من بحث عن معرّفك ودخل ملفك (الأحدث أولاً).
 // القائمة مقفلة حتى يشتري المستخدم «دفتر الزوّار» (1000 ماسة/شهر). قبل الشراء
 // تظهر شاشة فتح الدفتر بدل القائمة، ولا تُكشف أي بيانات للزوّار.
-export default function VisitorsModal({ wallet, onWalletUpdate, onRecharge, onClose }) {
+export default function VisitorsModal({ user, wallet, onWalletUpdate, onRecharge, onClose }) {
   const [list, setList] = useState(null);
   const [locked, setLocked] = useState(false);
   const [gb, setGb] = useState(null);   // حالة دفتر الزوّار { active, daysLeft, price }
+  const [preview, setPreview] = useState(null); // معاينة قبل الشراء { total, recent, avatars }
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -17,6 +18,7 @@ export default function VisitorsModal({ wallet, onWalletUpdate, onRecharge, onCl
       .then((d) => {
         setLocked(!!d.locked);
         setGb(d.guestbook || null);
+        setPreview(d.preview || null);
         setList(d.visitors || []);
       })
       .catch((e) => setErr(e.message));
@@ -44,8 +46,6 @@ export default function VisitorsModal({ wallet, onWalletUpdate, onRecharge, onCl
     return `قبل ${Math.floor(h / 24)} ي`;
   };
 
-  const price = gb?.price ?? 1000;
-
   return (
     <div className="soc-backdrop" onClick={onClose}>
       <motion.div className="soc-sheet" onClick={(e) => e.stopPropagation()}
@@ -61,17 +61,29 @@ export default function VisitorsModal({ wallet, onWalletUpdate, onRecharge, onCl
           {err && <div className="soc-alert err">{err}</div>}
           {!list && !err && <div className="soc-empty">جارٍ التحميل…</div>}
 
-          {/* مقفل: اعرض شاشة فتح دفتر الزوّار */}
+          {/* مقفل: اعرض معاينة الزوّار (صور بدون أسماء) قبل شراء الدفتر */}
           {list && locked && (
-            <div className="gb-lock">
-              <span className="gb-lock-ico">📒🔒</span>
-              <h3 className="gb-lock-title">دفتر الزوّار مقفل</h3>
-              <p className="gb-lock-desc">
-                اشترِ دفتر الزوّار لتكشف عن كل من زار ملفك الشخصي. الاشتراك شهري
-                ({price.toLocaleString("en-US")} ماسة) ويتجدّد بإرادتك.
+            <div className="gb-preview">
+              <p className="gb-pv-hi">
+                مرحباً، <strong>{user?.name || "صديقي"}</strong> ✨
               </p>
-              <button className="soc-btn ok gb-buy" disabled={busy} onClick={unlock}>
-                {busy ? "جارٍ الشراء…" : `💎 ${price.toLocaleString("en-US")} — افتح الدفتر`}
+              <div className="gb-pv-avatars">
+                {(preview?.avatars?.length ? preview.avatars : ["🧑🏻", "🧑🏻", "🧑🏻"])
+                  .slice(0, 3)
+                  .map((a, i) => (
+                    <span key={i} className="gb-pv-ava">
+                      {/^https?:|^data:/.test(a) ? <img src={a} alt="" /> : a}
+                    </span>
+                  ))}
+              </div>
+              <p className="gb-pv-total">
+                العدد الإجمالي للزوّار <strong>{(preview?.total ?? 0).toLocaleString("en-US")}</strong>
+              </p>
+              <p className="gb-pv-recent">
+                قام <strong>{(preview?.recent ?? 0).toLocaleString("en-US")}</strong> شخص بزيارتك مؤخراً
+              </p>
+              <button className="soc-btn ok gb-pv-buy" disabled={busy} onClick={unlock}>
+                {busy ? "جارٍ الشراء…" : "شراء دفتر الزوّار للتعرف على معلومات الزائر"}
               </button>
             </div>
           )}
