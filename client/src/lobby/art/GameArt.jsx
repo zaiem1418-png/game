@@ -1,7 +1,7 @@
 // ===== مُجمّع المشهد الكامل: قاعة قصر + طاولة + لوحة لعب + شخصيات + قِطع طائرة =====
 // طبقتان: خلفية (Backdrop، تملأ البطاقة) + مقدّمة SVG (طاولة وشخصيات، تتناسب). مرجع 340×280.
 
-import Backdrop from "./Backdrop.jsx";
+import Backdrop, { Candle } from "./Backdrop.jsx";
 import { CHAR_MAP, CardFan } from "./Characters.jsx";
 import { BOARD_MAP } from "./Boards.jsx";
 import { Dice, Token, Marble, Card, Ladder, Snake } from "./Pieces.jsx";
@@ -154,6 +154,10 @@ export default function GameArt({ game }) {
             </g>
           </g>
         ))}
+
+        {/* شمعتان متوهّجتان على طرفي الطاولة */}
+        <Candle x={58} y={205} scale={0.78} gold={game.accent} delay={0} />
+        <Candle x={282} y={205} scale={0.78} gold={game.accent} delay={1.1} />
 
         {/* القِطع الطائرة */}
         {conf.pieces}

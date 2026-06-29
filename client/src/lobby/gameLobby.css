@@ -211,6 +211,21 @@ button.gl-chip-plus:active { transform: scale(0.88); }
   0%, 100% { opacity: 0.25; transform: scale(0.6) rotate(0deg); }
   50% { opacity: 1; transform: scale(1) rotate(45deg); }
 }
+/* دخان البخور المتصاعد المتلاشي */
+.gl-bd-smoke { transform-box: fill-box; transform-origin: bottom center;
+  animation: glSmoke 4s ease-in-out infinite; }
+@keyframes glSmoke {
+  0% { opacity: 0; transform: translateY(4px) scaleY(0.7); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-12px) scaleY(1.25); }
+}
+/* وميض اللهب */
+.gl-bd-flame { transform-box: fill-box; transform-origin: bottom center;
+  animation: glFlame 0.5s ease-in-out infinite alternate; }
+@keyframes glFlame {
+  from { transform: scaleY(0.92) scaleX(1.05) translateX(-0.3px); }
+  to { transform: scaleY(1.08) scaleX(0.95) translateX(0.3px); }
+}
 
 /* مشهد SVG الأصلي (المقدّمة: طاولة + شخصيات) */
 .gl-art {
@@ -230,7 +245,8 @@ button.gl-chip-plus:active { transform: scale(0.88); }
   50% { transform: translateY(-4px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .gl-art-float, .gl-art-char, .gl-bd-sway, .gl-bd-bokeh circle, .gl-bd-twinkle { animation: none; }
+  .gl-art-float, .gl-art-char, .gl-bd-sway, .gl-bd-bokeh circle, .gl-bd-twinkle,
+  .gl-bd-smoke, .gl-bd-flame { animation: none; }
 }
 
 /* الشعار */

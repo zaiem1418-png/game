@@ -121,6 +121,104 @@ function Carpet({ p }) {
   );
 }
 
+/* نافذة زجاجية ملوّنة (vitrail) تملأ داخل القوس بأشعّة ملوّنة وقضبان ذهبية */
+function StainedGlass({ p, uid }) {
+  const cx = 170, cy = 206;          // مركز التشعّع (قاعدة القوس)
+  const a0 = -Math.PI, a1 = 0;        // نصف دائرة علوية
+  const N = 12;                       // عدد الأشعّة
+  const R = 196;                      // طول الشعاع
+  const jewels = ["#d24b4b", p.glow, "#3bb371", p.gold, "#4a7bd2", "#e0a33a"];
+  const wedges = [];
+  for (let i = 0; i < N; i++) {
+    const b0 = a0 + ((a1 - a0) * i) / N;
+    const b1 = a0 + ((a1 - a0) * (i + 1)) / N;
+    const x0 = cx + Math.cos(b0) * R, y0 = cy + Math.sin(b0) * R;
+    const x1 = cx + Math.cos(b1) * R, y1 = cy + Math.sin(b1) * R;
+    wedges.push(
+      <path key={i} d={`M ${cx} ${cy} L ${x0} ${y0} A ${R} ${R} 0 0 1 ${x1} ${y1} Z`}
+        fill={jewels[i % jewels.length]} opacity="0.42" />
+    );
+  }
+  return (
+    <g clipPath={`url(#${uid}-archclip)`}>
+      {wedges}
+      {/* حلقات متّحدة المركز */}
+      {[60, 110, 160].map((r, i) => (
+        <circle key={i} cx={cx} cy={cy} r={r} fill="none" stroke={p.gold} strokeWidth="1.4" opacity="0.5" />
+      ))}
+      {/* قضبان ذهبية شعاعية (cames) */}
+      {Array.from({ length: N + 1 }).map((_, i) => {
+        const b = a0 + ((a1 - a0) * i) / N;
+        return (
+          <line key={i} x1={cx} y1={cy} x2={cx + Math.cos(b) * R} y2={cy + Math.sin(b) * R}
+            stroke={p.gold} strokeWidth="1" opacity="0.45" />
+        );
+      })}
+      {/* روزيتة مركزية صغيرة في أعلى القوس */}
+      <g transform="translate(170 64)">
+        <circle r="14" fill={p.near} opacity="0.5" stroke={p.gold} strokeWidth="1.4" />
+        {Array.from({ length: 8 }).map((_, i) => {
+          const a = (i / 8) * Math.PI * 2;
+          return <circle key={i} cx={Math.cos(a) * 8} cy={Math.sin(a) * 8} r="3.4"
+            fill={jewels[i % jewels.length]} opacity="0.8" />;
+        })}
+        <circle r="3.5" fill={p.gold} />
+      </g>
+      {/* لمعة زجاج */}
+      <ellipse cx="150" cy="90" rx="44" ry="60" fill={`url(#${uid}-sheen)`} />
+    </g>
+  );
+}
+
+/* وسادة مزخرفة بشراشيب (جلسة أرضية) */
+function Cushion({ x, y, scale = 1, color, dark, gold }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${scale})`}>
+      <ellipse cx="0" cy="16" rx="30" ry="8" fill="rgba(0,0,0,0.35)" />
+      <path d="M -30 8 Q -34 -14 -16 -16 Q 0 -22 16 -16 Q 34 -14 30 8 Q 16 18 0 18 Q -16 18 -30 8 Z"
+        fill={color} stroke={dark} strokeWidth="2" />
+      {/* تطريز */}
+      <path d="M -22 -8 Q 0 4 22 -8" fill="none" stroke={gold} strokeWidth="1.4" opacity="0.8" />
+      <path d="M -20 2 Q 0 12 20 2" fill="none" stroke={gold} strokeWidth="1" opacity="0.5" />
+      <ellipse cx="0" cy="-4" rx="6" ry="4" fill={gold} opacity="0.5" />
+      {/* زر مركزي + شراشيب الأركان */}
+      <circle cx="0" cy="-4" r="2.4" fill={gold} />
+      {[-30, 30].map((sx, i) => (
+        <g key={i}>
+          <circle cx={sx} cy="6" r="3" fill={gold} />
+          <path d={`M ${sx} 9 l -2 6 l 4 0 z`} fill={gold} opacity="0.85" />
+        </g>
+      ))}
+    </g>
+  );
+}
+
+/* شمعة متوهّجة مع خيط دخان متصاعد */
+export function Candle({ x, y, scale = 1, gold = "#f5c451", delay = 0 }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${scale})`}>
+      {/* دخان متصاعد */}
+      <g className="gl-bd-smoke" style={{ animationDelay: `${delay}s` }}>
+        <path d="M 0 -16 q 7 -8 0 -16 q -7 -8 0 -16 q 7 -8 1 -16"
+          fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" opacity="0.18" />
+      </g>
+      {/* قاعدة نحاسية */}
+      <ellipse cx="0" cy="10" rx="11" ry="4" fill={gold} opacity="0.85" />
+      <path d="M -7 10 L -5 1 L 5 1 L 7 10 Z" fill={gold} opacity="0.7" />
+      {/* جسم الشمعة */}
+      <rect x="-4" y="-14" width="8" height="16" rx="2" fill="#fbf0d0" stroke="#d8c89a" strokeWidth="0.8" />
+      <rect x="-4" y="-14" width="2.5" height="16" fill="#fff" opacity="0.5" />
+      {/* هالة اللهب */}
+      <ellipse cx="0" cy="-20" rx="9" ry="14" fill="#ffd76a" opacity="0.35" />
+      {/* اللهب */}
+      <g className="gl-bd-flame">
+        <path d="M 0 -30 Q 5 -22 0 -14 Q -5 -22 0 -30 Z" fill="#ffb43a" />
+        <path d="M 0 -27 Q 3 -21 0 -15 Q -3 -21 0 -27 Z" fill="#fff2b0" />
+      </g>
+    </g>
+  );
+}
+
 /* زخرف زاوية ذهبي على شكل قوس صغير */
 function Corner({ x, y, sx, sy, gold }) {
   return (
@@ -183,6 +281,15 @@ export default function Backdrop({ game }) {
         <clipPath id={`${uid}-clip`}>
           <rect x="0" y="0" width="340" height="280" />
         </clipPath>
+        {/* قناع داخل القوس للنافذة الزجاجية الملوّنة */}
+        <clipPath id={`${uid}-archclip`}>
+          <path d={archPath(170, 30, 124, 178)} />
+        </clipPath>
+        {/* لمعان زجاجي */}
+        <radialGradient id={`${uid}-sheen`} cx="50%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </radialGradient>
       </defs>
 
       <g clipPath={`url(#${uid}-clip)`}>
@@ -194,15 +301,8 @@ export default function Backdrop({ game }) {
         <path d={archPath(170, 20, 150, 200)} fill="none" stroke={p.gold} strokeWidth="2.2" opacity="0.5" />
         <path d={archPath(170, 30, 124, 178)} fill="none" stroke={p.gold} strokeWidth="1" opacity="0.35" />
 
-        {/* مشربية: شبكة معيّنات خفيفة داخل القوس */}
-        <g opacity="0.16" stroke={p.gold} strokeWidth="0.7">
-          {Array.from({ length: 7 }).map((_, i) => (
-            <line key={`a${i}`} x1={120 + i * 16} y1="44" x2={120 + i * 16} y2="210" />
-          ))}
-          {Array.from({ length: 9 }).map((_, i) => (
-            <line key={`b${i}`} x1="116" y1={56 + i * 18} x2="224" y2={56 + i * 18} />
-          ))}
-        </g>
+        {/* نافذة زجاجية ملوّنة داخل القوس */}
+        <StainedGlass p={p} uid={uid} />
 
         {/* أشعة ضوء تتدلّى من القوس */}
         <g opacity="0.6">
@@ -255,6 +355,15 @@ export default function Backdrop({ game }) {
         </g>
         <rect x="0" y="234" width="340" height="3" fill="#fff7e0" opacity="0.1" />
         <ellipse cx="170" cy="236" rx="180" ry="20" fill={p.glow} opacity="0.12" />
+
+        {/* انعكاس لامع على الأرضية أسفل الطاولة */}
+        <ellipse cx="170" cy="262" rx="120" ry="22" fill={p.glow} opacity="0.16" />
+        <ellipse cx="170" cy="258" rx="90" ry="13" fill="#fff7e0" opacity="0.1" />
+        <rect x="150" y="236" width="40" height="44" fill={`url(#${uid}-sheen)`} opacity="0.5" />
+
+        {/* وسائد جلوس مزخرفة في زاويتي الأرضية */}
+        <Cushion x={40} y={250} scale={0.9} color={p.warm} dark={p.near} gold={p.gold} />
+        <Cushion x={300} y={250} scale={0.9} color={p.warm} dark={p.near} gold={p.gold} />
 
         {/* سجادة شرقية أمام الطاولة */}
         <Carpet p={p} />
