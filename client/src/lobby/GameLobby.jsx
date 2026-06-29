@@ -85,9 +85,6 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
     setPage([target, target > idx ? 1 : -1]);
   };
 
-  // ساعة شريط الحالة الوهمي
-  const clock = useClock();
-
   return (
     <div
       className="gl"
@@ -100,15 +97,6 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
         transition={{ duration: 0.6, ease: "easeInOut" }}
       />
       <Starfield />
-
-      {/* شريط الحالة الوهمي (للمطابقة البصرية) */}
-      <div className="gl-status">
-        <span className="gl-time">{clock}</span>
-        <span className="gl-status-right">
-          <span>📶</span><span>5G</span>
-          <span className="gl-batt">37</span>
-        </span>
-      </div>
 
       <div className="gl-scroll">
         {/* ===== رأس: أنشطة | العملات | البروفايل ===== */}
@@ -433,15 +421,3 @@ function Starfield() {
   );
 }
 
-function useClock() {
-  const [t, setT] = useState(() => fmtTime());
-  useEffect(() => {
-    const id = setInterval(() => setT(fmtTime()), 1000 * 20);
-    return () => clearInterval(id);
-  }, []);
-  return t;
-}
-function fmtTime() {
-  const d = new Date();
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}

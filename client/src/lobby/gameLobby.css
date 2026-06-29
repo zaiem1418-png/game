@@ -33,20 +33,6 @@
   background: #fff; box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
 }
 
-/* شريط الحالة الوهمي */
-.gl-status {
-  display: flex; align-items: center; justify-content: space-between;
-  direction: ltr; padding: 8px 20px 2px; font-size: 14px; font-weight: 700;
-  color: #fff; opacity: 0.92;
-}
-.gl-time {
-  background: #2ecc71; color: #06210f; padding: 2px 12px; border-radius: 999px; font-size: 13px;
-}
-.gl-status-right { display: flex; align-items: center; gap: 6px; font-size: 13px; }
-.gl-batt {
-  background: rgba(255, 255, 255, 0.18); border-radius: 6px; padding: 1px 6px; font-size: 11px;
-}
-
 /* منطقة قابلة للتمرير عند الحاجة */
 .gl-scroll {
   flex: 1; overflow-y: auto; overflow-x: hidden;
