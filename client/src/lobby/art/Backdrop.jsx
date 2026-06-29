@@ -51,6 +51,88 @@ function Lantern({ x, y, scale = 1, color = "#ffcf6a", delay = 0 }) {
   );
 }
 
+/* ستارة مخملية مجمّعة في زاوية علوية مع رِباط ذهبي */
+function Drape({ side = "left", color, dark, gold }) {
+  const flip = side === "right";
+  const g = (
+    <g>
+      {/* قماش متهدّل */}
+      <path d="M 0 0 L 92 0 L 92 6 Q 70 96 40 150 Q 30 120 24 150 Q 18 116 12 150 Q 6 110 0 138 Z"
+        fill={color} stroke={dark} strokeWidth="1.5" />
+      {/* طيّات */}
+      <path d="M 16 6 Q 14 90 24 140" stroke={dark} strokeWidth="2" fill="none" opacity="0.5" />
+      <path d="M 40 6 Q 40 92 40 144" stroke={dark} strokeWidth="2" fill="none" opacity="0.5" />
+      <path d="M 64 6 Q 66 80 50 120" stroke={dark} strokeWidth="2" fill="none" opacity="0.4" />
+      {/* لمعة */}
+      <path d="M 30 6 Q 28 70 34 110" stroke="#fff" strokeWidth="1.4" fill="none" opacity="0.18" />
+      {/* كنّة ذهبية علوية */}
+      <rect x="-4" y="-2" width="100" height="12" rx="3" fill={gold} opacity="0.9" />
+      <rect x="-4" y="8" width="100" height="2.5" fill="#fff7e0" opacity="0.5" />
+      {/* شراشيب */}
+      {Array.from({ length: 9 }).map((_, i) => (
+        <path key={i} d={`M ${i * 11 + 2} 10 l -2 8 l 4 0 z`} fill={gold} opacity="0.85" />
+      ))}
+    </g>
+  );
+  return flip ? <g transform="translate(340 0) scale(-1 1)">{g}</g> : g;
+}
+
+/* نجمة لمّاعة رباعية الأطراف — المجموعة الخارجية للموضع والداخلية للأنميشن */
+function Sparkle({ x, y, s = 4, color, delay = 0 }) {
+  return (
+    <g transform={`translate(${x} ${y})`}>
+      <g className="gl-bd-twinkle" style={{ animationDelay: `${delay}s` }}>
+        <path
+          d={`M 0 ${-s * 2.4} Q ${s * 0.5} ${-s * 0.5} ${s * 2.4} 0
+              Q ${s * 0.5} ${s * 0.5} 0 ${s * 2.4}
+              Q ${-s * 0.5} ${s * 0.5} ${-s * 2.4} 0
+              Q ${-s * 0.5} ${-s * 0.5} 0 ${-s * 2.4} Z`}
+          fill={color}
+        />
+        <circle cx="0" cy="0" r={s * 0.5} fill="#fff7e0" />
+      </g>
+    </g>
+  );
+}
+
+/* سجادة شرقية بمنظور أمام الطاولة (شبه منحرف) */
+function Carpet({ p }) {
+  return (
+    <g opacity="0.95">
+      {/* جسم السجادة */}
+      <polygon points="92,250 248,250 286,279 54,279" fill={p.warm} stroke={p.gold} strokeWidth="1.6" />
+      <polygon points="92,250 248,250 286,279 54,279" fill={p.near} opacity="0.35" />
+      {/* حدّ داخلي مزدوج */}
+      <polygon points="106,255 234,255 262,274 78,274" fill="none" stroke={p.gold} strokeWidth="1" opacity="0.7" />
+      <polygon points="116,258 224,258 246,271 94,271" fill="none" stroke={p.glow} strokeWidth="0.8"
+        opacity="0.55" strokeDasharray="3 4" />
+      {/* ميدالية مركزية */}
+      <g transform="translate(170 264)">
+        <path d="M 0 -8 L 12 0 L 0 8 L -12 0 Z" fill={p.gold} opacity="0.85" />
+        <path d="M 0 -5 L 7 0 L 0 5 L -7 0 Z" fill={p.glow} opacity="0.7" />
+        <circle cx="0" cy="0" r="2" fill="#fff7e0" />
+      </g>
+      {/* شراشيب الحافة الأمامية */}
+      {Array.from({ length: 17 }).map((_, i) => (
+        <line key={i} x1={56 + i * 14} y1="279" x2={56 + i * 14} y2="283"
+          stroke={p.gold} strokeWidth="1.4" opacity="0.7" />
+      ))}
+    </g>
+  );
+}
+
+/* زخرف زاوية ذهبي على شكل قوس صغير */
+function Corner({ x, y, sx, sy, gold }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${sx} ${sy})`}>
+      <path d="M 2 22 Q 2 2 22 2" fill="none" stroke={gold} strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M 8 28 Q 8 8 28 8" fill="none" stroke={gold} strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
+      <circle cx="4" cy="4" r="3" fill={gold} />
+      <circle cx="4" cy="4" r="1.3" fill="#fff7e0" />
+    </g>
+  );
+}
+
 export default function Backdrop({ game }) {
   const p = PALETTE[game.id] || PALETTE.jackaroo;
   const uid = `bd-${game.id}`;
@@ -141,24 +223,41 @@ export default function Backdrop({ game }) {
           </g>
         ))}
 
-        {/* شريط زخرفي علوي (مقرنصات مبسّطة) */}
-        <g opacity="0.85">
-          <rect x="0" y="0" width="340" height="16" fill={p.near} />
-          <rect x="0" y="14" width="340" height="3" fill={p.gold} opacity="0.6" />
+        {/* شريط زخرفي علوي: أقواس متعرّجة (سكالوب) + نقاط ذهبية + خيط عربي */}
+        <g opacity="0.9">
+          <rect x="0" y="0" width="340" height="15" fill={p.near} />
+          <rect x="0" y="13" width="340" height="2.5" fill={p.gold} opacity="0.7" />
           {Array.from({ length: 19 }).map((_, i) => (
-            <path key={i} d={`M ${i * 18} 16 L ${i * 18 + 9} 26 L ${i * 18 + 18} 16 Z`}
-              fill={p.warm} opacity="0.5" />
+            <path key={i} d={`M ${i * 18} 15 a 9 9 0 0 0 18 0 Z`} fill={p.warm} opacity="0.55" />
+          ))}
+          {Array.from({ length: 19 }).map((_, i) => (
+            <circle key={`d${i}`} cx={i * 18 + 9} cy={7} r="1.6" fill={p.gold} opacity="0.7" />
           ))}
         </g>
+
+        {/* ستائر مخملية في الزاويتين العلويتين */}
+        <Drape side="left" color={p.warm} dark={p.near} gold={p.gold} />
+        <Drape side="right" color={p.warm} dark={p.near} gold={p.gold} />
 
         {/* فوانيس معلّقة متوهّجة */}
         <Lantern x={70} y={70} scale={1.05} color={p.gold} delay={0} />
         <Lantern x={270} y={64} scale={0.9} color={p.gold} delay={0.8} />
         <Lantern x={170} y={48} scale={0.7} color={p.glow} delay={1.4} />
 
-        {/* الأرضية اللامعة */}
+        {/* الأرضية اللامعة + بلاط معيّن */}
         <rect x="0" y="232" width="340" height="48" fill={`url(#${uid}-floor)`} />
+        <g opacity="0.18" stroke={p.gold} strokeWidth="0.7" fill="none">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <path key={i} d={`M ${-20 + i * 46} 232 L ${4 + i * 46} 280 M ${-20 + i * 46} 232 L ${-44 + i * 46} 280`} />
+          ))}
+          <line x1="0" y1="246" x2="340" y2="246" opacity="0.6" />
+          <line x1="0" y1="262" x2="340" y2="262" opacity="0.5" />
+        </g>
+        <rect x="0" y="234" width="340" height="3" fill="#fff7e0" opacity="0.1" />
         <ellipse cx="170" cy="236" rx="180" ry="20" fill={p.glow} opacity="0.12" />
+
+        {/* سجادة شرقية أمام الطاولة */}
+        <Carpet p={p} />
 
         {/* جزيئات ضوئية عائمة (بوكيه) */}
         <g className="gl-bd-bokeh">
@@ -169,6 +268,18 @@ export default function Backdrop({ game }) {
             )
           )}
         </g>
+
+        {/* نجوم متلألئة ذهبية */}
+        {[[46, 64, 4, 0], [296, 96, 3.4, 0.6], [112, 52, 3, 1.1], [232, 46, 3.6, 1.6],
+          [34, 158, 3, 0.3], [306, 150, 3.4, 0.9], [150, 30, 2.6, 1.3]].map(([x, y, s, d], i) => (
+          <Sparkle key={i} x={x} y={y} s={s} color={p.gold} delay={d} />
+        ))}
+
+        {/* زخارف الزوايا الذهبية */}
+        <Corner x={6} y={6} sx={1} sy={1} gold={p.gold} />
+        <Corner x={334} y={6} sx={-1} sy={1} gold={p.gold} />
+        <Corner x={6} y={274} sx={1} sy={-1} gold={p.gold} />
+        <Corner x={334} y={274} sx={-1} sy={-1} gold={p.gold} />
       </g>
     </svg>
   );

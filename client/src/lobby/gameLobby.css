@@ -219,6 +219,12 @@ button.gl-chip-plus:active { transform: scale(0.88); }
   0%, 100% { opacity: 0.12; transform: translateY(0); }
   50% { opacity: 0.4; transform: translateY(-8px); }
 }
+.gl-bd-twinkle { transform-box: fill-box; transform-origin: center;
+  animation: glTwinkle 2.8s ease-in-out infinite; }
+@keyframes glTwinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.6) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(45deg); }
+}
 
 /* مشهد SVG الأصلي (المقدّمة: طاولة + شخصيات) */
 .gl-art {
@@ -238,7 +244,7 @@ button.gl-chip-plus:active { transform: scale(0.88); }
   50% { transform: translateY(-4px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .gl-art-float, .gl-art-char, .gl-bd-sway, .gl-bd-bokeh circle { animation: none; }
+  .gl-art-float, .gl-art-char, .gl-bd-sway, .gl-bd-bokeh circle, .gl-bd-twinkle { animation: none; }
 }
 
 /* الشعار */
