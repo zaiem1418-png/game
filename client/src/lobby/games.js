@@ -7,8 +7,8 @@ export const GAMES = [
     id: "jackaroo",
     logo: "JACKAROO",
     tab: "جاكارو",
-    // صورة خلفية المشهد (إن وُجدت تُعرض بدل الرسم المتحرك)
-    photo: "/games/jackaroo.jpg",
+    // المشهد المرسوم (SVG) هو الخلفية الافتراضية. لاستبداله بصورة جاهزة
+    // أضف حقل photo: "/games/jackaroo.jpg" وضع الملف في client/public/games.
     // تدرّج خلفية المشهد + ألوان الثيم
     bg: "radial-gradient(120% 90% at 50% 0%, #6a2f8f 0%, #3a1850 45%, #1f0e2e 100%)",
     glow: "#b06bff",
@@ -34,7 +34,6 @@ export const GAMES = [
     id: "ludo",
     logo: "LUDO",
     tab: "لودو",
-    photo: "/games/ludo.jpg",
     bg: "radial-gradient(120% 90% at 50% 0%, #8a4a22 0%, #5a2e16 45%, #2a160b 100%)",
     glow: "#ffb347",
     accent: "#ffd24a",
@@ -54,7 +53,6 @@ export const GAMES = [
     id: "baloot",
     logo: "BALOOT",
     tab: "بلوت",
-    photo: "/games/baloot.jpg",
     bg: "radial-gradient(120% 90% at 50% 0%, #a8451c 0%, #6a2c12 45%, #2a1208 100%)",
     glow: "#ff8a3d",
     accent: "#ffce5a",
@@ -74,7 +72,6 @@ export const GAMES = [
     id: "snake",
     logo: "SNAKE",
     tab: "السلم و الثعبان",
-    photo: "/games/snake.jpg",
     bg: "radial-gradient(120% 90% at 50% 0%, #1f6a8a 0%, #134a5a 45%, #0b2a2a 100%)",
     glow: "#3ad6c4",
     accent: "#7fffd4",
