@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MicIcon, MicMutedIcon, LeaveIcon } from "./ControlIcons.jsx";
 
 // الشريط السفلي: إدخال الشات، المايك، الكتم، الهدايا
 export default function BottomBar({
@@ -51,7 +52,7 @@ export default function BottomBar({
       {/* أزرار المايك */}
       {!onMic ? (
         <button type="button" className="bb-mic take" onClick={onTakeMic}>
-          🎤 أخذ المايك
+          <MicIcon /> أخذ المايك
         </button>
       ) : (
         <div className="bb-mic-group">
@@ -61,10 +62,10 @@ export default function BottomBar({
             onClick={onToggleMute}
             title={muted ? "فتح المايك" : "كتم المايك"}
           >
-            {muted ? "🔇" : "🎙️"}
+            {muted ? <MicMutedIcon /> : <MicIcon />}
           </button>
           <button type="button" className="bb-icon leave" onClick={onLeaveMic} title="نزول عن المايك">
-            ⬇
+            <LeaveIcon />
           </button>
         </div>
       )}

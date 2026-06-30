@@ -353,12 +353,20 @@ button.gl-chip-plus:active { transform: scale(0.88); }
 }
 .gl-nav-btn {
   flex: 1; cursor: pointer; border: none; background: none;
-  color: #9a86b8; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  color: #9a86b8; display: flex; flex-direction: column; align-items: center; gap: 4px;
   font-size: 11px; transition: color 0.2s;
 }
 .gl-nav-btn.active { color: var(--gold); }
-.gl-nav-ico { position: relative; font-size: 22px; }
-.gl-nav-btn.active .gl-nav-ico { filter: drop-shadow(0 0 8px var(--gold)); }
+.gl-nav-ico {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; transition: transform 0.2s ease;
+}
+.gl-nav-ico svg { display: block; width: 26px; height: 26px; }
+.gl-nav-btn.active .gl-nav-ico {
+  transform: translateY(-1px);
+  filter: drop-shadow(0 2px 8px rgba(245, 196, 81, 0.55));
+}
+.gl-nav-btn:not(.active):active .gl-nav-ico { transform: scale(0.9); }
 .gl-nav-dot {
   position: absolute; top: -2px; inset-inline-end: -4px; width: 8px; height: 8px;
   border-radius: 50%; background: #ff3b50; border: 1.5px solid #0a0510;

@@ -314,13 +314,16 @@ body {
 }
 .bb-icon:disabled { opacity: 0.4; cursor: not-allowed; }
 .gift-icon { background: linear-gradient(135deg, var(--pink), #ff9a5a); }
-.bb-icon.live { background: var(--accent); }
-.bb-icon.muted { background: #c0392b; }
-.bb-icon.leave { background: rgba(192,57,43,0.6); }
+.bb-icon.live { background: var(--accent); color: #07232a; }
+.bb-icon.muted { background: #c0392b; color: #fff; }
+.bb-icon.leave { background: rgba(192,57,43,0.6); color: #fff; }
+.bb-icon svg { width: 22px; height: 22px; }
 .bb-mic {
   padding: 12px 18px; border-radius: 22px; border: none; cursor: pointer; font-weight: 700;
   background: linear-gradient(90deg, var(--accent), #29e0a8); color: #07232a; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
 }
+.bb-mic svg { width: 20px; height: 20px; }
 .bb-mic-group { display: flex; gap: 6px; }
 
 /* ===== بانر اليانصيب الترويجي ===== */
