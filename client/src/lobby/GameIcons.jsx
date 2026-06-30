@@ -202,6 +202,45 @@ function Users() {
     <path d="M14.4 18c0-2.5 1.8-3.9 4-3.9 1.5 0 2.7.5 3.4 1.6" fill="currentColor" opacity="0.75" />
   </>);
 }
+// جهات/أشخاص (أحادي اللون)
+function Contacts() {
+  return wrap(<>
+    <circle cx="9" cy="8.5" r="3.2" fill="currentColor" />
+    <path d="M3.4 18.4c0-3.1 2.5-4.8 5.6-4.8s5.6 1.7 5.6 4.8z" fill="currentColor" />
+    <circle cx="16.6" cy="9" r="2.4" fill="currentColor" opacity="0.7" />
+    <path d="M14.6 18.4c0-2.6 1.9-4 4.1-4 1.5 0 2.8.6 3.5 1.7" fill="currentColor" opacity="0.7" />
+  </>);
+}
+// المحكمة — مبنى بأعمدة
+function Court() {
+  return wrap(<>
+    <path d="M12 3 21 7.5v1.5H3V7.5z" fill="currentColor" />
+    <g fill="currentColor"><rect x="5" y="10" width="2" height="7" /><rect x="9" y="10" width="2" height="7" /><rect x="13" y="10" width="2" height="7" /><rect x="17" y="10" width="2" height="7" /></g>
+    <rect x="3.5" y="18" width="17" height="2.5" rx="0.8" fill="currentColor" />
+  </>);
+}
+// القبيلة — راية
+function Tribe() {
+  return wrap(<>
+    <path d="M6 3v18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <path d="M6 4h11l-2.4 3.5L17 11H6z" fill="currentColor" />
+  </>);
+}
+// اللحظات — فتحة/وميض
+function MomentsSpark() {
+  return wrap(<>
+    <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" strokeWidth="2" />
+    <path d="M12 6.5v11M6.5 12h11M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="currentColor" strokeWidth="1.3" opacity="0.6" />
+    <circle cx="12" cy="12" r="2.4" fill="currentColor" />
+  </>);
+}
+// فقاعة محادثة
+function Chat() {
+  return wrap(<>
+    <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.6A.6.6 0 0 1 4.5 19v-2.6A2.5 2.5 0 0 1 4 14z" fill="currentColor" />
+    <g fill="#1f0e2e"><circle cx="9" cy="10" r="1.1" /><circle cx="12" cy="10" r="1.1" /><circle cx="15" cy="10" r="1.1" /></g>
+  </>);
+}
 // نجمة مفرّغة (مفضّلة غير مفعّلة)
 function StarOutline() {
   return wrap(
@@ -212,6 +251,7 @@ function StarOutline() {
 const ICONS = {
   diamond: Diamond, coin: Coin, star: Star,
   search: Search, trash: Trash, lock: Lock, mic: Mic, users: Users, starOutline: StarOutline,
+  contacts: Contacts, court: Court, tribe: Tribe, momentsSpark: MomentsSpark, chat: Chat,
   gift: Gift, trophy: Trophy, crown: Crown, friends: Friends,
   tasks: Tasks, glory: Medal, moon: Moon, worldcup: Trophy,
   cards: Cards, dice: Dice, swords: Swords, bow: Bow, bolt: Bolt,

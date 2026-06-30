@@ -250,15 +250,18 @@
   background: rgba(255,255,255,0.08); color: #f4ecef; font-size: 18px; display: grid; place-items: center;
 }
 .ms-act.add { background: linear-gradient(135deg, #1fd0b0, #15a88d); color: #06231f; font-size: 22px; font-weight: 800; }
+.ms-act svg { width: 22px; height: 22px; }
 .ms-title { flex: 1; text-align: end; margin: 0; font-size: 24px; font-weight: 900; }
 
 .ms-quick { display: flex; justify-content: space-around; padding: 10px 12px 14px; }
 .ms-quick-btn { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #e8dcd5; }
 .ms-quick-ico {
-  width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-size: 26px;
-  border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center;
+  border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 4px 12px rgba(0,0,0,0.4); color: #fff;
 }
+.ms-quick-ico svg { width: 30px; height: 30px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.35)); }
 .ms-quick-lbl { font-size: 12px; }
+.ms-empty-ico svg { width: 40px; height: 40px; color: #6a5f70; }
 
 .ms-list { display: flex; flex-direction: column; }
 .ms-thread {

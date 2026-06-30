@@ -4,13 +4,14 @@ import CourtModal from "./CourtModal.jsx";
 import FriendsModal from "./FriendsModal.jsx";
 import TribeModal from "./TribeModal.jsx";
 import MomentsModal from "./MomentsModal.jsx";
+import GameIcon from "./GameIcons.jsx";
 
 // أيقونات الوصول السريع أعلى الرسائل — كل واحدة تفتح نظامها الاجتماعي
 const QUICK = [
-  { id: "gamefriend", label: "صديق اللعب", icon: "👥", tint: "#1f8a6e" },
-  { id: "court", label: "المحكمة", icon: "🏛️", tint: "#9a3a5a" },
-  { id: "tribe", label: "القبيلة", icon: "🏅", tint: "#b5731f" },
-  { id: "moments", label: "اللحظات", icon: "🌀", tint: "#5a3a9a" },
+  { id: "gamefriend", label: "صديق اللعب", icon: "contacts", tint: "#1f8a6e" },
+  { id: "court", label: "المحكمة", icon: "court", tint: "#9a3a5a" },
+  { id: "tribe", label: "القبيلة", icon: "tribe", tint: "#b5731f" },
+  { id: "moments", label: "اللحظات", icon: "momentsSpark", tint: "#5a3a9a" },
 ];
 
 // قائمة المحادثات (فارغة — تُملأ بالرسائل الواردة)
@@ -26,7 +27,7 @@ export default function Messages({ onRecharge }) {
       <header className="ms-top">
         <div className="ms-top-actions">
           <button className="ms-act add">＋</button>
-          <button className="ms-act">👥</button>
+          <button className="ms-act"><GameIcon id="contacts" /></button>
         </div>
         <h1 className="ms-title">رسالة</h1>
       </header>
@@ -42,7 +43,7 @@ export default function Messages({ onRecharge }) {
               onClick={() => setOpen(q.id)}
             >
               <span className="ms-quick-ico" style={{ background: `radial-gradient(circle at 50% 30%, ${q.tint}, #15101f)` }}>
-                {q.icon}
+                <GameIcon id={q.icon} />
               </span>
               <span className="ms-quick-lbl">{q.label}</span>
             </motion.button>
@@ -53,7 +54,7 @@ export default function Messages({ onRecharge }) {
         <div className="ms-list">
           {THREADS.length === 0 && (
             <div className="ms-empty">
-              <span className="ms-empty-ico">💬</span>
+              <span className="ms-empty-ico"><GameIcon id="chat" /></span>
               <span>لا توجد رسائل</span>
             </div>
           )}
