@@ -164,7 +164,6 @@
 }
 .vr-pin-lock { font-size: 40px; margin-bottom: 6px; }
 .vr-pin-lock svg { width: 44px; height: 44px; color: #f5c451; }
-.vr-del-go ~ * .vr-pin-lock svg, .vr-pin-box .vr-del-go svg { color: #ff6b6b; }
 .vr-pin-box h3 { margin: 4px 0; font-size: 20px; }
 .vr-pin-box p { color: #c9b8ad; font-size: 13px; margin: 0 0 14px; }
 .vr-pin-actions { display: flex; gap: 10px; margin-top: 14px; }
