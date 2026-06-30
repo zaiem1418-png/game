@@ -4,6 +4,8 @@ import { fetchRooms, deleteRoom } from "./rooms.js";
 import { getUid } from "../wallet.js";
 import { getFavorites, toggleFavorite } from "./favorites.js";
 import CreateRoomModal from "./CreateRoomModal.jsx";
+import RankingModal from "./RankingModal.jsx";
+import GameIcon from "./GameIcons.jsx";
 
 const TOP_TABS = ["المفضلة", "الشائعة", "الكل"];
 const CATS = ["الكل", "الأصدقاء", "جاكارو", "بلوت", "لودو", "القبيلة", "الموسيقى"];
@@ -22,6 +24,7 @@ export default function VoiceRooms({ onEnterRoom }) {
   const [confirmDel, setConfirmDel] = useState(null); // الغرفة المراد حذفها
   const [deleting, setDeleting] = useState(false);
   const [favs, setFavs] = useState(getFavorites); // معرّفات الغرف المفضّلة (محلياً)
+  const [rankSys, setRankSys] = useState(null); // "vip" | "popular" — نافذة الترتيب المفتوحة
   const myUid = getUid();
 
   function onToggleFav(id) {
@@ -95,7 +98,7 @@ export default function VoiceRooms({ onEnterRoom }) {
               if (searchOpen) setQuery("");
             }}
           >
-            🔍
+            <GameIcon id="search" />
           </button>
         </div>
         <div className="vr-tabs">
@@ -141,13 +144,13 @@ export default function VoiceRooms({ onEnterRoom }) {
 
         {/* بطاقتا الترتيب */}
         <div className="vr-rankings">
-          <button className="vr-rank vip">
+          <button className="vr-rank vip" onClick={() => setRankSys("vip")}>
             <span className="vr-rank-ava" />
-            <span className="vr-rank-mid">VIP <span>🏆</span></span>
+            <span className="vr-rank-mid">VIP <span className="vr-rank-ico"><GameIcon id="trophy" /></span></span>
           </button>
-          <button className="vr-rank pop">
+          <button className="vr-rank pop" onClick={() => setRankSys("popular")}>
             <span className="vr-rank-ava" />
-            <span className="vr-rank-mid">الشعبية <span>🏆</span></span>
+            <span className="vr-rank-mid">الشعبية <span className="vr-rank-ico"><GameIcon id="trophy" /></span></span>
           </button>
         </div>
 
@@ -183,7 +186,7 @@ export default function VoiceRooms({ onEnterRoom }) {
               onClick={() => tapRoom(r)}
             >
               <span className="vr-room-cover" style={{ background: `linear-gradient(135deg, ${r.cover}, #15101f)` }}>
-                {r.locked ? "🔒" : "🎙️"}
+                <GameIcon id={r.locked ? "lock" : "mic"} />
               </span>
               <span className="vr-room-info">
                 <span className="vr-room-name">
@@ -192,7 +195,7 @@ export default function VoiceRooms({ onEnterRoom }) {
                 <span className="vr-room-meta">
                   <span className="vr-room-lv">Lv.{r.level || 1}</span>
                   <span className="vr-room-cat">{r.category}</span>
-                  <span className="vr-room-count">👥 {r.members}</span>
+                  <span className="vr-room-count"><GameIcon id="users" /> {r.members}</span>
                   <span className="vr-room-rid">ID {r.id}</span>
                   {r.tag && <span className="vr-room-tag">{r.tag}</span>}
                 </span>
@@ -206,7 +209,7 @@ export default function VoiceRooms({ onEnterRoom }) {
                   onToggleFav(r.id);
                 }}
               >
-                {favs.includes(String(r.id)) ? "⭐" : "☆"}
+                <GameIcon id={favs.includes(String(r.id)) ? "star" : "starOutline"} />
               </button>
               {r.ownerUid && r.ownerUid === myUid && (
                 <button
@@ -218,7 +221,7 @@ export default function VoiceRooms({ onEnterRoom }) {
                     setConfirmDel(r);
                   }}
                 >
-                  🗑️
+                  <GameIcon id="trash" />
                 </button>
               )}
               <span className="vr-room-go">‹</span>
@@ -226,6 +229,13 @@ export default function VoiceRooms({ onEnterRoom }) {
           ))}
         </div>
       </div>
+
+      {/* نوافذ الترتيب: VIP / الشعبية */}
+      <AnimatePresence>
+        {rankSys && (
+          <RankingModal key={rankSys} system={rankSys} rooms={rooms} onClose={() => setRankSys(null)} />
+        )}
+      </AnimatePresence>
 
       {/* نافذة الإنشاء */}
       <AnimatePresence>
@@ -252,7 +262,7 @@ export default function VoiceRooms({ onEnterRoom }) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.85, opacity: 0 }}
             >
-              <div className="vr-pin-lock">🗑️</div>
+              <div className="vr-pin-lock"><GameIcon id="trash" /></div>
               <h3>حذف الغرفة</h3>
               <p>هل تريد حذف «{confirmDel.name}» نهائياً؟</p>
               <div className="vr-pin-actions">
@@ -279,7 +289,7 @@ export default function VoiceRooms({ onEnterRoom }) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.85, opacity: 0 }}
             >
-              <div className="vr-pin-lock">🔒</div>
+              <div className="vr-pin-lock"><GameIcon id="lock" /></div>
               <h3>غرفة خاصة</h3>
               <p>أدخل رمز الدخول لـ «{pinRoom.name}»</p>
               <input

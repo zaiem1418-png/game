@@ -160,8 +160,58 @@ function Bolt() {
   </>);
 }
 
+/* ===== أيقونات وظيفية ===== */
+// بحث
+function Search() {
+  return wrap(<>
+    <circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" strokeWidth="2" />
+    <path d="M15 15l5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </>);
+}
+// سلّة حذف
+function Trash() {
+  return wrap(<>
+    <path d="M5 7h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7" fill="none" stroke="currentColor" strokeWidth="1.8" />
+    <path d="M6.5 7l.9 11.4a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5L17.5 7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    <path d="M10 10.5v6M14 10.5v6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+  </>);
+}
+// قفل
+function Lock() {
+  return wrap(<>
+    <rect x="5" y="10" width="14" height="10" rx="2.2" fill="currentColor" />
+    <path d="M8 10V8a4 4 0 0 1 8 0v2" fill="none" stroke="currentColor" strokeWidth="2" />
+    <circle cx="12" cy="14.5" r="1.6" fill="#1f0e2e" />
+  </>);
+}
+// ميكروفون (غلاف غرفة)
+function Mic() {
+  return wrap(<>
+    <rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor" />
+    <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+    <path d="M12 18v3M8.5 21h7" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+  </>);
+}
+// أعضاء/مجموعة
+function Users() {
+  return wrap(<>
+    <circle cx="9" cy="8.5" r="3" fill="currentColor" />
+    <path d="M3.6 18c0-3 2.4-4.6 5.4-4.6s5.4 1.6 5.4 4.6z" fill="currentColor" />
+    <circle cx="16.4" cy="9" r="2.3" fill="currentColor" opacity="0.75" />
+    <path d="M14.4 18c0-2.5 1.8-3.9 4-3.9 1.5 0 2.7.5 3.4 1.6" fill="currentColor" opacity="0.75" />
+  </>);
+}
+// نجمة مفرّغة (مفضّلة غير مفعّلة)
+function StarOutline() {
+  return wrap(
+    <path d="m12 3.5 2.5 5.1 5.6.5-4.2 3.7 1.2 5.5L12 20.9l-5.1 2.9 1.2-5.5L3.9 9.1l5.6-.5z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+  );
+}
+
 const ICONS = {
   diamond: Diamond, coin: Coin, star: Star,
+  search: Search, trash: Trash, lock: Lock, mic: Mic, users: Users, starOutline: StarOutline,
   gift: Gift, trophy: Trophy, crown: Crown, friends: Friends,
   tasks: Tasks, glory: Medal, moon: Moon, worldcup: Trophy,
   cards: Cards, dice: Dice, swords: Swords, bow: Bow, bolt: Bolt,

@@ -8,6 +8,7 @@ import CompetitionsModal from "./CompetitionsModal.jsx";
 import GloryModal from "./GloryModal.jsx";
 import PackagesModal from "./PackagesModal.jsx";
 import ActivitiesModal from "./ActivitiesModal.jsx";
+import RankingModal from "./RankingModal.jsx";
 import { tasks as tasksApi, glory as gloryApi } from "./tasks.js";
 import "./gameLobby.css";
 
@@ -53,6 +54,7 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
   const [gloryOpen, setGloryOpen] = useState(false);       // بطاقة المجد
   const [packagesOpen, setPackagesOpen] = useState(false); // الحزم الحصرية
   const [activitiesOpen, setActivitiesOpen] = useState(false); // مركز الأنشطة
+  const [rankSys, setRankSys] = useState(null); // "players" | "ranked" — نافذة الترتيب
   const [badges, setBadges] = useState({ tasks: 0, glory: 0 }); // عدّادات النقطة الحمراء (جاهز للاستلام)
 
   // يجلب عدد العناصر القابلة للاستلام لإظهار النقطة الحمراء وإخفائها بعد الاستلام
@@ -138,8 +140,8 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
 
         {/* ===== صفّ الترتيب ===== */}
         <div className="gl-rank-row">
-          <RankCard icon="trophy" main="الترتيب +100" sub="ترتيب" />
-          <RankCard icon="star" main="الترتيب 16" sub="مسابقة التصنيف" highlight />
+          <RankCard icon="trophy" main="الترتيب +100" sub="ترتيب" onClick={() => setRankSys("players")} />
+          <RankCard icon="star" main="الترتيب 16" sub="مسابقة التصنيف" highlight onClick={() => setRankSys("ranked")} />
         </div>
 
         {/* ===== المسرح القابل للسحب ===== */}
@@ -323,9 +325,9 @@ function Chip({ icon, value, color, badge, onPlus }) {
   );
 }
 
-function RankCard({ icon, main, sub, highlight }) {
+function RankCard({ icon, main, sub, highlight, onClick }) {
   return (
-    <motion.button className={`gl-rank ${highlight ? "hl" : ""}`} whileTap={{ scale: 0.97 }}>
+    <motion.button className={`gl-rank ${highlight ? "hl" : ""}`} whileTap={{ scale: 0.97 }} onClick={onClick}>
       <span className="gl-rank-main">{main}</span>
       <span className="gl-rank-sub">{sub}</span>
       <span className="gl-rank-ico"><GameIcon id={icon} /></span>
