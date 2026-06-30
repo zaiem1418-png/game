@@ -30,6 +30,73 @@ export function MicMutedIcon() {
   );
 }
 
+// هدية (زر الهدايا)
+export function GiftIcon() {
+  return (
+    <svg {...S} aria-hidden="true">
+      <rect x="4" y="10" width="16" height="10" rx="1.6" fill="currentColor" />
+      <rect x="3" y="7" width="18" height="3.6" rx="1.1" fill="currentColor" />
+      <rect x="10.6" y="7" width="2.8" height="13" fill="#fff" opacity="0.55" />
+      <path d="M12 7c-2.4-3.4-5.8-1-3 0M12 7c2.4-3.4 5.8-1 3 0" fill="none"
+        stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// وجه مبتسم (التفاعلات السريعة)
+export function SmileyIcon() {
+  return (
+    <svg {...S} aria-hidden="true">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.9" />
+      <circle cx="9" cy="10" r="1.2" fill="currentColor" />
+      <circle cx="15" cy="10" r="1.2" fill="currentColor" />
+      <path d="M8.2 14a4.5 4.5 0 0 0 7.6 0" fill="none" stroke="currentColor"
+        strokeWidth="1.9" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// تاج (شارة المالك)
+export function CrownIcon() {
+  return (
+    <svg {...S} aria-hidden="true">
+      <path d="M3 8 7 12l5-7 5 7 4-4-1.5 10.5h-15z" fill="currentColor" />
+      <circle cx="12" cy="18.5" r="1" fill="#3a1d00" opacity="0.5" />
+    </svg>
+  );
+}
+
+// درع (شارة المشرف / مستوى الغرفة)
+export function ShieldIcon() {
+  return (
+    <svg {...S} aria-hidden="true">
+      <path d="M12 2.5 19 5v6c0 4.6-3 8.2-7 10.5-4-2.3-7-5.9-7-10.5V5z" fill="currentColor" />
+      <path d="M9 12l2 2 4-4.5" fill="none" stroke="#1f0e2e" strokeWidth="1.8"
+        strokeLinecap="round" strokeLinejoin="round" opacity="0.55" />
+    </svg>
+  );
+}
+
+// مايك مكتوم بشكل مكبّر صوت (شارة الكتم)
+export function MuteBadgeIcon() {
+  return (
+    <svg {...S} aria-hidden="true">
+      <path d="M4 9.5h3l4-3.5v12l-4-3.5H4z" fill="currentColor" />
+      <path d="M15 9l4 6M19 9l-4 6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// قفل (مقعد مقفل)
+export function LockIcon() {
+  return (
+    <svg {...S} aria-hidden="true">
+      <rect x="5" y="10.5" width="14" height="9.5" rx="2.2" fill="currentColor" />
+      <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  );
+}
+
 // النزول عن المايك — سهم لأسفل داخل دائرة
 export function LeaveIcon() {
   return (

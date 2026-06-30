@@ -129,7 +129,8 @@ body {
   position: relative; width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; font-size: 17px;
   background: linear-gradient(135deg, #3a3f6b, #20243f); border: 1px solid rgba(255,255,255,0.12);
 }
-.rh-shield-ic { line-height: 1; }
+.rh-shield-ic { line-height: 1; display: inline-grid; place-items: center; }
+.rh-shield-ic svg { width: 18px; height: 18px; color: #6fd0ff; }
 .rh-shield-lv {
   position: absolute; bottom: -5px; right: -5px; min-width: 16px; height: 16px; padding: 0 3px;
   border-radius: 8px; background: linear-gradient(135deg, #f5c451, #d99b1f); color: #2a1c00;
@@ -219,6 +220,7 @@ body {
 .seat.empty .seat-circle { background: rgba(255,255,255,0.05); border: 2px dashed rgba(255,255,255,0.18); box-shadow: none; }
 .seat.empty .seat-circle:hover { border-color: var(--accent); box-shadow: 0 0 12px rgba(24,211,196,0.4); }
 .seat-plus { font-size: 26px; color: var(--muted); font-weight: 300; }
+.seat-plus svg { width: 22px; height: 22px; }
 .seat.locked .seat-circle { border-style: solid; opacity: 0.55; }
 
 .seat-name { font-size: 12px; max-width: 74px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
@@ -247,6 +249,10 @@ body {
   background: rgba(20,12,28,0.92); border: 1px solid rgba(255,255,255,0.25);
 }
 .role-badge.owner { box-shadow: 0 0 10px rgba(245,196,81,0.7); }
+.role-badge svg { width: 14px; height: 14px; }
+.role-badge.owner svg { color: #f5c451; }
+.role-badge.admin svg { color: #6fd0ff; }
+.mute-badge svg { width: 13px; height: 13px; color: #fff; }
 
 /* توهج وموجات صوت عند التحدث */
 .seat-av-wrap.is-speaking .seat-circle {
@@ -313,7 +319,8 @@ body {
   background: rgba(255,255,255,0.1); color: var(--text); display: grid; place-items: center;
 }
 .bb-icon:disabled { opacity: 0.4; cursor: not-allowed; }
-.gift-icon { background: linear-gradient(135deg, var(--pink), #ff9a5a); }
+.gift-icon { background: linear-gradient(135deg, var(--pink), #ff9a5a); color: #fff; }
+.react-icon { color: #fff; }
 .bb-icon.live { background: var(--accent); color: #07232a; }
 .bb-icon.muted { background: #c0392b; color: #fff; }
 .bb-icon.leave { background: rgba(192,57,43,0.6); color: #fff; }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MicIcon, MicMutedIcon, LeaveIcon } from "./ControlIcons.jsx";
+import { MicIcon, MicMutedIcon, LeaveIcon, GiftIcon, SmileyIcon } from "./ControlIcons.jsx";
 
 // الشريط السفلي: إدخال الشات، المايك، الكتم، الهدايا
 export default function BottomBar({
@@ -26,7 +26,7 @@ export default function BottomBar({
     <form className="bottom-bar" onSubmit={submit}>
       {/* زر الهدايا */}
       <button type="button" className="bb-icon gift-icon" onClick={onOpenGifts} title="الهدايا">
-        🎁
+        <GiftIcon />
       </button>
 
       {/* زر التفاعلات السريعة (متاح عند الجلوس على المايك) */}
@@ -37,7 +37,7 @@ export default function BottomBar({
         disabled={!canReact}
         title={canReact ? "تفاعل سريع" : "اصعد على المايك للتفاعل"}
       >
-        😀
+        <SmileyIcon />
       </button>
 
       {/* إدخال الشات */}

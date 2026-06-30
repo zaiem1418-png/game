@@ -1,3 +1,5 @@
+import { ShieldIcon } from "./ControlIcons.jsx";
+
 // رأس الغرفة — يعرض اسم الغرفة كاسم أساسي مع شارة المستوى والمعرّف.
 export default function RoomHeader({ room, memberCount, onBack, onOpenInfo }) {
   const level = room.level || 1;
@@ -23,7 +25,7 @@ export default function RoomHeader({ room, memberCount, onBack, onOpenInfo }) {
 
       {/* معلومات الغرفة يمين (بداية RTL) */}
       <div className="rh-shield" title="مستوى الغرفة">
-        <span className="rh-shield-ic">🛡️</span>
+        <span className="rh-shield-ic"><ShieldIcon /></span>
         <span className="rh-shield-lv">{level}</span>
       </div>
 

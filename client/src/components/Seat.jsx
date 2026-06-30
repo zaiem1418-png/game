@@ -1,6 +1,7 @@
 // مقعد واحد — تصميم محدّث: إطار احترافي، إطار متحرك للمالك/المشرف،
 // توهج وموجات صوت عند التحدث، تأثير دخول، وطبقة تفاعلات فوق الصورة.
 import ReactionBurst from "./ReactionBurst.jsx";
+import { CrownIcon, ShieldIcon, MuteBadgeIcon, LockIcon } from "./ControlIcons.jsx";
 
 export default function Seat({ seat, isSelf, reaction, onTake, onTap }) {
   const { user, muted, locked, speaking } = seat;
@@ -13,7 +14,7 @@ export default function Seat({ seat, isSelf, reaction, onTake, onTap }) {
         title={locked ? "مقعد مقفل" : "اجلس هنا"}
       >
         <div className="seat-circle">
-          <span className="seat-plus">{locked ? "🔒" : "+"}</span>
+          <span className="seat-plus">{locked ? <LockIcon /> : "+"}</span>
         </div>
         <div className="seat-name muted">المقعد {seat.index + 1}</div>
       </button>
@@ -42,7 +43,7 @@ export default function Seat({ seat, isSelf, reaction, onTake, onTap }) {
 
         {/* مؤشر الكتم / معادل الصوت أثناء الكلام */}
         {muted ? (
-          <span className="mute-badge">🔇</span>
+          <span className="mute-badge"><MuteBadgeIcon /></span>
         ) : speaking ? (
           <span className="eq" aria-hidden>
             <i /><i /><i /><i />
@@ -50,8 +51,8 @@ export default function Seat({ seat, isSelf, reaction, onTake, onTap }) {
         ) : null}
 
         {/* شارة المالك/المشرف */}
-        {role === "owner" && <span className="role-badge owner">👑</span>}
-        {role === "admin" && <span className="role-badge admin">🛡️</span>}
+        {role === "owner" && <span className="role-badge owner"><CrownIcon /></span>}
+        {role === "admin" && <span className="role-badge admin"><ShieldIcon /></span>}
 
         {/* طبقة التفاعل فوق الصورة */}
         {reaction && (
