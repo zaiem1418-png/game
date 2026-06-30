@@ -13,25 +13,26 @@ import MomentsModal from "./MomentsModal.jsx";
 import AchievementsModal from "./AchievementsModal.jsx";
 import ShopModal from "./ShopModal.jsx";
 import VipModal from "./VipModal.jsx";
+import ProfileIcon from "./ProfileIcons.jsx";
 
 // أيقونات الوصول السريع في الملف الشخصي — كل واحدة تفتح نظامها
 const QUICK = [
-  { id: "visitors", label: "الزوار", icon: "🔷", tint: "#2bb3e0" },
-  { id: "home", label: "المنزل", icon: "🏠", tint: "#e0563a" },
-  { id: "store", label: "المتجر", icon: "🏪", tint: "#2bbf8e", action: "store" },
-  { id: "vip", label: "مركز VIP", icon: "💎", tint: "#f5c451" },
+  { id: "visitors", label: "الزوار" },
+  { id: "home", label: "المنزل" },
+  { id: "store", label: "المتجر", action: "store" },
+  { id: "vip", label: "مركز VIP" },
 ];
 
 const ROWS = [
-  { id: "moments", label: "لحظاتي", icon: "📖" },
-  { id: "achievements", label: "إنجازات اللعب", icon: "🏆" },
-  { id: "shop", label: "الإطارات والخواتم", icon: "🛍️" },
-  { id: "bag", label: "الحقيبة", icon: "🎒" },
+  { id: "moments", label: "لحظاتي" },
+  { id: "achievements", label: "إنجازات اللعب" },
+  { id: "shop", label: "الإطارات والخواتم" },
+  { id: "bag", label: "الحقيبة" },
   { sep: true },
-  { id: "vipid", label: "أي دي مميز", icon: "🆔" },
-  { id: "badge", label: "الشارة", icon: "🎖️" },
-  { id: "invite", label: "دعوة الأصدقاء", icon: "🧑‍🤝‍🧑" },
-  { id: "songs", label: "مساهمة الأغاني", icon: "🎵" },
+  { id: "vipid", label: "أي دي مميز" },
+  { id: "badge", label: "الشارة" },
+  { id: "invite", label: "دعوة الأصدقاء" },
+  { id: "songs", label: "مساهمة الأغاني" },
 ];
 
 export default function Profile({ user, wallet, onRecharge, onOwnerTap, onWalletUpdate }) {
@@ -97,8 +98,8 @@ export default function Profile({ user, wallet, onRecharge, onOwnerTap, onWallet
             whileTap={{ scale: 0.92 }}
             onClick={() => handleQuick(q)}
           >
-            <span className="pf-quick-ico" style={{ color: q.tint }}>
-              {q.icon}
+            <span className="pf-quick-ico">
+              <ProfileIcon id={q.id} />
               {q.id === "visitors" && !gbActive && <span className="pf-quick-lock">🔒</span>}
             </span>
             <span className="pf-quick-lbl">{q.label}</span>
@@ -115,7 +116,7 @@ export default function Profile({ user, wallet, onRecharge, onOwnerTap, onWallet
               <button key={r.id} className="pf-row" onClick={() => setOpen(r.id)}>
                 <span className="pf-row-go">‹</span>
                 <span className="pf-row-label">{r.label}</span>
-                <span className="pf-row-ico">{r.icon}</span>
+                <span className="pf-row-ico"><ProfileIcon id={r.id} /></span>
               </button>
             )
           )}
