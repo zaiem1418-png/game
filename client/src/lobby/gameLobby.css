@@ -51,7 +51,8 @@
   border: none; cursor: pointer; border-radius: 12px; padding: 5px 8px;
   font-size: 10px; font-weight: 800; box-shadow: 0 4px 12px rgba(245, 196, 81, 0.4);
 }
-.gl-act-ico { font-size: 18px; }
+.gl-act-ico { width: 18px; height: 18px; display: inline-grid; place-items: center; }
+.gl-act-ico svg { width: 100%; height: 100%; }
 .gl-act-dot {
   position: absolute; top: -3px; inset-inline-end: -3px; width: 10px; height: 10px;
   border-radius: 50%; background: #ff3b50; border: 2px solid #1f0e2e;
@@ -68,7 +69,8 @@
   font-size: 13px; font-weight: 800; color: var(--c);
   box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.1);
 }
-.gl-chip-ico { font-size: 14px; }
+.gl-chip-ico { width: 16px; height: 16px; display: inline-grid; place-items: center; }
+.gl-chip-ico svg { width: 100%; height: 100%; }
 .gl-chip-val { color: #fff; }
 .gl-chip-plus {
   margin-inline-start: 2px; width: 16px; height: 16px; border-radius: 50%;
@@ -98,8 +100,9 @@ button.gl-chip-plus:active { transform: scale(0.88); }
 .gl-rank-sub { font-size: 11px; color: #c9b8e0; }
 .gl-rank-ico {
   position: absolute; inset-inline-start: 10px; top: 50%; transform: translateY(-50%);
-  font-size: 24px; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5));
+  width: 26px; height: 26px; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5));
 }
+.gl-rank-ico svg { width: 100%; height: 100%; }
 
 /* ===== المسرح ===== */
 .gl-stage {
@@ -117,11 +120,12 @@ button.gl-chip-plus:active { transform: scale(0.88); }
 }
 .gl-side-badge {
   position: relative; width: 46px; height: 46px; border-radius: 14px;
-  display: grid; place-items: center; font-size: 24px;
+  display: grid; place-items: center;
   background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.18), rgba(20, 12, 30, 0.6));
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 3px rgba(255, 255, 255, 0.15);
 }
+.gl-side-badge > svg { width: 28px; height: 28px; }
 .gl-side-lbl { font-size: 9px; line-height: 1.15; text-align: center; max-width: 60px; }
 .gl-side-timer { font-size: 9px; color: var(--gold); font-weight: 700; }
 .gl-side-dot {
@@ -291,7 +295,8 @@ button.gl-chip-plus:active { transform: scale(0.88); }
 .gl-modes-grid .gl-mode-lg { grid-column: 1; }
 .gl-modes-grid .gl-mode-sm { grid-column: 2; }
 
-.gl-mode-ico { font-size: 40px; line-height: 1; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4)); }
+.gl-mode-ico { width: 42px; height: 42px; display: grid; place-items: center; line-height: 1; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4)); }
+.gl-mode-ico svg { width: 100%; height: 100%; }
 .gl-mode-lbl { font-size: 17px; font-weight: 800; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); }
 .gl-mode-shine {
   position: absolute; inset: 0; pointer-events: none;
@@ -309,7 +314,8 @@ button.gl-chip-plus:active { transform: scale(0.88); }
   font-size: 12px; font-weight: 700;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
-.gl-sec-ico { font-size: 24px; }
+.gl-sec-ico { width: 26px; height: 26px; display: inline-grid; place-items: center; }
+.gl-sec-ico svg { width: 100%; height: 100%; }
 
 /* ===== تبويبات الألعاب ===== */
 .gl-tabs {

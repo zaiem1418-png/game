@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GAMES } from "./games.js";
 import GameArt from "./art/GameArt.jsx";
+import GameIcon from "./GameIcons.jsx";
 import TasksModal from "./TasksModal.jsx";
 import CompetitionsModal from "./CompetitionsModal.jsx";
 import GloryModal from "./GloryModal.jsx";
@@ -102,27 +103,27 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
         {/* ===== رأس: أنشطة | العملات | البروفايل ===== */}
         <header className="gl-top">
           <button className="gl-activities" onClick={() => setActivitiesOpen(true)}>
-            <span className="gl-act-ico">🎁</span>
+            <span className="gl-act-ico"><GameIcon id="gift" /></span>
             <span>الأنشطة</span>
             {(badges.tasks > 0 || badges.glory > 0) && <span className="gl-act-dot" />}
           </button>
 
           <div className="gl-currencies">
             <Chip
-              icon="💎"
+              icon="diamond"
               value={wallet?.infinite ? "∞" : fmtNum(wallet?.diamonds) ?? "73"}
               color="#36c5f0"
               badge
               onPlus={() => onRecharge?.("diamonds")}
             />
             <Chip
-              icon="🪙"
+              icon="coin"
               value={wallet?.infinite ? "∞" : fmtNum(wallet?.coins) ?? "779.8K"}
               color="#f5c451"
               badge
               onPlus={() => onRecharge?.("coins")}
             />
-            <Chip icon="✦" value="48" color="#b06bff" badge />
+            <Chip icon="star" value="48" color="#b06bff" badge />
           </div>
 
           <motion.button
@@ -137,16 +138,16 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
 
         {/* ===== صفّ الترتيب ===== */}
         <div className="gl-rank-row">
-          <RankCard icon="🏆" main="الترتيب +100" sub="ترتيب" />
-          <RankCard icon="⭐" main="الترتيب 16" sub="مسابقة التصنيف" highlight />
+          <RankCard icon="trophy" main="الترتيب +100" sub="ترتيب" />
+          <RankCard icon="star" main="الترتيب 16" sub="مسابقة التصنيف" highlight />
         </div>
 
         {/* ===== المسرح القابل للسحب ===== */}
         <div className="gl-stage">
           {/* أيقونات يسار */}
           <div className="gl-side gl-side-left">
-            <SideIcon icon="🌙" label="رأس السنة الهجرية" />
-            <SideIcon icon="🏆" label="كأس العالم" />
+            <SideIcon icon="moon" label="رأس السنة الهجرية" />
+            <SideIcon icon="worldcup" label="كأس العالم" />
             <GiftBox seconds={giftLeft} onClick={() => setPackagesOpen(true)} />
           </div>
 
@@ -178,9 +179,9 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
 
           {/* أيقونات يمين */}
           <div className="gl-side gl-side-right">
-            <SideIcon icon="🧑‍🤝‍🧑" label="الأصدقاء" />
-            <SideIcon icon="✅" label="المهام" dot={badges.tasks > 0} onClick={() => setTasksOpen(true)} />
-            <SideIcon icon="🏅" label="بطاقة المجد" timer={fmtDays(gloryLeft)} dot={badges.glory > 0}
+            <SideIcon icon="friends" label="الأصدقاء" />
+            <SideIcon icon="tasks" label="المهام" dot={badges.tasks > 0} onClick={() => setTasksOpen(true)} />
+            <SideIcon icon="glory" label="بطاقة المجد" timer={fmtDays(gloryLeft)} dot={badges.glory > 0}
               onClick={() => setGloryOpen(true)} />
           </div>
         </div>
@@ -217,7 +218,7 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
                 else onPlay?.(game, s);
               }}
             >
-              <span className="gl-sec-ico">{s.icon}</span>
+              <span className="gl-sec-ico"><GameIcon id={s.iconId} /></span>
               <span>{s.label}</span>
             </motion.button>
           ))}
@@ -310,7 +311,7 @@ function HeroScene({ game }) {
 function Chip({ icon, value, color, badge, onPlus }) {
   return (
     <div className="gl-chip" style={{ "--c": color }}>
-      <span className="gl-chip-ico">{icon}</span>
+      <span className="gl-chip-ico"><GameIcon id={icon} /></span>
       <span className="gl-chip-val">{value}</span>
       {badge &&
         (onPlus ? (
@@ -327,7 +328,7 @@ function RankCard({ icon, main, sub, highlight }) {
     <motion.button className={`gl-rank ${highlight ? "hl" : ""}`} whileTap={{ scale: 0.97 }}>
       <span className="gl-rank-main">{main}</span>
       <span className="gl-rank-sub">{sub}</span>
-      <span className="gl-rank-ico">{icon}</span>
+      <span className="gl-rank-ico"><GameIcon id={icon} /></span>
     </motion.button>
   );
 }
@@ -343,7 +344,7 @@ function SideIcon({ icon, label, dot, timer, onClick }) {
       onClick={onClick}
     >
       <span className="gl-side-badge">
-        {icon}
+        <GameIcon id={icon} />
         {dot && <span className="gl-side-dot" />}
       </span>
       <span className="gl-side-lbl">{label}</span>
@@ -361,7 +362,7 @@ function GiftBox({ seconds, onClick }) {
       transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
       onClick={onClick}
     >
-      <span className="gl-side-badge gl-gift-badge">🎁</span>
+      <span className="gl-side-badge gl-gift-badge"><GameIcon id="gift" /></span>
       <span className="gl-side-lbl">حزمة حصرية</span>
       <span className="gl-side-timer gl-gift-timer">{fmtClock(seconds)}</span>
     </motion.button>
@@ -386,7 +387,7 @@ function ModeButton({ mode, i, onClick }) {
         animate={{ rotate: [0, -8, 8, 0] }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
       >
-        {mode.icon}
+        <GameIcon id={mode.iconId} />
       </motion.span>
       <span className="gl-mode-lbl">{mode.label}</span>
     </motion.button>

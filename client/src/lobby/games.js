@@ -20,14 +20,14 @@ export const GAMES = [
     table: "linear-gradient(160deg, #7a3aa6, #3c1a55)",
     // أنماط اللعب: عمود يسار صغير + بطاقة يمين كبيرة
     modes: [
-      { id: "complex", label: "كمبلكس", icon: "🃏", size: "sm", tint: "#2bbf9e" },
-      { id: "normal", label: "عادي", icon: "🎲", size: "sm", tint: "#f0a93a" },
-      { id: "1v1", label: "ا ضد ا", icon: "⚔️", size: "lg", tint: "#3aa3ff" },
+      { id: "complex", label: "كمبلكس", iconId: "cards", size: "sm", tint: "#2bbf9e" },
+      { id: "normal", label: "عادي", iconId: "dice", size: "sm", tint: "#f0a93a" },
+      { id: "1v1", label: "ا ضد ا", iconId: "swords", size: "lg", tint: "#3aa3ff" },
     ],
     secondary: [
-      { id: "tournaments", label: "منافسات", icon: "🏆", tint: "#caa23a" },
-      { id: "vip", label: "غرفة VIP", icon: "👑", tint: "#3a86c8" },
-      { id: "friends", label: "العب مع الأصدقاء", icon: "🧑‍🤝‍🧑", tint: "#5a5f8a" },
+      { id: "tournaments", label: "منافسات", iconId: "trophy", tint: "#caa23a" },
+      { id: "vip", label: "غرفة VIP", iconId: "crown", tint: "#3a86c8" },
+      { id: "friends", label: "العب مع الأصدقاء", iconId: "friends", tint: "#5a5f8a" },
     ],
   },
   {
@@ -41,12 +41,12 @@ export const GAMES = [
     pieces: ["🎲", "🔴", "🔵", "🟢", "🟡"],
     table: "linear-gradient(160deg, #b5651d, #5a2e16)",
     modes: [
-      { id: "classic", label: "كلاسيكي", icon: "🎲", size: "lg", tint: "#f0a93a" },
-      { id: "arrow", label: "سهم", icon: "🏹", size: "lg", tint: "#8a6bff" },
+      { id: "classic", label: "كلاسيكي", iconId: "dice", size: "lg", tint: "#f0a93a" },
+      { id: "arrow", label: "سهم", iconId: "bow", size: "lg", tint: "#8a6bff" },
     ],
     secondary: [
-      { id: "tournaments", label: "منافسات", icon: "🏆", tint: "#caa23a" },
-      { id: "friends", label: "العب مع الأصدقاء", icon: "🧑‍🤝‍🧑", tint: "#5a5f8a" },
+      { id: "tournaments", label: "منافسات", iconId: "trophy", tint: "#caa23a" },
+      { id: "friends", label: "العب مع الأصدقاء", iconId: "friends", tint: "#5a5f8a" },
     ],
   },
   {
@@ -60,12 +60,12 @@ export const GAMES = [
     pieces: ["🂡", "🂱", "🃁", "🃑"],
     table: "linear-gradient(160deg, #1f8a4a, #0f5a2e)",
     modes: [
-      { id: "baloot", label: "بلوت", icon: "🃏", size: "wide", tint: "#ff7a3a" },
+      { id: "baloot", label: "بلوت", iconId: "cards", size: "wide", tint: "#ff7a3a" },
     ],
     secondary: [
-      { id: "tournaments", label: "منافسات", icon: "🏆", tint: "#caa23a" },
-      { id: "vip", label: "غرفة VIP", icon: "👑", tint: "#3a86c8" },
-      { id: "friends", label: "العب مع الأصدقاء", icon: "🧑‍🤝‍🧑", tint: "#5a5f8a" },
+      { id: "tournaments", label: "منافسات", iconId: "trophy", tint: "#caa23a" },
+      { id: "vip", label: "غرفة VIP", iconId: "crown", tint: "#3a86c8" },
+      { id: "friends", label: "العب مع الأصدقاء", iconId: "friends", tint: "#5a5f8a" },
     ],
   },
   {
@@ -79,12 +79,12 @@ export const GAMES = [
     pieces: ["🪜", "🐍", "🎲", "🔴", "🟢"],
     table: "linear-gradient(160deg, #1f8a8a, #0f4a5a)",
     modes: [
-      { id: "classic", label: "كلاسيكي", icon: "🎲", size: "lg", tint: "#2bbf9e" },
-      { id: "fast", label: "سريع", icon: "⚡", size: "lg", tint: "#f0a93a" },
+      { id: "classic", label: "كلاسيكي", iconId: "dice", size: "lg", tint: "#2bbf9e" },
+      { id: "fast", label: "سريع", iconId: "bolt", size: "lg", tint: "#f0a93a" },
     ],
     secondary: [
-      { id: "tournaments", label: "منافسات", icon: "🏆", tint: "#caa23a" },
-      { id: "friends", label: "العب مع الأصدقاء", icon: "🧑‍🤝‍🧑", tint: "#5a5f8a" },
+      { id: "tournaments", label: "منافسات", iconId: "trophy", tint: "#caa23a" },
+      { id: "friends", label: "العب مع الأصدقاء", iconId: "friends", tint: "#5a5f8a" },
     ],
   },
 ];
