@@ -808,6 +808,14 @@
 }
 .bl-rules-btn:active { transform: scale(0.96); }
 
+/* شريط زر القواعد أعلى لوحات لودو/السلم والثعبان */
+.gr-bar {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  padding: 2px 4px;
+}
+
 /* نافذة القواعد */
 .bl-rules-overlay {
   position: fixed;

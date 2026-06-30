@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import GameRules, { RulesButton } from "./GameRules.jsx";
 
 // يبني صفوف اللوحة مرئياً (الأعلى = 100، الأسفل = 1) بنمط الثعبان
 function buildRows() {
@@ -15,6 +16,7 @@ function buildRows() {
 }
 
 export default function SnakeLadderBoard({ game, you, action, onExit }) {
+  const [showRules, setShowRules] = useState(false);
   const rows = useMemo(buildRows, []);
   const st = game?.state;
   if (!st) return <div className="grm-loading">جاري التحميل…</div>;
@@ -34,6 +36,11 @@ export default function SnakeLadderBoard({ game, you, action, onExit }) {
 
   return (
     <div className="snl">
+      <RulesButton onClick={() => setShowRules(true)} />
+      <AnimatePresence>
+        {showRules && <SnakeRules onClose={() => setShowRules(false)} />}
+      </AnimatePresence>
+
       {/* شريط اللاعبين */}
       <div className="snl-players">
         {players.map((p) => (
@@ -131,6 +138,43 @@ export default function SnakeLadderBoard({ game, you, action, onExit }) {
 }
 
 const DICE = { 1: "⚀", 2: "⚁", 3: "⚂", 4: "⚃", 5: "⚄", 6: "⚅" };
+
+function SnakeRules({ onClose }) {
+  return (
+    <GameRules title="📖 قواعد وأنظمة السلم والثعبان" onClose={onClose}>
+      <section>
+        <h4>🎯 الهدف</h4>
+        <p>
+          سباق من الخانة ١ إلى الخانة <b>١٠٠</b>. أول لاعب يصل إلى ١٠٠ يفوز،
+          ويُرتَّب الباقون حسب وصولهم.
+        </p>
+      </section>
+      <section>
+        <h4>🎲 طريقة اللعب</h4>
+        <ul>
+          <li>يتناوب اللاعبون على رمي النرد ويتحرك كلٌّ بعدد ما يظهر.</li>
+          <li>رمي <b>٦</b> يمنح <b>رمية إضافية</b>.</li>
+          <li>اللعبة تدعم من ٢ إلى ٤ لاعبين، وتُملأ المقاعد الفارغة بلاعبين آليين.</li>
+        </ul>
+      </section>
+      <section>
+        <h4>🪜 السلالم و🐍 الثعابين</h4>
+        <ul>
+          <li>الوقوف على <b>أسفل سلّم 🪜</b> يرفعك مباشرةً إلى أعلاه.</li>
+          <li>الوقوف على <b>رأس ثعبان 🐍</b> يُنزلك إلى ذيله في الأسفل.</li>
+        </ul>
+      </section>
+      <section>
+        <h4>🏁 الوصول و الفوز</h4>
+        <ul>
+          <li>يجب الوصول إلى ١٠٠ <b>بالرقم المضبوط</b>.</li>
+          <li>إذا تجاوزت رميتُك ١٠٠ يبقى بيدقك مكانه ولا يتحرك.</li>
+          <li>تستمر اللعبة حتى يصل الجميع، ويُعلَن الترتيب 🥇🥈🥉.</li>
+        </ul>
+      </section>
+    </GameRules>
+  );
+}
 
 function Over({ players, onExit }) {
   const ranked = [...players].sort((a, b) => (a.rank || 99) - (b.rank || 99));

@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import GameRules, { RulesButton } from "./GameRules.jsx";
 
 // ===== هندسة لوحة لودو 15×15 (إحداثيات [صف، عمود]) =====
 const PATH = buildPath();
@@ -67,6 +68,7 @@ function tokenPos(seat, steps, tokenIdx) {
 }
 
 export default function LudoBoard({ game, you, action, onExit }) {
+  const [showRules, setShowRules] = useState(false);
   const st = game?.state;
   if (!st) return <div className="grm-loading">جاري التحميل…</div>;
 
@@ -91,6 +93,11 @@ export default function LudoBoard({ game, you, action, onExit }) {
 
   return (
     <div className="ludo">
+      <RulesButton onClick={() => setShowRules(true)} />
+      <AnimatePresence>
+        {showRules && <LudoRules onClose={() => setShowRules(false)} />}
+      </AnimatePresence>
+
       {/* اللوحة مع مقاعد اللاعبين في الزوايا */}
       <div className="ludo-stage">
         {players.map((p) => (
@@ -252,6 +259,58 @@ function hexA(hex, a) {
   const g = parseInt(m.slice(2, 4), 16);
   const b = parseInt(m.slice(4, 6), 16);
   return `rgba(${r},${g},${b},${a})`;
+}
+
+function LudoRules({ onClose }) {
+  return (
+    <GameRules title="📖 قواعد وأنظمة لودو" onClose={onClose}>
+      <section>
+        <h4>🎯 الهدف</h4>
+        <p>
+          ينقل كل لاعب بيادقه الأربعة من <b>قاعدته</b> حول المسار وصولاً إلى
+          <b> البيت</b> في المركز. أول من يُوصّل بيادقه الأربعة يفوز بالمركز الأول.
+        </p>
+      </section>
+      <section>
+        <h4>🎲 الخروج بالستة</h4>
+        <ul>
+          <li>تبدأ البيادق داخل القاعدة، ولا يخرج البيدق إلا عند رمي <b>٦</b>.</li>
+          <li>رمي <b>٦</b> يمنحك <b>رمية إضافية</b>.</li>
+          <li>إن لم تكن لديك حركة ممكنة، ينتقل الدور للاعب التالي.</li>
+        </ul>
+      </section>
+      <section>
+        <h4>🚶 الحركة</h4>
+        <ul>
+          <li>تتحرك البيادق بعدد نقاط النرد على المسار باتجاه واحد.</li>
+          <li>إذا أمكن تحريك بيدق واحد فقط، يُحرَّك تلقائياً؛ وإن تعدّدت الخيارات تختار بنفسك.</li>
+        </ul>
+      </section>
+      <section>
+        <h4>💥 الأكل (القطع)</h4>
+        <ul>
+          <li>إذا حطّ بيدقك على خانة فيها بيدق خصم (خارج الخانات الآمنة) <b>تأكله</b> ويعود لقاعدته.</li>
+          <li>الأكل يمنحك <b>رمية إضافية</b>.</li>
+          <li>الخانات المعلّمة بنجمة ★ وخانات الانطلاق الملوّنة <b>آمنة</b> لا يُؤكل فيها.</li>
+        </ul>
+      </section>
+      <section>
+        <h4>🏠 الوصول للبيت</h4>
+        <ul>
+          <li>بعد دورة كاملة يدخل البيدق ممر لونه ثم البيت.</li>
+          <li>يجب الوصول للبيت <b>بالرقم المضبوط</b>؛ والزيادة لا تُلعب.</li>
+          <li>إيصال بيدق للبيت يمنحك <b>رمية إضافية</b>.</li>
+        </ul>
+      </section>
+      <section>
+        <h4>🏁 الفوز</h4>
+        <p>
+          يُرتَّب اللاعبون حسب من أنهى بيادقه الأربعة أولاً (🥇🥈🥉)،
+          وتنتهي اللعبة عند بقاء لاعب واحد.
+        </p>
+      </section>
+    </GameRules>
+  );
 }
 
 function LudoOver({ players, onExit }) {
