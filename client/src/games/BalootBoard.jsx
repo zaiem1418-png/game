@@ -36,8 +36,13 @@ export default function BalootBoard({ game, you, action, onExit }) {
   const myTurn = turnPlayer?.id === you;
 
   const myTeam = me?.team ?? 0;
+  const other = myTeam === 0 ? 1 : 0;
+  const matchPts = st.matchPoints || [0, 0];
+  const target = st.matchTarget || 152;
+  const usMatch = matchPts[myTeam];
+  const themMatch = matchPts[other];
   const usPts = st.teamPoints[myTeam];
-  const themPts = st.teamPoints[myTeam === 0 ? 1 : 0];
+  const themPts = st.teamPoints[other];
 
   return (
     <div className="bl">
@@ -47,10 +52,14 @@ export default function BalootBoard({ game, you, action, onExit }) {
           📖 القواعد
         </button>
         <div className="bl-scoreboard">
+          <div className="bl-sb-target">السباق إلى {target}</div>
           <div className="bl-sb-row">
-            <span className="bl-sb-us">لنا {usPts}</span>
+            <span className="bl-sb-us">لنا {usMatch}</span>
             <span className="bl-sb-sep">:</span>
-            <span className="bl-sb-them">{themPts} لهم</span>
+            <span className="bl-sb-them">{themMatch} لهم</span>
+          </div>
+          <div className="bl-sb-sub">
+            جولة {st.roundNo || 1} · هذه اليد {usPts}-{themPts}
           </div>
           {st.mode && (
             <div className="bl-sb-mode">
@@ -62,6 +71,9 @@ export default function BalootBoard({ game, you, action, onExit }) {
 
       <AnimatePresence>
         {showRules && <BalootRules onClose={() => setShowRules(false)} />}
+        {st.phase === "roundOver" && st.roundSummary && (
+          <BlRoundOver key="ro" st={st} you={you} action={action} />
+        )}
       </AnimatePresence>
 
       {/* الطاولة */}
@@ -153,11 +165,20 @@ function BidBar({ st, myTurn, action, turnName }) {
 
 function PlayHand({ st, me, myTurn, action, turnName }) {
   const legalIds = new Set((st.myLegal || []).map((c) => c.id));
+  const myProjects = st.myProjects || [];
   return (
     <div className="bl-handwrap">
       <div className="bl-status">
         {myTurn ? "دورك — العب ورقة" : `دور ${turnName || "…"}`}
       </div>
+      {myProjects.length > 0 && (
+        <div className="bl-myproj">
+          مشاريعك:
+          {myProjects.map((p, i) => (
+            <span key={i} className="bl-proj-chip">{p.label} {p.suit} ({p.value})</span>
+          ))}
+        </div>
+      )}
       <div className="bl-hand">
         {me.hand.map((card) => {
           const playable = myTurn && legalIds.has(card.id);
@@ -295,14 +316,83 @@ function BalootRules({ onClose }) {
   );
 }
 
+// ملخّص نتيجة الجولة (يُستخدم بين الجولات وفي نهاية المباراة)
+function RoundSummaryBody({ s, myTeam }) {
+  if (!s) return null;
+  const us = myTeam;
+  const them = myTeam === 0 ? 1 : 0;
+  const teamLabel = (t) => (t === myTeam ? "فريقك" : "الخصم");
+  return (
+    <div className="bl-sum">
+      <div className="bl-sum-mode">
+        {s.mode === "sun" ? "☀️ صن" : `🃏 حكم ${s.trump || ""}`} · اشترى {teamLabel(s.buyerTeam)}
+        {s.qahar && <span className="bl-sum-qahar"> — قُهر! 💥</span>}
+      </div>
+      <div className="bl-sum-row">
+        <span>نقاط اليد</span>
+        <b>{s.cardPoints[us]} ↔ {s.cardPoints[them]}</b>
+      </div>
+      {s.projects && s.projects.length > 0 && (
+        <div className="bl-sum-proj">
+          مشاريع:
+          {s.projects.map((p, i) => (
+            <span key={i} className="bl-proj-chip">
+              {p.label} {p.suit} ({p.value}) — {teamLabel(p.team)}
+            </span>
+          ))}
+        </div>
+      )}
+      {s.baloot && <div className="bl-sum-proj">بلوت 🂮🂭 (20) — {teamLabel(s.baloot.team)}</div>}
+      <div className="bl-sum-row bl-sum-gain">
+        <span>أبناط هذه الجولة</span>
+        <b>+{s.abnatGained[us]} ↔ +{s.abnatGained[them]}</b>
+      </div>
+      <div className="bl-sum-row bl-sum-total">
+        <span>إجمالي المباراة</span>
+        <b>{s.matchPoints[us]} ↔ {s.matchPoints[them]}</b>
+      </div>
+    </div>
+  );
+}
+
+function BlRoundOver({ st, you, action }) {
+  const me = st.players.find((p) => p.id === you);
+  const myTeam = me?.team ?? 0;
+  return (
+    <motion.div
+      className="bl-rules-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.div
+        className="bl-rules-sheet bl-ro-sheet"
+        initial={{ y: 40, opacity: 0, scale: 0.96 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 40, opacity: 0, scale: 0.96 }}
+      >
+        <div className="bl-rules-head">
+          <h3>📋 نتيجة الجولة {st.roundSummary.roundNo}</h3>
+        </div>
+        <div className="bl-rules-body">
+          <RoundSummaryBody s={st.roundSummary} myTeam={myTeam} />
+        </div>
+        <button className="bl-rules-done" onClick={() => action({ type: "next" })}>
+          الجولة التالية ▶
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function BlOver({ st, you, onExit }) {
   const me = st.players.find((p) => p.id === you);
+  const myTeam = me?.team ?? 0;
   const won = me && me.team === st.winnerTeam;
   return (
     <div className="snl-over">
-      <h3>{won ? "🎉 فاز فريقك!" : `فاز الفريق ${st.winnerTeam + 1}`}</h3>
-      <p>النتيجة — فريق 1: {st.teamPoints[0]} · فريق 2: {st.teamPoints[1]}</p>
-      {st.qahar && <p>قُهر المشترون! 💥</p>}
+      <h3>{won ? "🎉 فاز فريقك!" : "فاز الخصم"}</h3>
+      {st.roundSummary && <RoundSummaryBody s={st.roundSummary} myTeam={myTeam} />}
       <button className="grm-start" onClick={onExit}>رجوع للقائمة</button>
     </div>
   );
