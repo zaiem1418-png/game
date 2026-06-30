@@ -87,6 +87,7 @@ const TABLE_IMG = "/games/jackaroo-table.png";
 export default function JackarooBoard({ game, you, action, onExit }) {
   const st = game?.state;
   const [selCard, setSelCard] = useState(null);
+  const [showRules, setShowRules] = useState(false);
   // لا نُفعّل صورة الطاولة إلا بعد التأكد من تحميلها (وإلا يبقى اللوح الخشبي)
   const [tableReady, setTableReady] = useState(false);
   useEffect(() => {
@@ -109,16 +110,39 @@ export default function JackarooBoard({ game, you, action, onExit }) {
   // الخانات الثابتة للمسار (تُحسب مرّة)
   const ring = useMemo(() => Array.from({ length: LOOP }, (_, i) => ({ i, ...perimeter(i) })), []);
 
-  // البيادق القابلة للتحريك بالورقة المختارة
-  const movableMarbles = useMemo(() => {
-    if (selCard == null) return [];
-    return legal.filter((m) => m.card === selCard).map((m) => m.marble);
-  }, [selCard, legal]);
+  // خيارات الورقة المختارة (قد تحمل الورقة الواحدة عدة خيارات)
+  const cardOpts = useMemo(
+    () => (selCard == null ? [] : legal.filter((m) => m.card === selCard)),
+    [selCard, legal]
+  );
+  // نعرض لوحة خيارات عندما يحتاج اللاعب لاختيار (تبديل/تقسيم/إيقاف) أو عند تعدّد الخيارات لنفس البيدق (إيس 1/11)
+  const needsPanel = useMemo(() => {
+    if (cardOpts.some((o) => ["swap", "split", "stop"].includes(o.kind))) return true;
+    const seen = new Set();
+    for (const o of cardOpts) {
+      if (o.marble < 0) continue;
+      if (seen.has(o.marble)) return true;
+      seen.add(o.marble);
+    }
+    return false;
+  }, [cardOpts]);
+
+  // البيادق القابلة للتحريك مباشرةً (المسار البسيط بدون لوحة خيارات)
+  const movableMarbles = useMemo(
+    () => (needsPanel ? [] : cardOpts.filter((o) => o.marble >= 0).map((o) => o.marble)),
+    [cardOpts, needsPanel]
+  );
 
   function onMarbleClick(p, mi) {
-    if (!myTurn || selCard == null || p.id !== you) return;
-    if (!movableMarbles.includes(mi)) return;
-    action({ type: "play", card: selCard, marble: mi });
+    if (!myTurn || selCard == null || p.id !== you || needsPanel) return;
+    const opt = cardOpts.find((o) => o.marble === mi);
+    if (!opt) return;
+    action({ type: "play", card: selCard, opt: opt.opt });
+    setSelCard(null);
+  }
+
+  function onOptClick(o) {
+    action({ type: "play", card: selCard, opt: o.opt });
     setSelCard(null);
   }
 
@@ -246,8 +270,9 @@ export default function JackarooBoard({ game, you, action, onExit }) {
         </div>
       </div>
 
-      {/* حالة الدور */}
+      {/* حالة الدور + زر القواعد */}
       <div className="jak-turn">
+        <button className="jak-rules-btn" onClick={() => setShowRules(true)} title="قواعد جاكارو">؟ القواعد</button>
         {st.phase === "over"
           ? null
           : myTurn
@@ -255,11 +280,28 @@ export default function JackarooBoard({ game, you, action, onExit }) {
               ? "لا حركة متاحة — اختر ورقة للتخلّص منها"
               : selCard == null
                 ? "دورك — اختر ورقة"
-                : "اختر بيدقاً متوهّجاً لتحريكه"
+                : needsPanel
+                  ? "اختر الحركة من الأسفل"
+                  : "اختر بيدقاً متوهّجاً لتحريكه"
             : `دور ${turnPlayer?.name || "…"}`}
         {ev && ev.type === "capture" && <span className="jak-ev"> 💥 أكل!</span>}
         {ev && ev.type === "home" && <span className="jak-ev"> 🏁 بيدق وصل!</span>}
+        {ev && ev.type === "swap" && <span className="jak-ev"> 🔄 تبديل!</span>}
+        {ev && ev.type === "stop" && <span className="jak-ev"> ⛔ إيقاف!</span>}
       </div>
+
+      {/* لوحة خيارات الورقة (تبديل/تقسيم/إيقاف/إيس 1-11) */}
+      {myTurn && needsPanel && cardOpts.length > 0 && (
+        <div className="jak-opts">
+          {cardOpts.map((o) => (
+            <button key={o.opt} className={`jak-opt ${o.cap ? "cap" : ""}`} onClick={() => onOptClick(o)}>
+              {o.label}{o.cap ? " 💥" : ""}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {showRules && <JakRules onClose={() => setShowRules(false)} />}
 
       {/* اليد + النهاية */}
       {st.phase === "over" ? (
@@ -292,6 +334,51 @@ function hexA(hex, a) {
   const m = (hex || "#555555").replace("#", "");
   const r = parseInt(m.slice(0, 2), 16), g = parseInt(m.slice(2, 4), 16), b = parseInt(m.slice(4, 6), 16);
   return `rgba(${r},${g},${b},${a})`;
+}
+
+// ===== ورقة القواعد: كم حركة لكل كرت + الكروت الخاصة =====
+const RULE_CARDS = [
+  { c: "A", t: "إخراج بيدق من البيت، أو التقدّم 1 أو 11 (اختيارك)", tag: "متعدد" },
+  { c: "K", t: "إخراج بيدق من البيت، أو التقدّم 13 ويأكل ما يمرّ عليه", tag: "متعدد" },
+  { c: "Q", t: "التقدّم 12 خطوة", tag: "" },
+  { c: "J", t: "كرت التبديل — بدّل بيدقك مع بيدق خصم على المسار", tag: "تبديل" },
+  { c: "10", t: "التقدّم 10، أو كرت الإيقاف — يُفقد اللاعب التالي دوره", tag: "إيقاف" },
+  { c: "9", t: "التقدّم 9 خطوات", tag: "" },
+  { c: "8", t: "التقدّم 8 خطوات", tag: "" },
+  { c: "7", t: "كرت التقسيم — وزّع 7 خطوات على بيدق واحد أو بيدقين", tag: "تقسيم" },
+  { c: "6", t: "التقدّم 6 خطوات", tag: "" },
+  { c: "5", t: "التقدّم 5 خطوات", tag: "" },
+  { c: "4", t: "التحرّك 4 خطوات للخلف", tag: "خلف" },
+  { c: "3", t: "التقدّم 3 خطوات", tag: "" },
+  { c: "2", t: "التقدّم خطوتين", tag: "" },
+  { c: "🃏", t: "إخراج بيدق، أو التقدّم 18 ويأكل ما يمرّ عليه", tag: "متعدد" },
+];
+
+function JakRules({ onClose }) {
+  return (
+    <div className="jak-rules-overlay" onClick={onClose}>
+      <div className="jak-rules" onClick={(e) => e.stopPropagation()}>
+        <div className="jak-rules-head">
+          <b>قواعد جاكارو</b>
+          <button className="jak-rules-x" onClick={onClose}>✕</button>
+        </div>
+        <p className="jak-rules-intro">
+          4 لاعبين، فريقان (المتقابلان شركاء). لكل لاعب 4 بيادق و4 أوراق. أخرِج البيادق من البيت ودُر حول المسار
+          (64 خانة) حتى بيت النهاية (4 خانات) — ويجب الوصول بالعدد بالضبط. الهبوط على بيدق خصم يعيده للبيت،
+          والبيدق على خانة بدايته «آمن» لا يُؤكل ولا يُبدّل. يفوز الفريق الذي تصل كل بيادقه لبيت النهاية.
+        </p>
+        <div className="jak-rules-list">
+          {RULE_CARDS.map((r) => (
+            <div key={r.c} className="jak-rule-row">
+              <span className="jak-rule-card">{r.c}</span>
+              <span className="jak-rule-txt">{r.t}</span>
+              {r.tag && <span className="jak-rule-tag">{r.tag}</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function JakOver({ st, you, onExit }) {

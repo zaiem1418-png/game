@@ -676,6 +676,107 @@
 .jak-card.sel { outline: 3px solid #7fffd4; }
 .jak-card.dim { opacity: 0.4; cursor: default; }
 
+/* زر القواعد داخل شريط الدور */
+.jak-rules-btn {
+  position: absolute;
+  inset-inline-start: 8px;
+  top: -2px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(127, 255, 212, 0.5);
+  background: rgba(8, 26, 22, 0.7);
+  color: #7fffd4;
+  cursor: pointer;
+}
+.jak-turn { position: relative; }
+
+/* لوحة خيارات الورقة (تبديل/تقسيم/إيقاف/إيس) */
+.jak-opts {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 4px 8px;
+}
+.jak-opt {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(127, 255, 212, 0.55);
+  background: rgba(10, 32, 28, 0.92);
+  color: #eafff7;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.jak-opt:hover { background: rgba(18, 52, 46, 0.95); }
+.jak-opt.cap { border-color: #ff8a5a; color: #ffd9c8; }
+
+/* نافذة القواعد */
+.jak-rules-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: 14px;
+}
+.jak-rules {
+  width: min(440px, 96vw);
+  max-height: 86vh;
+  overflow-y: auto;
+  background: #0c1f1b;
+  border: 1px solid rgba(127, 255, 212, 0.35);
+  border-radius: 16px;
+  padding: 14px;
+  color: #eafff7;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+}
+.jak-rules-head { display: flex; align-items: center; justify-content: space-between; font-size: 18px; }
+.jak-rules-x {
+  border: none;
+  background: transparent;
+  color: #9fded0;
+  font-size: 18px;
+  cursor: pointer;
+}
+.jak-rules-intro { font-size: 12.5px; line-height: 1.7; opacity: 0.9; margin: 8px 0 12px; }
+.jak-rules-list { display: flex; flex-direction: column; gap: 6px; }
+.jak-rule-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 7px 10px;
+}
+.jak-rule-card {
+  min-width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #14201c;
+  font-weight: 800;
+  border-radius: 7px;
+  font-size: 15px;
+}
+.jak-rule-txt { flex: 1; font-size: 12.5px; line-height: 1.5; }
+.jak-rule-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(127, 255, 212, 0.16);
+  color: #7fffd4;
+  white-space: nowrap;
+}
+
 /* ===== بلوت ===== */
 .bl {
   flex: 1;
