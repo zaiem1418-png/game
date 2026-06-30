@@ -6,6 +6,7 @@ import GiftStage from "../giftEngine/GiftStage.jsx";
 import { BUILTIN_SOUNDS } from "../giftEngine/core/SoundManager.js";
 import { SCENARIOS } from "../giftEngine/scenarios.js";
 import { SERVER_URL } from "../serverUrl.js";
+import { EyeIcon, EditIcon, TrashIcon } from "./ControlIcons.jsx";
 
 const RARITIES = ["common", "rare", "epic", "legendary"];
 const RENDERERS = ["scenario", "lottie", "rive", "video", "gif"];
@@ -179,9 +180,9 @@ export default function AdminPanel() {
               <b>{g.name}</b>
               <small>{g.id} · {g.rarity} · {g.renderer} · {g.duration}ms · 🪙{g.coins}</small>
             </div>
-            <button onClick={() => preview(g)} title="معاينة">👁️</button>
-            <button onClick={() => edit(g)} title="تحرير">✏️</button>
-            <button onClick={() => del(g.id)} title="حذف">🗑️</button>
+            <button onClick={() => preview(g)} title="معاينة" className="ap-ico-btn"><EyeIcon /></button>
+            <button onClick={() => edit(g)} title="تحرير" className="ap-ico-btn"><EditIcon /></button>
+            <button onClick={() => del(g.id)} title="حذف" className="ap-ico-btn del"><TrashIcon /></button>
           </div>
         ))}
       </div>

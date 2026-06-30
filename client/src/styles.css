@@ -131,6 +131,9 @@ body {
 }
 .rh-shield-ic { line-height: 1; display: inline-grid; place-items: center; }
 .rh-shield-ic svg { width: 18px; height: 18px; color: #6fd0ff; }
+.ap-ico-btn { display: inline-grid; place-items: center; color: #cfd6e2; }
+.ap-ico-btn svg { width: 18px; height: 18px; }
+.ap-ico-btn.del { color: #ff6b6b; }
 .rh-shield-lv {
   position: absolute; bottom: -5px; right: -5px; min-width: 16px; height: 16px; padding: 0 3px;
   border-radius: 8px; background: linear-gradient(135deg, #f5c451, #d99b1f); color: #2a1c00;

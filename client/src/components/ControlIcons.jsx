@@ -87,6 +87,39 @@ export function MuteBadgeIcon() {
   );
 }
 
+// عين (معاينة)
+export function EyeIcon() {
+  return (
+    <svg {...S} aria-hidden="true">
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"
+        fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <circle cx="12" cy="12" r="3" fill="currentColor" />
+    </svg>
+  );
+}
+
+// سلّة حذف
+export function TrashIcon() {
+  return (
+    <svg {...S} aria-hidden="true">
+      <path d="M5 7h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M6.5 7l.9 11.4a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5L17.5 7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// قلم (تحرير)
+export function EditIcon() {
+  return (
+    <svg {...S} aria-hidden="true">
+      <path d="M14.5 5.5l4 4L9 19l-4.5 1 1-4.5z" fill="none" stroke="currentColor"
+        strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M13 7l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 // قفل (مقعد مقفل)
 export function LockIcon() {
   return (

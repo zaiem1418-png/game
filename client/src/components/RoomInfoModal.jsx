@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { ShieldIcon, CrownIcon } from "./ControlIcons.jsx";
 
 // تفاصيل الغرفة: المعرّف (للبحث/النسخ)، المستوى وتقدّم النقاط، المالك، وإدارة المشرفين.
 // يضيف/يزيل المالك المشرفين (العدد المسموح حسب مستوى الغرفة).
@@ -61,7 +62,7 @@ export default function RoomInfoModal({ room, selfUid, onAddAdmin, onRemoveAdmin
         {/* المستوى + شريط التقدّم */}
         <div className="ri-level-card">
           <div className="ri-level-top">
-            <span className="ri-level-badge">🛡️ المستوى {level}</span>
+            <span className="ri-level-badge"><span className="ri-ti-ico"><ShieldIcon /></span> المستوى {level}</span>
             <span className="ri-level-pts">{points.toLocaleString("en-US")} نقطة</span>
           </div>
           <div className="ri-level-bar">
@@ -74,7 +75,7 @@ export default function RoomInfoModal({ room, selfUid, onAddAdmin, onRemoveAdmin
         </div>
 
         {/* المالك */}
-        <div className="ri-section-title">👑 مالك الغرفة</div>
+        <div className="ri-section-title"><span className="ri-ti-ico owner"><CrownIcon /></span> مالك الغرفة</div>
         <div className="ri-person owner">
           <span className="ri-ava">{owner?.avatar || "👤"}</span>
           <span className="ri-person-name">{owner?.name || "المالك"}</span>
@@ -83,7 +84,7 @@ export default function RoomInfoModal({ room, selfUid, onAddAdmin, onRemoveAdmin
 
         {/* المشرفون */}
         <div className="ri-section-title">
-          🛡️ المشرفون <span className="ri-count">{admins.length}/{maxAdmins}</span>
+          <span className="ri-ti-ico"><ShieldIcon /></span> المشرفون <span className="ri-count">{admins.length}/{maxAdmins}</span>
         </div>
         {adminMembers.length === 0 && <div className="ri-empty">لا يوجد مشرفون بعد</div>}
         {adminMembers.map((m) => (
