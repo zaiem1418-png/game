@@ -4,8 +4,16 @@
 // - المايك يُنشر فقط عند الجلوس على مقعد وفك الكتم.
 // - كشف التحدّث يأتي جاهزاً من LiveKit (ActiveSpeakers).
 
-import { Room, RoomEvent, Track, ConnectionState } from "livekit-client";
+// ملاحظة أداء: مكتبة livekit-client ثقيلة (~مئات الكيلوبايت). لا نستوردها بشكل
+// ثابت حتى لا تُحمَّل مع الشاشة الأولى (واجهة الألعاب)؛ نجلبها ديناميكياً فقط
+// عند أول دخول لغرفة صوتية. هذا يسرّع التحميل الأولي للعبة بشكل كبير.
 import { SERVER_URL } from "./serverUrl.js";
+
+let _lkPromise = null;
+function loadLiveKit() {
+  if (!_lkPromise) _lkPromise = import("livekit-client");
+  return _lkPromise;
+}
 
 // نطلب التوكن من سيرفر الحالة (Render) — المفاتيح السرية تبقى هناك.
 
@@ -14,6 +22,7 @@ export class VoiceManager {
     this.room = null;
     this.selfId = null;
     this.ready = false;
+    this._ConnectionState = null; // يُملأ بعد تحميل livekit
     this._micWanted = false; // هل يريد المستخدم نشر المايك حالياً؟
     this._lastSpeaking = false;
     this._audioEls = new Map(); // identity -> <audio>
@@ -25,6 +34,10 @@ export class VoiceManager {
   // اتصل بغرفة LiveKit: اجلب التوكن ثم انضمّ
   async init({ identity, name, roomId }) {
     this.selfId = identity;
+
+    // حمّل مكتبة الصوت ديناميكياً عند الحاجة فقط
+    const { Room, RoomEvent, Track, ConnectionState } = await loadLiveKit();
+    this._ConnectionState = ConnectionState;
 
     let token, url;
     try {
@@ -80,7 +93,7 @@ export class VoiceManager {
   // نشر/إيقاف المايك فعلياً (publish/unpublish على مستوى الخادم)
   async setMicEnabled(enabled) {
     this._micWanted = enabled;
-    if (!this.room || this.room.state !== ConnectionState.Connected) return;
+    if (!this.room || this.room.state !== this._ConnectionState?.Connected) return;
     try {
       await this.room.localParticipant.setMicrophoneEnabled(enabled, {
         echoCancellation: true,

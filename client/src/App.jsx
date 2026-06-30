@@ -1,15 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { socket } from "./socket.js";
 import { VoiceManager } from "./voice.js";
 import Shell from "./lobby/Shell.jsx";
-import GameRoom from "./games/GameRoom.jsx";
+// تقسيم الحزمة: شاشة اللعبة ومحرّك الهدايا ثقيلان ولا يحتاجهما المستخدم على
+// الشاشة الأولى — نحمّلهما عند فتحهما فعلياً فقط لتسريع التحميل الأولي.
+const GameRoom = lazy(() => import("./games/GameRoom.jsx"));
+const GiftStage = lazy(() => import("./giftEngine/GiftStage.jsx"));
 import RoomHeader from "./components/RoomHeader.jsx";
 import RoomInfoModal from "./components/RoomInfoModal.jsx";
 import SeatGrid from "./components/SeatGrid.jsx";
 import ChatPanel from "./components/ChatPanel.jsx";
 import BottomBar from "./components/BottomBar.jsx";
 import GiftPicker from "./components/GiftPicker.jsx";
-import GiftStage from "./giftEngine/GiftStage.jsx";
 import AdminPanel from "./components/AdminPanel.jsx";
 import ReactionPicker from "./components/ReactionPicker.jsx";
 import WalletBar from "./components/WalletBar.jsx";
@@ -327,15 +329,17 @@ export default function App() {
   if (view === "game" && activeGame)
     return (
       <>
-        <GameRoom
-          gameId={activeGame.gameId}
-          mode={activeGame.mode}
-          user={{ name: "زائر", avatar: "🧑🏻", uid: getUid() }}
-          onExit={() => {
-            setActiveGame(null);
-            setView("lobby");
-          }}
-        />
+        <Suspense fallback={<div className="lazy-loading"><div className="join-spinner" /></div>}>
+          <GameRoom
+            gameId={activeGame.gameId}
+            mode={activeGame.mode}
+            user={{ name: "زائر", avatar: "🧑🏻", uid: getUid() }}
+            onExit={() => {
+              setActiveGame(null);
+              setView("lobby");
+            }}
+          />
+        </Suspense>
         {walletOverlays}
       </>
     );
@@ -461,7 +465,9 @@ export default function App() {
 
       {walletOverlays}
 
-      <GiftStage ref={giftStageRef} />
+      <Suspense fallback={null}>
+        <GiftStage ref={giftStageRef} />
+      </Suspense>
     </div>
   );
 }
