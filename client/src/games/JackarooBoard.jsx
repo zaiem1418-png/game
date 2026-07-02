@@ -1,75 +1,45 @@
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 
-// ===== هندسة مسار جاكارو (لوحة على شكل صليب/زائد، 64 خانة حول المحيط) =====
+// ===== هندسة مسار جاكارو الدائري (مطابق للطاولة الحقيقية، 64 خانة حول الدائرة) =====
 const LOOP = 64;
 const HOME_FIRST = 65;
+const RING_R = 43; // نصف قطر مسار الدائرة (٪)
 
-// رؤوس مضلّع الصليب (٪) — حافة خارجية 7/93، تجويف داخلي 35/65
-const OUT_LO = 7, OUT_HI = 93, IN_LO = 35, IN_HI = 65;
-const CROSS = [
-  [IN_LO, OUT_LO], [IN_HI, OUT_LO], // حافّة ذراع أعلى
-  [IN_HI, IN_LO], [OUT_HI, IN_LO], // الانتقال لذراع اليمين
-  [OUT_HI, IN_HI], [IN_HI, IN_HI], // حافّة ذراع اليمين
-  [IN_HI, OUT_HI], [IN_LO, OUT_HI], // ذراع أسفل
-  [IN_LO, IN_HI], [OUT_LO, IN_HI], // الانتقال لذراع اليسار
-  [OUT_LO, IN_LO], [IN_LO, IN_LO], // حافّة ذراع اليسار + إغلاق
-];
-
-// أطوال الأضلاع التراكمية على محيط الصليب
-const SEGLEN = [];
-const CUM = [0];
-for (let k = 0; k < CROSS.length; k++) {
-  const a = CROSS[k], b = CROSS[(k + 1) % CROSS.length];
-  const d = Math.hypot(b[0] - a[0], b[1] - a[1]);
-  SEGLEN.push(d);
-  CUM.push(CUM[k] + d);
-}
-const PERIM = CUM[CUM.length - 1];
-
-// موضع خانة رقم i (0..63) موزّعة بالتساوي حول محيط الصليب
+// موضع خانة رقم i (0..63) على الدائرة — تبدأ من الأعلى وتدور مع عقارب الساعة
 function perimeter(i) {
-  const target = ((i % LOOP) / LOOP) * PERIM;
-  for (let k = 0; k < CROSS.length; k++) {
-    if (target <= CUM[k + 1] || k === CROSS.length - 1) {
-      const a = CROSS[k], b = CROSS[(k + 1) % CROSS.length];
-      const t = SEGLEN[k] ? (target - CUM[k]) / SEGLEN[k] : 0;
-      return { x: a[0] + (b[0] - a[0]) * t, y: a[1] + (b[1] - a[1]) * t };
-    }
-  }
-  return { x: 50, y: 50 };
+  const a = ((i % LOOP) / LOOP) * 2 * Math.PI - Math.PI / 2;
+  return { x: 50 + RING_R * Math.cos(a), y: 50 + RING_R * Math.sin(a) };
 }
 
-// بداية كل لاعب تقع على رأس ذراعه (0=أعلى، 16=يمين، 32=أسفل، 48=يسار)
+// بداية كل لاعب على محيط الدائرة (0=أعلى، 16=يمين، 32=أسفل، 48=يسار)
 const START_INDEX = [0, 16, 32, 48];
+function startAngle(seat) {
+  return (START_INDEX[seat] / LOOP) * 2 * Math.PI - Math.PI / 2;
+}
 
-// قواعد (بيوت) اللاعبين في الزوايا القُطرية بجوار مقاعدهم
-const CORNERS = [
-  { x: 16, y: 16 }, // 0 أعلى-يسار
-  { x: 84, y: 16 }, // 1 أعلى-يمين
-  { x: 84, y: 84 }, // 2 أسفل-يمين
-  { x: 16, y: 84 }, // 3 أسفل-يسار
-];
+// قواعد (بيوت) اللاعبين: زهرة من 4 ثقوب في الأركان القُطرية داخل الدائرة (مزاحة 45° عن البداية)
+const YARD_R = 27; // بُعد مركز القاعدة عن مركز اللوحة
+const CORNERS = [0, 1, 2, 3].map((seat) => {
+  const a = startAngle(seat) + Math.PI / 4;
+  return { x: 50 + YARD_R * Math.cos(a), y: 50 + YARD_R * Math.sin(a) };
+});
 
-// ممرّات بيت النهاية: خط ملوّن داخل ذراع كل لاعب يتجه للمركز
-const HOME_LANES = [
-  [[50, 17], [50, 25], [50, 33], [50, 41]], // 0 ذراع أعلى ↓
-  [[83, 50], [75, 50], [67, 50], [59, 50]], // 1 ذراع يمين ←
-  [[50, 83], [50, 75], [50, 67], [50, 59]], // 2 ذراع أسفل ↑
-  [[17, 50], [25, 50], [33, 50], [41, 50]], // 3 ذراع يسار →
-];
+// ممرّات بيت النهاية: خطّ شعاعي من المحيط نحو المركز باتجاه بداية اللاعب
+const HOME_R = [36, 29, 22, 15];
 function homeCells(seat) {
-  return (HOME_LANES[seat] || HOME_LANES[0]).map(([x, y]) => ({ x, y }));
+  const a = startAngle(seat);
+  return HOME_R.map((r) => ({ x: 50 + r * Math.cos(a), y: 50 + r * Math.sin(a) }));
 }
 
 // مواضع البيادق الأربعة داخل قاعدة اللاعب — على هيئة زهرة (clover) مثل زوايا الصورة
 function yardSlots(seat) {
   const c = CORNERS[seat];
   return [
-    { x: c.x, y: c.y - 6 }, // أعلى
-    { x: c.x - 6, y: c.y }, // يسار
-    { x: c.x + 6, y: c.y }, // يمين
-    { x: c.x, y: c.y + 6 }, // أسفل
+    { x: c.x, y: c.y - 5 }, // أعلى
+    { x: c.x - 5, y: c.y }, // يسار
+    { x: c.x + 5, y: c.y }, // يمين
+    { x: c.x, y: c.y + 5 }, // أسفل
   ];
 }
 
@@ -242,11 +212,10 @@ export default function JackarooBoard({ game, you, action, onExit }) {
           ))
         )}
 
-        {/* المركز — كومة التخلّص */}
+        {/* المركز — كومة الأوراق (دون كلمات) */}
         <div className="jak-center">
           <span className="jak-pile-card c1" />
           <span className="jak-pile-card c2" />
-          <span className="jak-pile-lbl">تخلّص</span>
         </div>
 
         {/* البيادق */}

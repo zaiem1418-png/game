@@ -489,16 +489,20 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1;
-  /* طاولة جاكارو: صورة حقيقية إن وُجدت، وإلا لوح خشبي مرسوم */
+  /* طاولة جاكارو دائرية: صورة حقيقية إن وُجدت، وإلا لوح خشبي مرسوم يتدرّج
+     من خشب فاتح في الوسط إلى حافّة حبل بنّي داكن — مطابق للطاولة الحقيقية */
   background:
     var(--jak-table, none),
-    radial-gradient(circle at 50% 45%, #e8c79a 0%, #d9b079 45%, #c79a5e 100%);
+    radial-gradient(circle at 50% 50%,
+      #eccea0 0%, #e4c28e 42%,
+      #d3a86e 60%, #bf8d57 72%,
+      #7c5330 82%, #4d2f16 100%);
   background-size: cover, cover;
   background-position: center, center;
   background-repeat: no-repeat, no-repeat;
-  border: 7px solid #2f7d56;
-  border-radius: 22%;
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5), inset 0 0 40px rgba(120, 75, 30, 0.35);
+  border: 6px solid #5a3a1c;
+  border-radius: 50%;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5), inset 0 0 34px rgba(80, 45, 15, 0.4);
 }
 /* عند توفّر صورة الطاولة: أخفِ الإطار الأخضر لأن الصورة تحمل إطارها */
 .jak-board.has-photo {
@@ -538,12 +542,16 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 30%;
-  height: 22%;
+  width: 24%;
+  height: 24%;
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   justify-content: center;
+  /* قرص المركز: أحمر داخلي داخل حلقة كحلية — مطابق للطاولة الحقيقية */
+  border-radius: 50%;
+  background: radial-gradient(circle, #a83232 0 40%, #1c2f4a 42%, #16283f 100%);
+  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 .jak-pile-card {
   position: absolute;
@@ -556,14 +564,6 @@
 }
 .jak-pile-card.c1 { transform: rotate(-12deg) translateX(-6px); }
 .jak-pile-card.c2 { transform: rotate(9deg) translateX(6px); }
-.jak-pile-lbl {
-  position: relative;
-  z-index: 2;
-  font-size: clamp(15px, 4.5vw, 22px);
-  font-weight: 800;
-  color: #d2352a;
-  text-shadow: 0 1px 0 #fff, 0 2px 4px rgba(0, 0, 0, 0.3);
-}
 .jak-marble {
   position: absolute;
   width: clamp(15px, 4.4vw, 22px);
