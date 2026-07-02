@@ -1,32 +1,62 @@
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 
-// ===== هندسة مسار جاكارو الدائري (مطابق للطاولة الحقيقية، 64 خانة حول الدائرة) =====
+// ===== هندسة مسار جاكارو: مربّع بحوافّ مستديرة (squircle) كما في الطاولة الحقيقية =====
+// النقاط تسير على مسار شبه مربّع (أعلى/أسفل/جانبان شبه مستقيمة + أركان مستديرة)
+// داخل اللوح الخشبي الدائري — لا دائرة مثالية. 64 خانة موزّعة بالتساوي حول المحيط.
 const LOOP = 64;
 const HOME_FIRST = 65;
-const RING_R = 43; // نصف قطر مسار الدائرة (٪)
+// نصف امتداد الأضلاع؛ الأركان تمتدّ أبعد (×~1.19) فتقترب من حافّة اللوح الدائري
+const RING_R = 37;
+const SQUARE_N = 4; // درجة «التربيع» (2 = دائرة، ∞ = مربّع حادّ) — 4 لحوافّ مستديرة
 
-// موضع خانة رقم i (0..63) على الدائرة — تبدأ من الأعلى وتدور مع عقارب الساعة
-function perimeter(i) {
-  const a = ((i % LOOP) / LOOP) * 2 * Math.PI - Math.PI / 2;
-  return { x: 50 + RING_R * Math.cos(a), y: 50 + RING_R * Math.sin(a) };
+// نقطة على المربّع المستدير عند الزاوية t (0 = أعلى، مع عقارب الساعة)
+function superPoint(t) {
+  const a = t - Math.PI / 2;
+  const c = Math.cos(a), s = Math.sin(a);
+  const sx = Math.sign(c) * Math.pow(Math.abs(c), 2 / SQUARE_N);
+  const sy = Math.sign(s) * Math.pow(Math.abs(s), 2 / SQUARE_N);
+  return { x: 50 + RING_R * sx, y: 50 + RING_R * sy };
 }
 
-// بداية كل لاعب على محيط الدائرة (0=أعلى، 16=يمين، 32=أسفل، 48=يسار)
+// عيّنات كثيفة على المنحنى ثم إعادة توزيع النقاط بالتساوي حسب طول القوس
+// (حتى لا تتكدّس النقاط عند الأركان) — يُحسب مرّة واحدة.
+const _DENSE = 1440;
+const _pts = Array.from({ length: _DENSE + 1 }, (_, k) => superPoint((k / _DENSE) * 2 * Math.PI));
+const _cum = [0];
+for (let k = 1; k <= _DENSE; k++) {
+  _cum.push(_cum[k - 1] + Math.hypot(_pts[k].x - _pts[k - 1].x, _pts[k].y - _pts[k - 1].y));
+}
+const _TOTAL = _cum[_DENSE];
+
+// موضع خانة رقم i (0..63) موزّعة بالتساوي على محيط المربّع المستدير
+function perimeter(i) {
+  const target = ((i % LOOP) / LOOP) * _TOTAL;
+  let k = 1;
+  while (k < _DENSE && _cum[k] < target) k++;
+  const seg = _cum[k] - _cum[k - 1] || 1;
+  const f = (target - _cum[k - 1]) / seg;
+  return {
+    x: _pts[k - 1].x + (_pts[k].x - _pts[k - 1].x) * f,
+    y: _pts[k - 1].y + (_pts[k].y - _pts[k - 1].y) * f,
+  };
+}
+
+// بداية كل لاعب في منتصف ضلعه (0=أعلى، 16=يمين، 32=أسفل، 48=يسار)
 const START_INDEX = [0, 16, 32, 48];
 function startAngle(seat) {
   return (START_INDEX[seat] / LOOP) * 2 * Math.PI - Math.PI / 2;
 }
 
-// قواعد (بيوت) اللاعبين: زهرة من 4 ثقوب في الأركان القُطرية داخل الدائرة (مزاحة 45° عن البداية)
-const YARD_R = 27; // بُعد مركز القاعدة عن مركز اللوحة
+// قواعد (بيوت) اللاعبين: زهرة من 4 ثقوب في الأركان القُطرية (مزاحة 45° عن البداية)
+const YARD_R = 30; // بُعد مركز القاعدة عن مركز اللوحة
 const CORNERS = [0, 1, 2, 3].map((seat) => {
   const a = startAngle(seat) + Math.PI / 4;
   return { x: 50 + YARD_R * Math.cos(a), y: 50 + YARD_R * Math.sin(a) };
 });
 
 // ممرّات بيت النهاية: خطّ شعاعي من المحيط نحو المركز باتجاه بداية اللاعب
-const HOME_R = [36, 29, 22, 15];
+const HOME_R = [31, 25, 19, 13];
 function homeCells(seat) {
   const a = startAngle(seat);
   return HOME_R.map((r) => ({ x: 50 + r * Math.cos(a), y: 50 + r * Math.sin(a) }));
