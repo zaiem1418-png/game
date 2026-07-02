@@ -1,35 +1,40 @@
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 
-// ===== هندسة مسار جاكارو: معيّن (rhombus) مستدير الرؤوس كما في الطاولة الحقيقية =====
-// رؤوس المعيّن للأعلى/اليمين/الأسفل/اليسار (حيث بدايات اللاعبين)، وأضلاعه القُطرية
-// (حيث القواعد). 64 خانة موزّعة بالتساوي حول المحيط، داخل اللوح الخشبي الدائري.
+// ===== هندسة مسار جاكارو: مضلّع من 12 ضلعاً (dodecagon) كما في الطاولة الحقيقية =====
+// النقاط تسير على 12 حافّة مستقيمة؛ رؤوس الجهات (أعلى/يمين/أسفل/يسار) هي بدايات
+// اللاعبين. 64 خانة موزّعة بالتساوي حول المحيط، داخل اللوح الخشبي الدائري.
 const LOOP = 64;
 const HOME_FIRST = 65;
-// نصف امتداد الرؤوس (أبعد نقطة)؛ منتصف الأضلاع القُطرية أقرب للمركز (×~0.83)
-const RING_R = 42;
-const SQUARE_N = 1.3; // شكل المنحنى: 2=دائرة، >2=مربّع، 1=معيّن حادّ — 1.3 لمعيّن مستدير الرؤوس
+const SIDES = 12;  // عدد أضلاع المضلّع
+const RING_R = 43; // نصف قطر المضلّع (من المركز إلى الرأس) (٪)
 
-// نقطة على المعيّن المستدير عند الزاوية t (0 = رأس أعلى، مع عقارب الساعة)
-function superPoint(t) {
-  const a = t - Math.PI / 2;
-  const c = Math.cos(a), s = Math.sin(a);
-  const sx = Math.sign(c) * Math.pow(Math.abs(c), 2 / SQUARE_N);
-  const sy = Math.sign(s) * Math.pow(Math.abs(s), 2 / SQUARE_N);
-  return { x: 50 + RING_R * sx, y: 50 + RING_R * sy };
+// رؤوس المضلّع الاثنا عشر — الرأس الأول للأعلى ثم مع عقارب الساعة
+const VERTS = Array.from({ length: SIDES }, (_, k) => {
+  const a = (k / SIDES) * 2 * Math.PI - Math.PI / 2;
+  return { x: 50 + RING_R * Math.cos(a), y: 50 + RING_R * Math.sin(a) };
+});
+
+// نبني نقاطاً كثيفة على طول الأضلاع، ثم نوزّع 64 خانة بالتساوي حسب طول القوس
+// (حتى تتساوى المسافات على الحواف وعند الرؤوس) — يُحسب مرّة واحدة.
+const _pts = [];
+for (let e = 0; e < SIDES; e++) {
+  const A = VERTS[e], B = VERTS[(e + 1) % SIDES];
+  const STEP = 120;
+  for (let s = 0; s < STEP; s++) {
+    const f = s / STEP;
+    _pts.push({ x: A.x + (B.x - A.x) * f, y: A.y + (B.y - A.y) * f });
+  }
 }
-
-// عيّنات كثيفة على المنحنى ثم إعادة توزيع النقاط بالتساوي حسب طول القوس
-// (حتى لا تتكدّس النقاط عند الأركان) — يُحسب مرّة واحدة.
-const _DENSE = 1440;
-const _pts = Array.from({ length: _DENSE + 1 }, (_, k) => superPoint((k / _DENSE) * 2 * Math.PI));
+_pts.push({ ..._pts[0] }); // إغلاق الحلقة
+const _DENSE = _pts.length - 1;
 const _cum = [0];
 for (let k = 1; k <= _DENSE; k++) {
   _cum.push(_cum[k - 1] + Math.hypot(_pts[k].x - _pts[k - 1].x, _pts[k].y - _pts[k - 1].y));
 }
 const _TOTAL = _cum[_DENSE];
 
-// موضع خانة رقم i (0..63) موزّعة بالتساوي على محيط المعيّن
+// موضع خانة رقم i (0..63) موزّعة بالتساوي على محيط المضلّع
 function perimeter(i) {
   const target = ((i % LOOP) / LOOP) * _TOTAL;
   let k = 1;
@@ -42,20 +47,20 @@ function perimeter(i) {
   };
 }
 
-// بداية كل لاعب عند رأس المعيّن (0=أعلى، 16=يمين، 32=أسفل، 48=يسار)
+// بداية كل لاعب عند رأس الجهة (0=أعلى، 16=يمين، 32=أسفل، 48=يسار)
 const START_INDEX = [0, 16, 32, 48];
 function startAngle(seat) {
   return (START_INDEX[seat] / LOOP) * 2 * Math.PI - Math.PI / 2;
 }
 
-// قواعد (بيوت) اللاعبين: زهرة من 4 ثقوب على أضلاع المعيّن القُطرية (مزاحة 45° عن الرأس)
+// قواعد (بيوت) اللاعبين: زهرة من 4 ثقوب في الأركان القُطرية (مزاحة 45° عن الرأس)
 const YARD_R = 28; // بُعد مركز القاعدة عن مركز اللوحة
 const CORNERS = [0, 1, 2, 3].map((seat) => {
   const a = startAngle(seat) + Math.PI / 4;
   return { x: 50 + YARD_R * Math.cos(a), y: 50 + YARD_R * Math.sin(a) };
 });
 
-// ممرّات بيت النهاية: خطّ شعاعي من رأس المعيّن نحو المركز باتجاه بداية اللاعب
+// ممرّات بيت النهاية: خطّ شعاعي من الرأس نحو المركز باتجاه بداية اللاعب
 const HOME_R = [36, 29, 22, 15];
 function homeCells(seat) {
   const a = startAngle(seat);
