@@ -538,6 +538,24 @@
   box-sizing: border-box;
 }
 .jak-cell.home { border-style: dashed; background: rgba(255, 255, 255, 0.2); }
+/* خانة العبور: حلقة ذهبية + سهم عبور — اختصار للطرف المقابل */
+.jak-cell.cross {
+  width: 6.4%;
+  height: 6.4%;
+  background: radial-gradient(circle, #ffe08a 0%, #f4b73a 70%);
+  border: 2px solid #ffd15c;
+  box-shadow: 0 0 8px rgba(255, 196, 60, 0.9), inset 0 0 4px rgba(120, 70, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+.jak-cross-mark {
+  font-size: clamp(8px, 2.4vw, 12px);
+  font-weight: 900;
+  color: #6b3d00;
+  line-height: 1;
+}
 .jak-center {
   position: absolute;
   left: 50%;

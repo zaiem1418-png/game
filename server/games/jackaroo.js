@@ -41,6 +41,26 @@ function teamOf(seat) {
   return seat % 2;
 }
 
+// ===== خانتا العبور: منتصفا الجانبين (يسار/يمين) — اختصار للطرف المقابل =====
+// تُفعّل في 1ضد1 فقط؛ في 4 لاعبين تتطابق هاتان الخليّتان مع بدايات لاعبَي اليسار/اليمين.
+const CROSS_CELLS = [16, 48];
+function relStep(seat, abs) {
+  return ((abs - offsetOf(seat)) % LOOP + LOOP) % LOOP + 1;
+}
+function crossEnabled(state) {
+  return state.players.length <= 2;
+}
+// إن هبط البيدق (خطوة نسبية 1..64) على خانة عبور، يُرجع خطوة الوصول للخانة المقابلة
+// (للأمام فقط، حتى لا يرجع البيدق) — وإلا يُرجع الخطوة كما هي.
+function crossStep(state, seat, to) {
+  if (!crossEnabled(state) || !(to >= 1 && to <= LOOP)) return to;
+  const c = absCell(seat, to);
+  const other = c === CROSS_CELLS[0] ? CROSS_CELLS[1] : c === CROSS_CELLS[1] ? CROSS_CELLS[0] : -1;
+  if (other < 0) return to;
+  const s = relStep(seat, other);
+  return s > to ? s : to;
+}
+
 // ===== تخطيط المقاعد/الفرق حسب عدد اللاعبين =====
 const SEAT_LAYOUTS = {
   2: [{ seat: 0, team: 0 }, { seat: 2, team: 1 }],
@@ -269,12 +289,20 @@ function fwd(state, p, mi, step, dist, opt, label, o = {}) {
     if (occupiedOwnHome(p, to, mi)) return null; // خانة بيت مشغولة ببيدق آخر لي
     return { marble: mi, kind: "home", to, caps, cap: caps.length > 0, opt, label };
   }
-  if (occupiedByAlly(state, p, p.seat, to)) return null; // لا هبوط على بيدق من فريقي
-  if (!o.through) {
-    const v = captureAt(state, p, p.seat, to);
-    if (v) caps = [v];
+  // هبوط على المسار — إن كان على خانة عبور انتقل للخانة المقابلة (الطرف الآخر)
+  const landing = crossStep(state, p.seat, to);
+  const crossed = landing !== to;
+  if (occupiedByAlly(state, p, p.seat, landing)) return null; // لا هبوط على بيدق من فريقي
+  if (!o.through || crossed) {
+    // للأوراق العادية: أكل خانة الوصول. وللأوراق التي تمرّ وتأكل (K/JK): أضِف أكل خانة الوصول بعد العبور.
+    const v = captureAt(state, p, p.seat, landing);
+    if (v) { if (o.through) caps.push(v); else caps = [v]; }
   }
-  return { marble: mi, kind: "move", to, caps, cap: caps.length > 0, opt, label };
+  return {
+    marble: mi, kind: "move", to: landing, crossed,
+    caps, cap: caps.length > 0,
+    opt, label: crossed ? `${label} ⇄ عبور` : label,
+  };
 }
 
 // الورقة 4 — للخلف
@@ -426,7 +454,7 @@ function applyMove(state, p, move) {
   p.marbles[move.marble] = move.to;
   recountHome(p);
   state.lastEvent = {
-    type: move.cap ? "capture" : move.kind === "home" ? "home" : "move",
+    type: move.cap ? "capture" : move.kind === "home" ? "home" : move.crossed ? "cross" : "move",
     player: p.id,
     marble: move.marble,
     to: move.to,

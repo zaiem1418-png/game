@@ -62,6 +62,9 @@ function homeCells(seat) {
   return HOME_R.map((r) => ({ x: 50 + r * Math.cos(a), y: 50 + r * Math.sin(a) }));
 }
 
+// خانتا العبور (منتصفا الجانبين) — تُعرَضان في 1ضد1 فقط، اختصار للطرف المقابل
+const CROSS_CELLS = [16, 48];
+
 // مواضع البيادق الأربعة داخل قاعدة اللاعب — على هيئة زهرة (clover) مثل زوايا الصورة
 function yardSlots(seat) {
   const c = CORNERS[seat];
@@ -160,6 +163,8 @@ export default function JackarooBoard({ game, you, action, onExit }) {
   }
 
   const ev = st.lastEvent;
+  // العبور مُفعّل في 1ضد1 فقط (خانتا الجانبين ليستا بدايتَي لاعبين)
+  const crossOn = players.length <= 2;
   // موضع مقعد كل لاعب حول اللوحة حسب زاويته
   const POD_POS = ["tl", "tr", "br", "bl"];
 
@@ -219,15 +224,19 @@ export default function JackarooBoard({ game, you, action, onExit }) {
         {ring.map((cell) => {
           const startSeat = START_INDEX.indexOf(cell.i);
           const startP = startSeat >= 0 ? bySeat[startSeat] : null;
+          // خانة عبور: منتصف الجانب في 1ضد1 وليست بداية لاعب موجود
+          const isCross = crossOn && CROSS_CELLS.includes(cell.i) && !startP;
           return (
             <span
               key={cell.i}
-              className="jak-cell"
+              className={`jak-cell ${isCross ? "cross" : ""}`}
               style={{
                 left: `${cell.x}%`, top: `${cell.y}%`,
                 ...(startP ? { background: startP.color, borderColor: "#fff" } : {}),
               }}
-            />
+            >
+              {isCross && <span className="jak-cross-mark">⇄</span>}
+            </span>
           );
         })}
 
@@ -287,6 +296,7 @@ export default function JackarooBoard({ game, you, action, onExit }) {
         {ev && ev.type === "home" && <span className="jak-ev"> 🏁 بيدق وصل!</span>}
         {ev && ev.type === "swap" && <span className="jak-ev"> 🔄 تبديل!</span>}
         {ev && ev.type === "stop" && <span className="jak-ev"> ⛔ إيقاف!</span>}
+        {ev && ev.type === "cross" && <span className="jak-ev"> ⇄ عبور للطرف الآخر!</span>}
       </div>
 
       {/* لوحة خيارات الورقة (تبديل/تقسيم/إيقاف/إيس 1-11) */}
@@ -365,6 +375,10 @@ function JakRules({ onClose }) {
           4 لاعبين، فريقان (المتقابلان شركاء). لكل لاعب 4 بيادق و4 أوراق. أخرِج البيادق من البيت ودُر حول المسار
           (64 خانة) حتى بيت النهاية (4 خانات) — ويجب الوصول بالعدد بالضبط. الهبوط على بيدق خصم يعيده للبيت،
           والبيدق على خانة بدايته «آمن» لا يُؤكل ولا يُبدّل. يفوز الفريق الذي تصل كل بيادقه لبيت النهاية.
+        </p>
+        <p className="jak-rules-intro">
+          ⇄ <b>نقطتا العبور</b> (في 1ضد1): الخانتان الذهبيتان على منتصف الجانبين — عند وصول بيدقك
+          لإحداهما ينتقل مباشرةً إلى الخانة المقابلة على الطرف الآخر (اختصار للأمام).
         </p>
         <div className="jak-rules-list">
           {RULE_CARDS.map((r) => (
