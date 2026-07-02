@@ -8,6 +8,9 @@ const LOOP = 64;
 const HOME_FIRST = 65;
 const SIDES = 12;  // عدد أضلاع المضلّع
 const RING_R = 43; // نصف قطر المضلّع (من المركز إلى الرأس) (٪)
+// نسبة أبعاد اللوح الطولي (العرض:الارتفاع) — تطابق aspect-ratio في CSS،
+// وتُستخدم لتوزيع الخانات بالتساوي بالبكسل الفعلي (لا بفضاء النِّسب المتماثل).
+const ASPECT_W = 4, ASPECT_H = 5;
 
 // رؤوس المضلّع الاثنا عشر — الرأس الأول للأعلى ثم مع عقارب الساعة
 const VERTS = Array.from({ length: SIDES }, (_, k) => {
@@ -30,7 +33,10 @@ _pts.push({ ..._pts[0] }); // إغلاق الحلقة
 const _DENSE = _pts.length - 1;
 const _cum = [0];
 for (let k = 1; k <= _DENSE; k++) {
-  _cum.push(_cum[k - 1] + Math.hypot(_pts[k].x - _pts[k - 1].x, _pts[k].y - _pts[k - 1].y));
+  // مسافة بالبكسل الفعلي: نوزن فرق x بعرض اللوح وفرق y بارتفاعه (لوح طولي)
+  const dx = (_pts[k].x - _pts[k - 1].x) * ASPECT_W;
+  const dy = (_pts[k].y - _pts[k - 1].y) * ASPECT_H;
+  _cum.push(_cum[k - 1] + Math.hypot(dx, dy));
 }
 const _TOTAL = _cum[_DENSE];
 

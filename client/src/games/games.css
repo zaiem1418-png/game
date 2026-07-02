@@ -488,12 +488,13 @@
 .jak-board {
   position: relative;
   width: 100%;
-  aspect-ratio: 1;
-  /* طاولة جاكارو دائرية: صورة حقيقية إن وُجدت، وإلا لوح خشبي مرسوم يتدرّج
+  /* طاولة طوليّة (portrait): أطول من عرضها */
+  aspect-ratio: 4 / 5;
+  /* طاولة جاكارو: صورة حقيقية إن وُجدت، وإلا لوح خشبي مرسوم يتدرّج
      من خشب فاتح في الوسط إلى حافّة حبل بنّي داكن — مطابق للطاولة الحقيقية */
   background:
     var(--jak-table, none),
-    radial-gradient(circle at 50% 50%,
+    radial-gradient(ellipse at 50% 50%,
       #eccea0 0%, #e4c28e 42%,
       #d3a86e 60%, #bf8d57 72%,
       #7c5330 82%, #4d2f16 100%);
@@ -515,7 +516,7 @@
 .jak-base {
   position: absolute;
   width: 20%;
-  height: 20%;
+  aspect-ratio: 1; /* دائرة حتى على لوح طولي */
   transform: translate(-50%, -50%);
   border: 2px solid;
   border-radius: 50%;
@@ -524,13 +525,12 @@
 /* ثقوب القاعدة (الزهرة) */
 .jak-cell.yard {
   width: 5.6%;
-  height: 5.6%;
   border-width: 2px;
 }
 .jak-cell {
   position: absolute;
   width: 5%;
-  height: 5%;
+  aspect-ratio: 1; /* نقاط مستديرة حتى على لوح طولي (العرض هو المرجع) */
   transform: translate(-50%, -50%);
   border: 1.5px solid rgba(90, 55, 20, 0.5);
   border-radius: 50%;
@@ -541,7 +541,6 @@
 /* خانة العبور: حلقة ذهبية + سهم عبور — اختصار للطرف المقابل */
 .jak-cell.cross {
   width: 6.4%;
-  height: 6.4%;
   background: radial-gradient(circle, #ffe08a 0%, #f4b73a 70%);
   border: 2px solid #ffd15c;
   box-shadow: 0 0 8px rgba(255, 196, 60, 0.9), inset 0 0 4px rgba(120, 70, 0, 0.5);
@@ -561,7 +560,7 @@
   left: 50%;
   top: 50%;
   width: 21%;
-  height: 21%;
+  aspect-ratio: 1; /* قرص مركزي دائري حتى على لوح طولي */
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
