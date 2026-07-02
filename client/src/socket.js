@@ -3,6 +3,7 @@ import { SERVER_URL } from "./serverUrl.js";
 
 export const socket = io(SERVER_URL, {
   autoConnect: false,
-  // polling ثم websocket — أكثر موثوقية خلف بروكسي الاستضافات (Render/Railway)
-  transports: ["polling", "websocket"],
+  // websocket أولاً لمصافحة أسرع (تأخير أقل عند الدخول)، مع polling كاحتياطي
+  // موثوق خلف بروكسي الاستضافات (Render/Railway) إن تعذّر الـwebsocket.
+  transports: ["websocket", "polling"],
 });

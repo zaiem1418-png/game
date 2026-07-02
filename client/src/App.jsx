@@ -4,8 +4,11 @@ import { VoiceManager } from "./voice.js";
 import Shell from "./lobby/Shell.jsx";
 // تقسيم الحزمة: شاشة اللعبة ومحرّك الهدايا ثقيلان ولا يحتاجهما المستخدم على
 // الشاشة الأولى — نحمّلهما عند فتحهما فعلياً فقط لتسريع التحميل الأولي.
-const GameRoom = lazy(() => import("./games/GameRoom.jsx"));
-const GiftStage = lazy(() => import("./giftEngine/GiftStage.jsx"));
+// نعرّف المصانع منفصلة لإعادة استخدامها في الجلب المسبق (prefetch) أثناء اللوبي.
+const importGameRoom = () => import("./games/GameRoom.jsx");
+const importGiftStage = () => import("./giftEngine/GiftStage.jsx");
+const GameRoom = lazy(importGameRoom);
+const GiftStage = lazy(importGiftStage);
 import RoomHeader from "./components/RoomHeader.jsx";
 import RoomInfoModal from "./components/RoomInfoModal.jsx";
 import SeatGrid from "./components/SeatGrid.jsx";
@@ -167,6 +170,20 @@ export default function App() {
       socket.off("room:closed");
       voice.destroy();
     };
+  }, []);
+
+  // تسريع الدخول للعب: بينما المستخدم في اللوبي نجهّز مسبقاً حزمة شاشة اللعبة
+  // (تُنزَّل وتُحلَّل بالخلفية) ونفتح اتصال السوكِت مبكراً لإتمام المصافحة
+  // واستيقاظ السيرفر البارد — فيصبح "game:join" لحظياً عند النقر على «لعب».
+  useEffect(() => {
+    const warm = () => {
+      importGameRoom();
+      importGiftStage();
+      if (!socket.connected) socket.connect(); // مصافحة مسبقة (idempotent)
+    };
+    const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 800));
+    const id = idle(warm);
+    return () => (window.cancelIdleCallback || clearTimeout)(id);
   }, []);
 
   // اجلب المحفظة عند فتح اللعبة — مستخدم جديد يحصل على مكافأة البداية (500💎 + 10000🪙)
