@@ -1,56 +1,75 @@
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 
-// ===== هندسة مسار جاكارو: مضلّع من 12 ضلعاً (dodecagon) كما في الطاولة الحقيقية =====
-// النقاط تسير على 12 حافّة مستقيمة؛ رؤوس الجهات (أعلى/يمين/أسفل/يسار) هي بدايات
-// اللاعبين. 64 خانة موزّعة بالتساوي حول المحيط، داخل اللوح الخشبي الدائري.
+// ===== هندسة مسار جاكارو: شكل «القناتين والانتفاخين» كما في الطاولة الحقيقية =====
+// قناتان ضيّقتان طويلتان (أعلى/أسفل) لممرّي البيت، وجسم عريض بانتفاخين جانبيّين
+// (نقطتا العبور) — مطابق للخط الأحمر. 64 خانة: 16 لكل ربع بين المراسي.
 const LOOP = 64;
 const HOME_FIRST = 65;
-const SIDES = 12;  // عدد أضلاع المضلّع
-const RING_R = 43; // نصف قطر المضلّع (من المركز إلى الرأس) (٪)
-// نسبة أبعاد اللوح الطولي (العرض:الارتفاع) — تطابق aspect-ratio في CSS،
-// وتُستخدم لتوزيع الخانات بالتساوي بالبكسل الفعلي (لا بفضاء النِّسب المتماثل).
-const ASPECT_W = 4, ASPECT_H = 5;
 
-// رؤوس المضلّع الاثنا عشر — الرأس الأول للأعلى ثم مع عقارب الساعة
-const VERTS = Array.from({ length: SIDES }, (_, k) => {
-  const a = (k / SIDES) * 2 * Math.PI - Math.PI / 2;
-  return { x: 50 + RING_R * Math.cos(a), y: 50 + RING_R * Math.sin(a) };
-});
+// محيط المسار (٪، المركز 50,50) مع عقارب الساعة من منتصف الأعلى.
+// المراسي (بدايات اللاعبين): أعلى=فهرس 0، يمين=6، أسفل=12، يسار=18.
+const OUTLINE = [
+  [50, 9],   // 0  رأس أعلى (منتصف القناة العليا)
+  [57, 9],
+  [57, 27],
+  [64, 31],
+  [75, 39],
+  [82, 46],
+  [83, 50],  // 6  انتفاخ اليمين
+  [82, 54],
+  [75, 61],
+  [64, 69],
+  [57, 73],
+  [57, 91],
+  [50, 91],  // 12 رأس أسفل (منتصف القناة السفلى)
+  [43, 91],
+  [43, 73],
+  [36, 69],
+  [25, 61],
+  [18, 54],
+  [17, 50],  // 18 انتفاخ اليسار
+  [18, 46],
+  [25, 39],
+  [36, 31],
+  [43, 27],
+  [43, 9],
+];
+const ANCHORS = [0, 6, 12, 18];
 
-// نبني نقاطاً كثيفة على طول الأضلاع، ثم نوزّع 64 خانة بالتساوي حسب طول القوس
-// (حتى تتساوى المسافات على الحواف وعند الرؤوس) — يُحسب مرّة واحدة.
-const _pts = [];
-for (let e = 0; e < SIDES; e++) {
-  const A = VERTS[e], B = VERTS[(e + 1) % SIDES];
-  const STEP = 120;
-  for (let s = 0; s < STEP; s++) {
-    const f = s / STEP;
-    _pts.push({ x: A.x + (B.x - A.x) * f, y: A.y + (B.y - A.y) * f });
+// وزّع 16 خانة على كل ربع (بين مرساتين) حسب طول القوس، فتقع البدايات على المراسي
+const CELLS = (() => {
+  const out = new Array(LOOP);
+  for (let q = 0; q < 4; q++) {
+    const a = ANCHORS[q], b = ANCHORS[(q + 1) % 4];
+    const seg = [];
+    for (let idx = a; ; idx++) {
+      seg.push(OUTLINE[idx % OUTLINE.length]);
+      if (idx % OUTLINE.length === b) break;
+    }
+    const cum = [0];
+    for (let k = 1; k < seg.length; k++) {
+      cum.push(cum[k - 1] + Math.hypot(seg[k][0] - seg[k - 1][0], seg[k][1] - seg[k - 1][1]));
+    }
+    const total = cum[cum.length - 1] || 1;
+    for (let j = 0; j < 16; j++) {
+      const t = (j / 16) * total;
+      let k = 1;
+      while (k < seg.length && cum[k] < t) k++;
+      const s = cum[k] - cum[k - 1] || 1;
+      const f = (t - cum[k - 1]) / s;
+      out[q * 16 + j] = {
+        x: seg[k - 1][0] + (seg[k][0] - seg[k - 1][0]) * f,
+        y: seg[k - 1][1] + (seg[k][1] - seg[k - 1][1]) * f,
+      };
+    }
   }
-}
-_pts.push({ ..._pts[0] }); // إغلاق الحلقة
-const _DENSE = _pts.length - 1;
-const _cum = [0];
-for (let k = 1; k <= _DENSE; k++) {
-  // مسافة بالبكسل الفعلي: نوزن فرق x بعرض اللوح وفرق y بارتفاعه (لوح طولي)
-  const dx = (_pts[k].x - _pts[k - 1].x) * ASPECT_W;
-  const dy = (_pts[k].y - _pts[k - 1].y) * ASPECT_H;
-  _cum.push(_cum[k - 1] + Math.hypot(dx, dy));
-}
-const _TOTAL = _cum[_DENSE];
+  return out;
+})();
 
-// موضع خانة رقم i (0..63) موزّعة بالتساوي على محيط المضلّع
+// موضع خانة رقم i (0..63) على محيط المسار
 function perimeter(i) {
-  const target = ((i % LOOP) / LOOP) * _TOTAL;
-  let k = 1;
-  while (k < _DENSE && _cum[k] < target) k++;
-  const seg = _cum[k] - _cum[k - 1] || 1;
-  const f = (target - _cum[k - 1]) / seg;
-  return {
-    x: _pts[k - 1].x + (_pts[k].x - _pts[k - 1].x) * f,
-    y: _pts[k - 1].y + (_pts[k].y - _pts[k - 1].y) * f,
-  };
+  return CELLS[((i % LOOP) + LOOP) % LOOP];
 }
 
 // بداية كل لاعب عند رأس الجهة (0=أعلى، 16=يمين، 32=أسفل، 48=يسار)
