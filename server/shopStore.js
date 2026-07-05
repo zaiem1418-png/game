@@ -12,10 +12,15 @@ import { dirname, join } from "path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FILE = join(__dirname, "shop.json");
 
+// أنواع المقتنيات القابلة للتجهيز (كل نوع خانة تجهيز مستقلّة).
+export const SLOTS = ["frame", "ring", "entrance", "bubble"];
+
 // ===== الكتالوج =====
 // kind: "frame" (إطار حول الصورة) | "ring" (خاتم بجانب الاسم)
+//     | "entrance" (دخولية تُعرض عند الدخول للغرفة) | "bubble" (فقاعة الدردشة)
 // currency: "diamonds" | "coins"
-// glow: لون الهالة المزخرفة حول الخاتم في الواجهة (اختياري)
+// glow: لون الهالة المزخرفة في الواجهة (اختياري)
+// grad: تدرّج لوني لخلفية فقاعة الدردشة (لعناصر bubble)
 export const SHOP_ITEMS = [
   // ---- الإطارات المزخرفة ----
   { id: "f_leaf",    kind: "frame", name: "إطار الغزال",   emoji: "🦌", price: 60000,  currency: "coins",    glow: "#19e08a" },
@@ -47,6 +52,23 @@ export const SHOP_ITEMS = [
   { id: "r_royal",   kind: "ring", name: "الخاتم الملكي",       emoji: "🔱", price: 18000, currency: "diamonds", glow: "#f5c451", vipOnly: true },
   { id: "r_galaxy",  kind: "ring", name: "خاتم المجرّة",        emoji: "🌌", price: 24000, currency: "diamonds", glow: "#7a5cff", vipOnly: true },
   { id: "r_crown",   kind: "ring", name: "خاتم التاج",          emoji: "👑", price: 30000, currency: "diamonds", glow: "#ffd700", vipOnly: true },
+
+  // ---- الدخوليات (تُعرض عند دخول اللاعب للغرفة) ----
+  { id: "e_coins",  kind: "entrance", name: "مطر الذهب",   emoji: "🪙", price: 90000, currency: "coins",    glow: "#f5c451" },
+  { id: "e_car",    kind: "entrance", name: "دخول بسيارة", emoji: "🏎️", price: 2500,  currency: "diamonds", glow: "#ff4d4d" },
+  { id: "e_wings",  kind: "entrance", name: "أجنحة",       emoji: "🕊️", price: 3200,  currency: "diamonds", glow: "#7fd8ff" },
+  { id: "e_fire",   kind: "entrance", name: "دخول ناري",   emoji: "🔥", price: 4200,  currency: "diamonds", glow: "#ff6a00" },
+  { id: "e_star",   kind: "entrance", name: "موكب النجوم", emoji: "🌟", price: 6000,  currency: "diamonds", glow: "#ffe45e" },
+  { id: "e_crown",  kind: "entrance", name: "موكب ملكي",   emoji: "👑", price: 9000,  currency: "diamonds", glow: "#ffd700", vipOnly: true },
+  { id: "e_dragon", kind: "entrance", name: "زحف التنّين", emoji: "🐉", price: 14000, currency: "diamonds", glow: "#19e08a", vipOnly: true },
+
+  // ---- فقاعات الدردشة (خلفية رسائلك في الشات) ----
+  { id: "b_green",  kind: "bubble", name: "فقاعة الزمرّد", emoji: "💚", price: 50000, currency: "coins",    glow: "#19e08a", grad: "linear-gradient(135deg,#3ff0a8,#12b56b)" },
+  { id: "b_rose",   kind: "bubble", name: "فقاعة وردية",  emoji: "🌸", price: 1200,  currency: "diamonds", glow: "#ff7eb3", grad: "linear-gradient(135deg,#ff9ec7,#ff5ea8)" },
+  { id: "b_ocean",  kind: "bubble", name: "فقاعة المحيط", emoji: "🌊", price: 1600,  currency: "diamonds", glow: "#3a7bff", grad: "linear-gradient(135deg,#4f9bff,#2b5cff)" },
+  { id: "b_flame",  kind: "bubble", name: "فقاعة اللهب",  emoji: "🔥", price: 2000,  currency: "diamonds", glow: "#ff6a00", grad: "linear-gradient(135deg,#ff8a3d,#ff5722)" },
+  { id: "b_gold",   kind: "bubble", name: "فقاعة ذهبية",  emoji: "👑", price: 6000,  currency: "diamonds", glow: "#ffd700", grad: "linear-gradient(135deg,#ffe27a,#f5b301)", vipOnly: true },
+  { id: "b_galaxy", kind: "bubble", name: "فقاعة المجرّة", emoji: "🌌", price: 7000,  currency: "diamonds", glow: "#7a5cff", grad: "linear-gradient(135deg,#8f6cff,#5b34d6)", vipOnly: true },
 ];
 
 export function getItem(itemId) {
@@ -92,20 +114,35 @@ function persist() {
 function rec(uid) {
   uid = cleanUid(uid);
   if (!uid) return null;
-  if (!state.users[uid]) state.users[uid] = { owned: [], frame: null, ring: null };
-  return state.users[uid];
+  if (!state.users[uid]) state.users[uid] = { owned: [] };
+  const r = state.users[uid];
+  if (!Array.isArray(r.owned)) r.owned = [];
+  for (const slot of SLOTS) if (!(slot in r)) r[slot] = null; // خانات التجهيز
+  return r;
 }
 
-// مخزون المستخدم — يُرجع المُملوك والمُجهَّز
+// مخزون المستخدم — يُرجع المُملوك وكل خانات التجهيز
 function inventory(uid) {
   const r = rec(uid);
-  if (!r) return { owned: [], frame: null, ring: null };
-  return { owned: r.owned.slice(), frame: r.frame, ring: r.ring };
+  const inv = { owned: r ? r.owned.slice() : [] };
+  for (const slot of SLOTS) inv[slot] = r ? r[slot] : null;
+  return inv;
 }
 
 function owns(uid, itemId) {
   const r = rec(uid);
   return !!r && r.owned.includes(itemId);
+}
+
+// يضيف عنصراً لمخزون المستخدم دون تجهيزه (يُستخدم للإهداء)
+function grantOwned(uid, itemId) {
+  const r = rec(uid);
+  if (!r) return { ok: false, error: "مستخدم غير صالح" };
+  const item = getItem(itemId);
+  if (!item) return { ok: false, error: "عنصر غير معروف" };
+  if (!r.owned.includes(itemId)) r.owned.push(itemId);
+  persist();
+  return { ok: true, item };
 }
 
 // يضيف عنصراً لمخزون المستخدم (بعد خصم الثمن في الخادم) ويُجهّزه تلقائياً
@@ -115,22 +152,19 @@ function grant(uid, itemId) {
   const item = getItem(itemId);
   if (!item) return { ok: false, error: "عنصر غير معروف" };
   if (!r.owned.includes(itemId)) r.owned.push(itemId);
-  // جهّزه فوراً (إطار/خاتم)
-  if (item.kind === "frame") r.frame = itemId;
-  else r.ring = itemId;
+  if (SLOTS.includes(item.kind)) r[item.kind] = itemId; // جهّزه فوراً
   persist();
   return { ok: true, item, inventory: inventory(uid) };
 }
 
-// يجهّز عنصراً يملكه المستخدم (أو يلغي التجهيز بتمرير null للنوع)
+// يجهّز عنصراً يملكه المستخدم
 function equip(uid, itemId) {
   const r = rec(uid);
   if (!r) return { ok: false, error: "سجّل دخولك أولاً" };
   const item = getItem(itemId);
   if (!item) return { ok: false, error: "عنصر غير معروف" };
   if (!r.owned.includes(itemId)) return { ok: false, error: "لا تملك هذا العنصر" };
-  if (item.kind === "frame") r.frame = itemId;
-  else r.ring = itemId;
+  if (SLOTS.includes(item.kind)) r[item.kind] = itemId;
   persist();
   return { ok: true, inventory: inventory(uid) };
 }
@@ -138,20 +172,19 @@ function equip(uid, itemId) {
 function unequip(uid, kind) {
   const r = rec(uid);
   if (!r) return { ok: false, error: "سجّل دخولك أولاً" };
-  if (kind === "frame") r.frame = null;
-  else if (kind === "ring") r.ring = null;
-  else return { ok: false, error: "نوع غير معروف" };
+  if (!SLOTS.includes(kind)) return { ok: false, error: "نوع غير معروف" };
+  r[kind] = null;
   persist();
   return { ok: true, inventory: inventory(uid) };
 }
 
-// كتالوج معروض للواجهة مع علم الملكية
+// كتالوج معروض للواجهة مع علم الملكية والتجهيز
 function catalogFor(uid) {
   const inv = inventory(uid);
   return SHOP_ITEMS.map((it) => ({
     ...it,
     owned: inv.owned.includes(it.id),
-    equipped: inv.frame === it.id || inv.ring === it.id,
+    equipped: inv[it.kind] === it.id,
   }));
 }
 
@@ -161,6 +194,8 @@ export const shopStore = {
   catalogFor,
   owns,
   grant,
+  grantOwned,
   equip,
   unequip,
+  getItem,
 };

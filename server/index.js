@@ -710,14 +710,54 @@ app.post("/api/shop/buy", (req, res) => {
   res.json({ ...result, wallet: updated });
 });
 
-// تجهيز عنصر مملوك (إطار/خاتم)
+// تجهيز عنصر مملوك (إطار/خاتم/دخولية/فقاعة)
 app.post("/api/shop/equip", (req, res) =>
   send(res, shopStore.equip(uidOf(req), req.body?.itemId))
 );
-// إلغاء تجهيز نوع (frame|ring)
+// إلغاء تجهيز نوع (frame|ring|entrance|bubble)
 app.post("/api/shop/unequip", (req, res) =>
   send(res, shopStore.unequip(uidOf(req), req.body?.kind))
 );
+
+// إهداء عنصر لصديق عبر معرّفه القصير — يخصم من المُهدي ويضيفه لمخزون المُستلم
+app.post("/api/shop/gift", (req, res) => {
+  const uid = uidOf(req);
+  if (!uid) return res.status(400).json({ error: "uid مطلوب" });
+  const target = socialStore.getUserByShortId(String(req.body?.toShortId || "").trim());
+  if (!target) return res.status(404).json({ error: "لا يوجد لاعب بهذا المعرّف" });
+  if (target.uid === uid) return res.status(400).json({ error: "لا يمكنك إهداء نفسك" });
+  const item = shopStore.catalogFor(uid).find((x) => x.id === req.body?.itemId);
+  if (!item) return res.status(400).json({ error: "عنصر غير معروف" });
+  if (item.vipOnly && !vipStore.isVip(uid)) {
+    return res.status(403).json({ error: "هذا العنصر حصريّ لمشتركي VIP", vipOnly: true });
+  }
+  if (shopStore.owns(target.uid, item.id)) {
+    return res.status(409).json({ error: "الطرف الآخر يملك هذا العنصر بالفعل" });
+  }
+  if (!socialStore.getUser(uid)) socialStore.registerUser(uid, null, null);
+  const { wallet } = walletStore.ensure(uid);
+  const have = item.currency === "diamonds" ? wallet.diamonds : wallet.coins;
+  if (!wallet.owner && have < item.price) {
+    return res.status(402).json({
+      error: `تحتاج ${item.price.toLocaleString("en-US")} ${item.currency === "diamonds" ? "ألماسة" : "كوين"}`,
+      need: item.price, have, kind: item.currency,
+    });
+  }
+  const paid = walletStore.spend(uid, { [item.currency]: item.price });
+  if (!paid) return res.status(402).json({ error: "الرصيد غير كافٍ", kind: item.currency });
+  shopStore.grantOwned(target.uid, item.id);
+  pushWalletUpdate(uid);
+  // إشعار فوري للمُستلم إن كان متصلاً
+  const sockId = uidSockets.get(target.uid);
+  if (sockId) {
+    io.to(sockId).emit("shop:gift", {
+      item: { id: item.id, name: item.name, emoji: item.emoji, kind: item.kind },
+      from: socialStore.publicUser(uid),
+    });
+  }
+  const { wallet: updated } = walletStore.ensure(uid);
+  res.json({ ok: true, item, to: target, wallet: updated });
+});
 
 // ===== نظام VIP =====
 // حالة العضوية + الخطط المتاحة
@@ -980,6 +1020,11 @@ io.on("connection", (socket) => {
       ? walletStore.ensure(currentUid)
       : { wallet: { coins: 0, diamonds: 0, owner: false } };
 
+    // المقتنيات المُجهَّزة من المتجر (فقاعة الدردشة + الدخولية)
+    const inv = currentUid ? shopStore.inventory(currentUid) : null;
+    const bubbleItem = inv?.bubble ? shopStore.getItem(inv.bubble) : null;
+    const entranceItem = inv?.entrance ? shopStore.getItem(inv.entrance) : null;
+
     currentUser = {
       id: socket.id,
       uid: currentUid,
@@ -990,6 +1035,9 @@ io.on("connection", (socket) => {
       coins: wallet.coins,
       diamonds: wallet.diamonds,
       isOwner: !!wallet.owner, // مالك اللعبة (رصيد لانهائي)
+      // فقاعة الدردشة (لون خلفية الرسائل) والدخولية (تأثير الدخول)
+      bubble: bubbleItem ? { id: bubbleItem.id, grad: bubbleItem.grad, glow: bubbleItem.glow } : null,
+      entrance: entranceItem ? { id: entranceItem.id, emoji: entranceItem.emoji, glow: entranceItem.glow, name: entranceItem.name } : null,
     };
 
     room.members.set(socket.id, currentUser);

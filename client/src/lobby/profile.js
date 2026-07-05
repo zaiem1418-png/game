@@ -59,6 +59,7 @@ export const shop = {
   buy: (itemId) => jpost("/api/shop/buy", { itemId }),
   equip: (itemId) => jpost("/api/shop/equip", { itemId }),
   unequip: (kind) => jpost("/api/shop/unequip", { kind }),
+  gift: (itemId, toShortId) => jpost("/api/shop/gift", { itemId, toShortId }),
 };
 
 // ===== نظام VIP =====

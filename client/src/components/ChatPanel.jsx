@@ -19,6 +19,23 @@ export default function ChatPanel({ messages, selfId }) {
           );
         }
         if (m.type === "enter") {
+          const ent = m.user?.entrance;
+          if (ent) {
+            // دخولية مميّزة من المتجر — لافتة متوهّجة بلون العنصر
+            return (
+              <div
+                key={m.id}
+                className="msg entrance-fx"
+                style={{ "--glow": ent.glow || "#ffd700" }}
+              >
+                <span className="entrance-em">{ent.emoji}</span>
+                <span className="entrance-txt">
+                  {m.user?.avatar} {m.text} — {ent.name}
+                </span>
+                <span className="entrance-em">{ent.emoji}</span>
+              </div>
+            );
+          }
           return (
             <div key={m.id} className="msg enter">
               {m.user?.avatar} {m.text} 👋
@@ -33,10 +50,16 @@ export default function ChatPanel({ messages, selfId }) {
           );
         }
         const mine = m.user?.id === selfId;
+        const bubble = m.user?.bubble;
         return (
           <div key={m.id} className={`msg chat ${mine ? "mine" : ""}`}>
             <span className="msg-author">{m.user?.avatar} {m.user?.name}:</span>{" "}
-            <span className="msg-text">{m.text}</span>
+            <span
+              className={`msg-text ${bubble ? "has-bubble" : ""}`}
+              style={bubble ? { background: bubble.grad, "--glow": bubble.glow } : undefined}
+            >
+              {m.text}
+            </span>
           </div>
         );
       })}

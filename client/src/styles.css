@@ -311,6 +311,45 @@ body {
 .msg.chat.mine { align-self: flex-end; background: rgba(24,211,196,0.18); }
 .msg-author { color: var(--accent); font-weight: 700; }
 
+/* فقاعة دردشة مميّزة من المتجر */
+.msg-text.has-bubble {
+  display: inline-block; padding: 5px 12px; border-radius: 14px; color: #fff;
+  font-weight: 600; box-shadow: 0 0 10px 1px var(--glow, transparent);
+  border: 1px solid rgba(255,255,255,0.35);
+}
+
+/* لافتة الدخولية المميّزة */
+.msg.entrance-fx {
+  align-self: center; text-align: center; padding: 8px 14px; border-radius: 14px;
+  color: #fff; font-weight: 700; letter-spacing: .3px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--glow) 40%, transparent), transparent);
+  border: 1px solid var(--glow); box-shadow: 0 0 16px 2px var(--glow);
+  animation: entrancePop .5s ease-out;
+}
+.msg.entrance-fx .entrance-em { animation: entranceFloat 1.6s ease-in-out infinite; display: inline-block; }
+.msg.entrance-fx .entrance-txt { margin: 0 8px; }
+@keyframes entrancePop { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes entranceFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+/* معاينات المتجر: الفقاعة والدخولية + أزرار الإهداء */
+.bubble-preview {
+  display: inline-block; padding: 6px 12px; border-radius: 14px; color: #fff;
+  font-weight: 700; font-size: 13px; box-shadow: 0 0 10px 1px var(--glow, transparent);
+  border: 1px solid rgba(255,255,255,0.35);
+}
+.entrance-preview {
+  display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%;
+  border: 2px solid var(--glow); box-shadow: 0 0 14px 2px var(--glow);
+  background: radial-gradient(circle, color-mix(in srgb, var(--glow) 30%, transparent), transparent 70%);
+}
+.entrance-preview-em { font-size: 26px; animation: entranceFloat 1.6s ease-in-out infinite; }
+.shop-actions { display: flex; gap: 6px; align-items: center; justify-content: center; }
+.soc-btn.sm.gift { padding: 6px 9px; }
+.shop-gift-bar {
+  display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; font-size: 13px; color: var(--muted, #b7b1c6);
+}
+.shop-gift-bar .soc-input.sm { flex: 1; padding: 8px 10px; font-size: 13px; }
+
 /* ===== الشريط السفلي ===== */
 .bottom-bar {
   display: flex; align-items: center; gap: 8px; padding: 10px 12px 16px;
