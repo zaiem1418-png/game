@@ -79,7 +79,7 @@ function startAngle(seat) {
 }
 
 // قواعد (بيوت) اللاعبين: زهرة من 4 ثقوب في الأركان القُطرية (مزاحة 45° عن الرأس)
-const YARD_R = 28; // بُعد مركز القاعدة عن مركز اللوحة
+const YARD_R = 36; // بُعد مركز القاعدة عن مركز اللوحة (أبعدناها نحو الركن بعيداً عن المسار)
 const CORNERS = [0, 1, 2, 3].map((seat) => {
   const a = startAngle(seat) + Math.PI / 4;
   return { x: 50 + YARD_R * Math.cos(a), y: 50 + YARD_R * Math.sin(a) };
