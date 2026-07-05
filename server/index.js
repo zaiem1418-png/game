@@ -705,19 +705,44 @@ app.post("/api/shop/buy", (req, res) => {
   const paid = walletStore.spend(uid, { [item.currency]: item.price });
   if (!paid) return res.status(402).json({ error: "الرصيد غير كافٍ", kind: item.currency });
   const result = shopStore.grant(uid, item.id);
+  refreshPresenceCosmetics(uid); // طبّق الزيّ الجديد فوراً إن كان داخل غرفة
   pushWalletUpdate(uid);
   const { wallet: updated } = walletStore.ensure(uid);
   res.json({ ...result, wallet: updated });
 });
 
-// تجهيز عنصر مملوك (إطار/خاتم/دخولية/فقاعة)
-app.post("/api/shop/equip", (req, res) =>
-  send(res, shopStore.equip(uidOf(req), req.body?.itemId))
-);
-// إلغاء تجهيز نوع (frame|ring|entrance|bubble)
-app.post("/api/shop/unequip", (req, res) =>
-  send(res, shopStore.unequip(uidOf(req), req.body?.kind))
-);
+// يطبّق الأزياء المُجهَّزة على حضور المستخدم في غرفته الحالية ويبثّها فوراً
+// (فقاعة/دخولية/مايك على عضوه، والخلفية تُقرأ في serializeRoom من مخزون المالك).
+function refreshPresenceCosmetics(uid) {
+  const sockId = uid ? uidSockets.get(uid) : null;
+  if (!sockId) return;
+  const inv = shopStore.inventory(uid);
+  const fx = (id, pick) => { const it = id ? shopStore.getItem(id) : null; return it ? pick(it) : null; };
+  for (const room of rooms.values()) {
+    const member = room.members.get(sockId);
+    if (!member) continue;
+    member.bubble = fx(inv.bubble, (it) => ({ id: it.id, grad: it.grad, glow: it.glow }));
+    member.entrance = fx(inv.entrance, (it) => ({ id: it.id, emoji: it.emoji, glow: it.glow, name: it.name }));
+    member.mic = fx(inv.mic, (it) => ({ id: it.id, emoji: it.emoji, glow: it.glow }));
+    broadcastRoom(room); // يعيد بثّ الخلفية أيضاً (من مخزون مالك الغرفة)
+    break;
+  }
+}
+
+// تجهيز عنصر مملوك (إطار/خاتم/دخولية/فقاعة/مايك/خلفية) — يُطبَّق فوراً في الغرفة
+app.post("/api/shop/equip", (req, res) => {
+  const uid = uidOf(req);
+  const result = shopStore.equip(uid, req.body?.itemId);
+  if (result.ok) refreshPresenceCosmetics(uid);
+  send(res, result);
+});
+// إلغاء تجهيز نوع (frame|ring|entrance|bubble|mic|background) — يُطبَّق فوراً
+app.post("/api/shop/unequip", (req, res) => {
+  const uid = uidOf(req);
+  const result = shopStore.unequip(uid, req.body?.kind);
+  if (result.ok) refreshPresenceCosmetics(uid);
+  send(res, result);
+});
 
 // إهداء عنصر لصديق عبر معرّفه القصير — يخصم من المُهدي ويضيفه لمخزون المُستلم
 app.post("/api/shop/gift", (req, res) => {
