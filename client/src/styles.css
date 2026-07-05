@@ -350,6 +350,49 @@ body {
 }
 .shop-gift-bar .soc-input.sm { flex: 1; padding: 8px 10px; font-size: 13px; }
 
+/* تأثير المايك حول المقعد */
+.seat-av-wrap.has-mic-fx .mic-fx {
+  position: absolute; inset: -6px; border-radius: 50%; pointer-events: none;
+  border: 2px solid var(--mic-glow, #19e08a);
+  box-shadow: 0 0 12px 2px var(--mic-glow, #19e08a), inset 0 0 8px var(--mic-glow, #19e08a);
+  opacity: .55; animation: micSpin 3s linear infinite;
+}
+.seat-av-wrap.has-mic-fx.is-speaking .mic-fx { opacity: 1; animation: micPulse 1s ease-in-out infinite; }
+@keyframes micSpin { to { transform: rotate(360deg); } }
+@keyframes micPulse { 0%,100% { transform: scale(1); opacity: .8; } 50% { transform: scale(1.08); opacity: 1; } }
+
+/* خلفية الغرفة المميّزة (يطبّقها المالك) — فوق خلفية النجوم وتحت المحتوى.
+   نخفض z-index للطبقتين (يتغلّب على .room > * : z-index 1) ونعتمد ترتيب DOM. */
+.room .room-bg { z-index: 0; }
+.room .room-bg-theme { position: absolute; inset: 0; z-index: 0; opacity: .95; }
+.room-bg-theme::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(0,0,0,0.15), rgba(0,0,0,0.5));
+}
+
+/* معاينات المتجر: مايك وخلفية */
+.mic-preview {
+  display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%;
+  border: 2px solid var(--glow); box-shadow: 0 0 14px 2px var(--glow); animation: micSpin 3s linear infinite;
+}
+.mic-preview-em { font-size: 24px; }
+.bg-preview {
+  display: grid; place-items: center; width: 64px; height: 44px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.35); box-shadow: 0 0 10px 1px var(--glow);
+}
+.bg-preview-em { font-size: 22px; }
+
+/* شبكة مقتنيات الحقيبة */
+.bag-owned-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.bag-owned {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px;
+  border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+}
+.bag-owned.on { border-color: var(--accent); background: rgba(24,211,196,0.12); }
+.bag-owned-em { font-size: 26px; filter: drop-shadow(0 0 6px var(--glow, transparent)); }
+.bag-owned-name { font-size: 13px; font-weight: 600; text-align: center; }
+.bag-owned-kind { font-size: 11px; color: var(--muted, #b7b1c6); }
+
 /* ===== الشريط السفلي ===== */
 .bottom-bar {
   display: flex; align-items: center; gap: 8px; padding: 10px 12px 16px;

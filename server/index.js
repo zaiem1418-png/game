@@ -923,7 +923,11 @@ function serializeRoom(room) {
   const meta = roomStore.get(room.id);
   const level = meta?.level || 1;
   const points = meta?.points || 0;
+  // خلفية الغرفة = الخلفية المُجهَّزة لدى مالك الغرفة (يراها الجميع)
+  const bgId = meta?.ownerUid ? shopStore.inventory(meta.ownerUid).background : null;
+  const bgItem = bgId ? shopStore.getItem(bgId) : null;
   return {
+    background: bgItem ? { id: bgItem.id, grad: bgItem.grad, glow: bgItem.glow } : null,
     id: room.id,
     name: meta?.name || room.name,
     seatCount: SEAT_COUNT,
@@ -1020,10 +1024,11 @@ io.on("connection", (socket) => {
       ? walletStore.ensure(currentUid)
       : { wallet: { coins: 0, diamonds: 0, owner: false } };
 
-    // المقتنيات المُجهَّزة من المتجر (فقاعة الدردشة + الدخولية)
+    // المقتنيات المُجهَّزة من المتجر (فقاعة الدردشة + الدخولية + تأثير المايك)
     const inv = currentUid ? shopStore.inventory(currentUid) : null;
     const bubbleItem = inv?.bubble ? shopStore.getItem(inv.bubble) : null;
     const entranceItem = inv?.entrance ? shopStore.getItem(inv.entrance) : null;
+    const micItem = inv?.mic ? shopStore.getItem(inv.mic) : null;
 
     currentUser = {
       id: socket.id,
@@ -1035,9 +1040,10 @@ io.on("connection", (socket) => {
       coins: wallet.coins,
       diamonds: wallet.diamonds,
       isOwner: !!wallet.owner, // مالك اللعبة (رصيد لانهائي)
-      // فقاعة الدردشة (لون خلفية الرسائل) والدخولية (تأثير الدخول)
+      // فقاعة الدردشة (لون خلفية الرسائل) والدخولية (تأثير الدخول) وتأثير المايك
       bubble: bubbleItem ? { id: bubbleItem.id, grad: bubbleItem.grad, glow: bubbleItem.glow } : null,
       entrance: entranceItem ? { id: entranceItem.id, emoji: entranceItem.emoji, glow: entranceItem.glow, name: entranceItem.name } : null,
+      mic: micItem ? { id: micItem.id, emoji: micItem.emoji, glow: micItem.glow } : null,
     };
 
     room.members.set(socket.id, currentUser);

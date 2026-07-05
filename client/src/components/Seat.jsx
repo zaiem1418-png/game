@@ -26,7 +26,13 @@ export default function Seat({ seat, isSelf, reaction, onTake, onTap }) {
 
   return (
     <div className={`seat filled ${isSelf ? "self" : ""}`} onClick={onTap}>
-      <div className={`seat-av-wrap ${roleClass} ${speaking ? "is-speaking" : ""}`}>
+      <div
+        className={`seat-av-wrap ${roleClass} ${speaking ? "is-speaking" : ""} ${user.mic ? "has-mic-fx" : ""}`}
+        style={user.mic ? { "--mic-glow": user.mic.glow } : undefined}
+      >
+        {/* تأثير المايك المميّز من المتجر (حلقة متوهّجة) */}
+        {user.mic && <span className="mic-fx" aria-hidden />}
+
         {/* حلقات صوت عند التحدث */}
         {speaking && (
           <>

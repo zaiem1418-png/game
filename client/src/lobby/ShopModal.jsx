@@ -9,6 +9,8 @@ const TABS = [
   { id: "ring", label: "💍 الخواتم" },
   { id: "entrance", label: "🚪 الدخوليات" },
   { id: "bubble", label: "💬 الفقاعات" },
+  { id: "mic", label: "🎤 المايك" },
+  { id: "background", label: "🖼 الخلفيات" },
 ];
 
 export default function ShopModal({ wallet, onWalletUpdate, onRecharge, onClose }) {
@@ -89,6 +91,20 @@ export default function ShopModal({ wallet, onWalletUpdate, onRecharge, onClose 
         </span>
       );
     }
+    if (it.kind === "mic") {
+      return (
+        <span className="mic-preview" style={{ "--glow": it.glow }}>
+          <i className="mic-preview-em">🎤</i>
+        </span>
+      );
+    }
+    if (it.kind === "background") {
+      return (
+        <span className="bg-preview" style={{ background: it.grad, "--glow": it.glow }}>
+          <i className="bg-preview-em">{it.emoji}</i>
+        </span>
+      );
+    }
     return (
       <span className="frame3d" style={{ "--c": it.glow || "#ffffff" }}>
         <i className="frame3d-ring" />
@@ -164,7 +180,8 @@ export default function ShopModal({ wallet, onWalletUpdate, onRecharge, onClose 
           </div>
 
           <p className="soc-hint">
-            الإطار يحيط بصورتك، الخاتم بجانب اسمك، الدخولية تظهر عند دخولك الغرفة، والفقاعة تلوّن رسائلك في الشات.
+            الإطار يحيط بصورتك، الخاتم بجانب اسمك، الدخولية عند دخولك الغرفة، الفقاعة تلوّن رسائلك،
+            وتأثير المايك يظهر حول مقعدك على المايك. أما الخلفية فيطبّقها <b>مالك الغرفة</b> على الجميع.
             أدخل معرّف صديق واضغط 🎁 لإهدائه أي عنصر. المميّز بـ VIP يُفتح بالاشتراك.
           </p>
         </div>

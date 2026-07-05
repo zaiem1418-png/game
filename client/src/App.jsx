@@ -381,6 +381,9 @@ export default function App() {
   return (
     <div className="room">
       <div className="room-bg" />
+      {room.background && (
+        <div className="room-bg-theme" style={{ background: room.background.grad }} aria-hidden />
+      )}
       <WalletBar
         wallet={wallet}
         onRecharge={(tab) => setStoreTab(tab)}

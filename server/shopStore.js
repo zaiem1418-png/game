@@ -13,11 +13,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const FILE = join(__dirname, "shop.json");
 
 // أنواع المقتنيات القابلة للتجهيز (كل نوع خانة تجهيز مستقلّة).
-export const SLOTS = ["frame", "ring", "entrance", "bubble"];
+export const SLOTS = ["frame", "ring", "entrance", "bubble", "mic", "background"];
 
 // ===== الكتالوج =====
 // kind: "frame" (إطار حول الصورة) | "ring" (خاتم بجانب الاسم)
 //     | "entrance" (دخولية تُعرض عند الدخول للغرفة) | "bubble" (فقاعة الدردشة)
+//     | "mic" (تأثير حول المقعد على المايك) | "background" (خلفية الغرفة — يطبّقها المالك)
 // currency: "diamonds" | "coins"
 // glow: لون الهالة المزخرفة في الواجهة (اختياري)
 // grad: تدرّج لوني لخلفية فقاعة الدردشة (لعناصر bubble)
@@ -69,6 +70,21 @@ export const SHOP_ITEMS = [
   { id: "b_flame",  kind: "bubble", name: "فقاعة اللهب",  emoji: "🔥", price: 2000,  currency: "diamonds", glow: "#ff6a00", grad: "linear-gradient(135deg,#ff8a3d,#ff5722)" },
   { id: "b_gold",   kind: "bubble", name: "فقاعة ذهبية",  emoji: "👑", price: 6000,  currency: "diamonds", glow: "#ffd700", grad: "linear-gradient(135deg,#ffe27a,#f5b301)", vipOnly: true },
   { id: "b_galaxy", kind: "bubble", name: "فقاعة المجرّة", emoji: "🌌", price: 7000,  currency: "diamonds", glow: "#7a5cff", grad: "linear-gradient(135deg,#8f6cff,#5b34d6)", vipOnly: true },
+
+  // ---- تأثيرات المايك (حلقة متوهّجة حول مقعدك أثناء الحديث) ----
+  { id: "m_pulse",  kind: "mic", name: "نبض أخضر",   emoji: "💚", price: 40000, currency: "coins",    glow: "#19e08a" },
+  { id: "m_neon",   kind: "mic", name: "نيون وردي",  emoji: "🌸", price: 1400,  currency: "diamonds", glow: "#ff5ea8" },
+  { id: "m_ocean",  kind: "mic", name: "موجة زرقاء", emoji: "🌊", price: 1800,  currency: "diamonds", glow: "#3a7bff" },
+  { id: "m_fire",   kind: "mic", name: "حلقة نار",   emoji: "🔥", price: 2400,  currency: "diamonds", glow: "#ff6a00" },
+  { id: "m_gold",   kind: "mic", name: "توهّج ذهبي", emoji: "👑", price: 6500,  currency: "diamonds", glow: "#ffd700", vipOnly: true },
+  { id: "m_galaxy", kind: "mic", name: "هالة مجرّة", emoji: "🌌", price: 8000,  currency: "diamonds", glow: "#7a5cff", vipOnly: true },
+
+  // ---- خلفيات الغرفة (يطبّقها مالك الغرفة على الجميع) ----
+  { id: "g_aurora", kind: "background", name: "الشفق",    emoji: "🌌", price: 60000, currency: "coins",    glow: "#19e08a", grad: "linear-gradient(160deg,#0b3d2e,#134e4a,#0b1e3d)" },
+  { id: "g_sunset", kind: "background", name: "الغروب",   emoji: "🌇", price: 2600,  currency: "diamonds", glow: "#ff6a00", grad: "linear-gradient(160deg,#3a1c2e,#7a2f2f,#c05621)" },
+  { id: "g_ocean",  kind: "background", name: "أعماق",    emoji: "🌊", price: 3000,  currency: "diamonds", glow: "#3a7bff", grad: "linear-gradient(160deg,#0a1a3f,#123a6b,#0a2540)" },
+  { id: "g_royal",  kind: "background", name: "قصر ملكي", emoji: "👑", price: 9000,  currency: "diamonds", glow: "#ffd700", grad: "linear-gradient(160deg,#2a1c3f,#4a2f6b,#7a5c21)", vipOnly: true },
+  { id: "g_galaxy", kind: "background", name: "مجرّة",    emoji: "🌠", price: 12000, currency: "diamonds", glow: "#7a5cff", grad: "linear-gradient(160deg,#140b2e,#2b1a5b,#0b1e3d)", vipOnly: true },
 ];
 
 export function getItem(itemId) {

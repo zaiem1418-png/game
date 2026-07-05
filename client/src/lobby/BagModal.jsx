@@ -1,14 +1,35 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { getProfile } from "../wallet.js";
-import { vipId } from "./profile.js";
+import { vipId, shop } from "./profile.js";
+
+const KIND_LABEL = {
+  frame: "🖼️ إطار", ring: "💍 خاتم", entrance: "🚪 دخولية",
+  bubble: "💬 فقاعة", mic: "🎤 مايك", background: "🖼 خلفية",
+};
 
 // الحقيبة 🎒 — مقتنياتك: المعرّف المميّز، الصورة، الإطار، والرصيد.
 export default function BagModal({ wallet, onClose }) {
   const [vip, setVip] = useState(null); // { current, vip }
+  const [shopData, setShopData] = useState(null); // { items, inventory }
+  const [busy, setBusy] = useState("");
   const profile = getProfile();
 
-  useEffect(() => { vipId.info().then(setVip).catch(() => setVip({})); }, []);
+  const loadShop = () => shop.list().then(setShopData).catch(() => {});
+  useEffect(() => { vipId.info().then(setVip).catch(() => setVip({})); loadShop(); }, []);
+
+  // العناصر المملوكة (بما فيها المُهداة) مع حالة التجهيز
+  const owned = (shopData?.items || []).filter((i) => i.owned);
+
+  async function toggleEquip(it) {
+    setBusy(it.id);
+    try {
+      if (it.equipped) await shop.unequip(it.kind);
+      else await shop.equip(it.id);
+      await loadShop();
+    } catch { /* تجاهل */ }
+    finally { setBusy(""); }
+  }
 
   const items = [];
   if (vip?.vip) items.push({ icon: "🆔", label: "معرّف مميّز", value: vip.current });
@@ -44,6 +65,33 @@ export default function BagModal({ wallet, onClose }) {
             </div>
             {!vip?.vip && (
               <p className="soc-hint">احصل على معرّف مميّز من «أي دي مميّز» ليظهر هنا ✨</p>
+            )}
+          </div>
+
+          {/* مقتنيات المتجر (المشتراة والمُهداة) */}
+          <div className="soc-section">
+            <h3>مقتنيات المتجر</h3>
+            {!shopData ? (
+              <div className="soc-empty">جارٍ التحميل…</div>
+            ) : owned.length === 0 ? (
+              <p className="soc-hint">لا تملك مقتنيات بعد — تسوّق من المتجر 🛍️ أو استلم هدية من صديق 🎁</p>
+            ) : (
+              <div className="bag-owned-grid">
+                {owned.map((it) => (
+                  <div key={it.id} className={`bag-owned ${it.equipped ? "on" : ""}`}>
+                    <span className="bag-owned-em" style={{ "--glow": it.glow }}>{it.emoji}</span>
+                    <span className="bag-owned-name">{it.name}</span>
+                    <span className="bag-owned-kind">{KIND_LABEL[it.kind] || it.kind}</span>
+                    <button
+                      className={`soc-btn sm ${it.equipped ? "ghost" : "ok"}`}
+                      disabled={busy === it.id}
+                      onClick={() => toggleEquip(it)}
+                    >
+                      {it.equipped ? "إلغاء" : "تجهيز"}
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
