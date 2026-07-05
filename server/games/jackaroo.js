@@ -27,7 +27,8 @@ const SUITS = ["♠", "♥", "♦", "♣"];
 const RANKS = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
 
 // الأوراق العادية: تقدّم بقيمة ثابتة وخيار واحد لكل بيدق
-const STEP = { Q: 12, "9": 9, "8": 8, "6": 6, "5": 5, "3": 3, "2": 2 };
+// (الورقة 5 لها معالجة خاصة: تحرّك أي حجر على المسار، حتى حجر الخصم)
+const STEP = { Q: 12, "9": 9, "8": 8, "6": 6, "3": 3, "2": 2 };
 const CAN_EXIT = new Set(["A", "K", "JK"]); // أوراق تُخرج بيدقاً من البيت
 
 function offsetOf(seat) {
@@ -250,6 +251,9 @@ function entriesForCard(state, p, card) {
     for (const e of splitEntries(state, p)) add(e);
   } else if (r === "J") {
     for (const e of swapEntries(state, p)) add(e);
+  } else if (r === "5") {
+    // 5: تحرّك أي حجر على المسار (حجرك أو حجر خصم) 5 خطوات
+    for (const e of shoveEntries(state, p)) add(e);
   } else if (r === "4") {
     onPath(p, (mi, step) => add(backEntry(state, p, mi, step)));
   } else if (r in STEP) {
@@ -271,18 +275,26 @@ function onPath(p, fn) {
 function exitEntry(state, p, mi) {
   const to = 1;
   if (occupiedByAlly(state, p, p.seat, to)) return null;
-  return { marble: mi, kind: "exit", to, ...capData(state, p, p.seat, to), opt: `exit:${mi}`, label: "🚀 إخراج بيدق" };
+  if (isWallAt(state, p, absCell(p.seat, to))) return null; // سدّ خصم على قاعدتي
+  return { marble: mi, kind: "exit", to, ...capData(state, p, p.seat, to), opt: `exit:${mi}`, label: "🚀 إخراج للقاعدة" };
 }
 
 // حركة للأمام بمقدار dist (مع أكل ما يمرّ عليه إن كانت through مثل K/JK)
 function fwd(state, p, mi, step, dist, opt, label, o = {}) {
   const to = step + dist;
   if (to > HOME_LAST) return null; // تجاوز بيت النهاية ممنوع
+  const walkEnd = Math.min(to, LOOP);
   let caps = [];
   if (o.through) {
-    for (let s = step + 1; s <= Math.min(to, LOOP); s++) {
-      const v = captureAt(state, p, p.seat, s);
+    // K/JK: يخترقان السدّ ويأكلان كل حجر خصم في الطريق (حتى المحميّ)
+    for (let s = step + 1; s <= walkEnd; s++) {
+      const v = captureAt(state, p, p.seat, s, true);
       if (v) caps.push(v);
+    }
+  } else {
+    // الأوراق العادية: السدّ يمنع التجاوز والهبوط على خانة محميّة لخصم
+    for (let s = step + 1; s <= walkEnd; s++) {
+      if (isWallAt(state, p, absCell(p.seat, s))) return null;
     }
   }
   if (to >= HOME_FIRST) {
@@ -292,6 +304,7 @@ function fwd(state, p, mi, step, dist, opt, label, o = {}) {
   // هبوط على المسار — إن كان على خانة عبور انتقل للخانة المقابلة (الطرف الآخر)
   const landing = crossStep(state, p.seat, to);
   const crossed = landing !== to;
+  if (crossed && isWallAt(state, p, absCell(p.seat, landing))) return null; // سدّ على خانة العبور
   if (occupiedByAlly(state, p, p.seat, landing)) return null; // لا هبوط على بيدق من فريقي
   if (!o.through || crossed) {
     // للأوراق العادية: أكل خانة الوصول. وللأوراق التي تمرّ وتأكل (K/JK): أضِف أكل خانة الوصول بعد العبور.
@@ -309,8 +322,44 @@ function fwd(state, p, mi, step, dist, opt, label, o = {}) {
 function backEntry(state, p, mi, step) {
   let to = step - 4;
   if (to < 1) to += LOOP; // التفاف على المسار
+  if (isWallAt(state, p, absCell(p.seat, to))) return null; // سدّ خصم على خانة الوصول
   if (occupiedByAlly(state, p, p.seat, to)) return null;
   return { marble: mi, kind: "back", to, ...capData(state, p, p.seat, to), opt: `b:${mi}`, label: "↩ للخلف 4" };
+}
+
+// ===== ورقة 5: دفع أي حجر على المسار 5 خطوات (حجرك أو حجر خصم) =====
+function shoveEntries(state, p) {
+  const out = [];
+  for (const owner of state.players) {
+    owner.marbles.forEach((s, mi) => {
+      if (!(s >= 1 && s <= LOOP)) return; // على المسار فقط
+      if (isProtected(owner, mi)) return; // الحجر المحميّ (السدّ) لا يُحرَّك
+      const e = shoveOne(state, owner, mi, 5);
+      if (!e) return;
+      const who = owner.id === p.id ? "حجرك" : owner.name;
+      out.push({
+        ...e,
+        opt: `sh:${owner.seat}:${mi}`,
+        label: `▶ 5 ${who} (حجر ${mi + 1})${e.cap ? " 💥" : ""}`,
+      });
+    });
+  }
+  return out;
+}
+
+// دفع حجر يملكه owner بمقدار dist على المسار (لا يدخل بيت نهايته)
+function shoveOne(state, owner, mi, dist) {
+  const step = owner.marbles[mi];
+  const to = step + dist;
+  if (to > LOOP) return null; // لا يُدفَع الحجر إلى بيت نهايته
+  for (let s = step + 1; s <= to; s++) {
+    if (isWallAt(state, owner, absCell(owner.seat, s))) return null; // سدّ يمنع المرور
+  }
+  const landing = crossStep(state, owner.seat, to);
+  if (landing !== to && isWallAt(state, owner, absCell(owner.seat, landing))) return null;
+  if (occupiedByAlly(state, owner, owner.seat, landing)) return null;
+  const v = captureAt(state, owner, owner.seat, landing);
+  return { marble: mi, ownerSeat: owner.seat, kind: "shove", to: landing, caps: v ? [v] : [], cap: !!v };
 }
 
 // كرت التبديل (J): بدّل أحد بيادقك مع بيدق خصم على المسار (ليس على خانة آمنة)
@@ -323,7 +372,7 @@ function swapEntries(state, p) {
       if (q.team === p.team) continue; // التبديل مع الخصوم فقط
       q.marbles.forEach((qs, qmi) => {
         if (!(qs >= 1 && qs <= LOOP)) return; // الهدف على المسار
-        if (qs === 1) return; // الهدف على خانة آمنة
+        if (isProtected(q, qmi)) return; // الهدف محميّ (سدّ/قاعدة) لا يُبدّل
         out.push({
           marble: mi, kind: "swap",
           target: { seat: q.seat, marble: qmi },
@@ -383,6 +432,31 @@ function capData(state, p, seat, step) {
   return { caps: v ? [v] : [], cap: !!v };
 }
 
+// ===== السدّ (التسنيد) =====
+// حجر «محميّ» إذا كان على خانة بدايته (القاعدة)، أو ملاصقاً لحجر آخر لنفس اللاعب (زوج = سدّ).
+// المحميّ لا يُؤكل ولا يُبدّل ولا يُتجاوز ولا يُحرَّك بورقة الغير (5).
+function isProtected(q, i) {
+  const s = q.marbles[i];
+  if (!(s >= 1 && s <= LOOP)) return false;
+  if (s === 1) return true; // على قاعدته (خانة البداية الآمنة)
+  return q.marbles.some(
+    (s2, j) => j !== i && (s2 === s - 1 || s2 === s + 1) && s2 >= 1 && s2 <= LOOP
+  );
+}
+
+// هل الخانة المطلقة c سدٌّ في وجه اللاعب p؟ (حجر خصم محميّ عليها)
+function isWallAt(state, p, c) {
+  if (c == null) return false;
+  for (const q of state.players) {
+    if (q.team === p.team) continue; // أسوار الخصوم فقط تصدّنا
+    for (let i = 0; i < 4; i++) {
+      const s = q.marbles[i];
+      if (s >= 1 && s <= LOOP && absCell(q.seat, s) === c && isProtected(q, i)) return true;
+    }
+  }
+  return false;
+}
+
 // خانة المسار مشغولة ببيدق من نفس الفريق؟
 function occupiedByAlly(state, p, seat, step) {
   const c = absCell(seat, step);
@@ -402,8 +476,9 @@ function occupiedOwnHome(p, homeStep, mi) {
   return p.marbles.some((s, i) => i !== mi && s === homeStep);
 }
 
-// بيدق خصم على هذه الخانة يُؤكل؟ (بيدق على بدايته الآمنة لا يُؤكل) — يُرجع {seat,marble} أو null
-function captureAt(state, p, seat, step) {
+// بيدق خصم على هذه الخانة يُؤكل؟ (المحميّ لا يُؤكل إلا بورقة تخترق: K/JK عبر ignoreProtection)
+// يُرجع {seat,marble} أو null
+function captureAt(state, p, seat, step, ignoreProtection) {
   const c = absCell(seat, step);
   if (c == null) return null;
   for (const q of state.players) {
@@ -411,7 +486,7 @@ function captureAt(state, p, seat, step) {
     for (let i = 0; i < 4; i++) {
       const s = q.marbles[i];
       if (s >= 1 && s <= LOOP && absCell(q.seat, s) === c) {
-        if (s === 1) continue; // خانة آمنة (بداية صاحبه)
+        if (!ignoreProtection && isProtected(q, i)) continue; // محميّ (سدّ/قاعدة) لا يُؤكل
         return { seat: q.seat, marble: i };
       }
     }
@@ -446,6 +521,15 @@ function applyMove(state, p, move) {
     for (const part of move.parts) p.marbles[part.marble] = part.to;
     recountHome(p);
     state.lastEvent = { type: move.cap ? "capture" : "split", player: p.id };
+    return;
+  }
+
+  // shove (ورقة 5): تحريك حجر قد لا يكون ملك اللاعب الحالي
+  if (move.kind === "shove") {
+    for (const c of move.caps || []) sendHome(state, c);
+    const owner = state.players.find((x) => x.seat === move.ownerSeat);
+    if (owner) { owner.marbles[move.marble] = move.to; recountHome(owner); }
+    state.lastEvent = { type: move.cap ? "capture" : "move", player: p.id };
     return;
   }
 
@@ -513,6 +597,7 @@ function scoreMove(state, p, move) {
   if (move.kind === "stop") s += 12;
   if (move.kind === "move") s += (move.to || 0) / 8;
   if (move.kind === "back") s += 2;
+  if (move.kind === "shove") s += move.cap ? 50 : 5; // ورقة 5: الأكل أفضل، وإلا حركة بسيطة
   return s;
 }
 
