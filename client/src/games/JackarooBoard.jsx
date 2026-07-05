@@ -296,7 +296,7 @@ export default function JackarooBoard({ game, you, action, onExit }) {
               <motion.button
                 key={`${p.id}-${mi}`}
                 className={`jak-marble ${movable ? "movable" : ""}`}
-                style={{ background: p.color }}
+                style={{ "--mc": p.color }}
                 animate={{ left: `${pos.x}%`, top: `${pos.y}%` }}
                 transition={{ type: "spring", stiffness: 240, damping: 26 }}
                 disabled={!movable}
