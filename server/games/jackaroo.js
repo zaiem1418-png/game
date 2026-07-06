@@ -365,24 +365,26 @@ function shoveOne(state, owner, mi, dist) {
   return { marble: mi, ownerSeat: owner.seat, kind: "shove", to: landing, caps: v ? [v] : [], cap: !!v };
 }
 
-// كرت التبديل (J): بدّل أحد بيادقك مع بيدق خصم على المسار (ليس على خانة آمنة)
+// كرت التبديل (J): بدّل أحد بيادقك مع أي بيدق آخر في اللعب (شريك أو خصم) على المسار
+// المستثنى: بيادقك أنت، وما هو في البيت/على قاعدته/في الحارة/محميّ بالسدّ.
 function swapEntries(state, p) {
   const out = [];
   const mine = [];
   p.marbles.forEach((step, mi) => { if (step >= 2 && step <= LOOP) mine.push(mi); }); // ليس على بدايتي الآمنة
   for (const mi of mine) {
     for (const q of state.players) {
-      if (q.team === p.team) continue; // التبديل مع الخصوم فقط
+      if (q.id === p.id) continue; // لا تبديل مع بيادقك أنت
+      const mate = q.team === p.team; // شريك أم خصم؟
       q.marbles.forEach((qs, qmi) => {
         if (!(qs >= 1 && qs <= LOOP)) return; // الهدف على المسار
         if (isProtected(q, qmi)) return; // الهدف محميّ (سدّ/قاعدة) لا يُبدّل
         out.push({
           marble: mi, kind: "swap",
           target: { seat: q.seat, marble: qmi },
-          targetName: q.name,
+          targetName: q.name, mate,
           to: null, caps: [], cap: false,
           opt: `sw:${mi}:${q.seat}:${qmi}`,
-          label: `🔄 تبديل ↔ ${q.name}`,
+          label: `🔄 تبديل ↔ ${q.name}${mate ? " (شريك)" : ""}`,
         });
       });
     }
@@ -595,7 +597,13 @@ function scoreMove(state, p, move) {
   if (caps) s += 55 * caps;
   if (move.kind === "home") s += 80;
   if (move.kind === "exit") s += 25;
-  if (move.kind === "swap") s += 28;
+  if (move.kind === "swap") {
+    // تبديل الخصم: خذ موقعه المتقدّم وأرجعه للخلف. تبديل الشريك نادراً ما يفيد.
+    const myStep = p.marbles[move.marble];
+    const tgt = state.players.find((x) => x.seat === move.target.seat);
+    const tStep = tgt ? tgt.marbles[move.target.marble] : myStep;
+    s += move.mate ? 2 : 20 + Math.max(0, tStep - myStep) * 1.2;
+  }
   if (move.kind === "split") s += 14;
   if (move.kind === "stop") s += 12;
   if (move.kind === "move") s += (move.to || 0) / 8;

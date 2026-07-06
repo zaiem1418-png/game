@@ -186,13 +186,13 @@ export default function JackarooBoard({ game, you, action, onExit }) {
     () => (swapMode ? [...new Set(cardOpts.map((o) => o.marble))] : []),
     [swapMode, cardOpts]
   );
-  // بيادق الخصم المؤهّلة كهدف بعد اختيار بيدقك (الخطوة الثانية)
+  // البيادق (شريك أو خصم) المؤهّلة كهدف بعد اختيار بيدقك (الخطوة الثانية)
   const swapTargets = useMemo(
     () =>
       swapMode && swapFrom != null
         ? cardOpts
             .filter((o) => o.marble === swapFrom)
-            .map((o) => ({ seat: o.target.seat, marble: o.target.marble, name: o.targetName, opt: o.opt }))
+            .map((o) => ({ seat: o.target.seat, marble: o.target.marble, name: o.targetName, mate: o.mate, opt: o.opt }))
         : [],
     [swapMode, swapFrom, cardOpts]
   );
@@ -371,9 +371,12 @@ export default function JackarooBoard({ game, you, action, onExit }) {
                 if (p.id === you && swapSrc.includes(mi)) {
                   clickable = true;
                   cls = swapFrom === mi ? "swap-src sel" : "swap-src";
-                } else if (swapFrom != null && swapTargets.some((t) => t.seat === p.seat && t.marble === mi)) {
-                  clickable = true;
-                  cls = "swap-tgt";
+                } else if (swapFrom != null) {
+                  const t = swapTargets.find((x) => x.seat === p.seat && x.marble === mi);
+                  if (t) {
+                    clickable = true;
+                    cls = t.mate ? "swap-tgt mate" : "swap-tgt";
+                  }
                 }
               } else if (p.id === you && movableMarbles.includes(mi)) {
                 clickable = true;
@@ -460,7 +463,7 @@ export default function JackarooBoard({ game, you, action, onExit }) {
                 : swapMode
                   ? swapFrom == null
                     ? "🔄 كرت التبديل — اختر بيدقك المتوهّج"
-                    : "🔄 اختر بيدق الخصم لتبديله (أو انقر بيدقك للإلغاء)"
+                    : "🔄 اختر بيدق الخصم أو الشريك لتبديله (أو انقر بيدقك للإلغاء)"
                   : needsPanel
                     ? "اختر الحركة من الأسفل"
                     : "اختر بيدقاً متوهّجاً لتحريكه"
@@ -523,7 +526,7 @@ const RULE_CARDS = [
   { c: "A", t: "إخراج بيدق من البيت، أو التقدّم 1 أو 11 (اختيارك)", tag: "متعدد" },
   { c: "K", t: "إخراج بيدق من البيت، أو التقدّم 13 ويأكل ما يمرّ عليه ويخترق السدّ", tag: "متعدد" },
   { c: "Q", t: "التقدّم 12 خطوة", tag: "" },
-  { c: "J", t: "كرت التبديل — اختر بيدقاً واحداً لك ثم بيدق خصم على المسار لتبديل موقعيهما (لا يُبدّل ما في البيت/القاعدة/الحارة)", tag: "تبديل" },
+  { c: "J", t: "كرت التبديل — اختر بيدقاً واحداً لك ثم أي بيدق آخر على المسار (شريك أو خصم) لتبديل موقعيهما (لا يُبدّل ما في البيت/القاعدة/الحارة/المحميّ)", tag: "تبديل" },
   { c: "10", t: "التقدّم 10، أو كرت الإيقاف — يُفقد اللاعب التالي دوره", tag: "إيقاف" },
   { c: "9", t: "التقدّم 9 خطوات", tag: "" },
   { c: "8", t: "التقدّم 8 خطوات", tag: "" },
