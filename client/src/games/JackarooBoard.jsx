@@ -74,8 +74,8 @@ function perimeter(i) {
 
 // رؤوس الجهات (0=أعلى، 16=يمين، 32=أسفل، 48=يسار) — اتجاه بيت النهاية والقاعدة
 const HEAD_INDEX = [0, 16, 32, 48];
-// خانة خروج الحجر (البداية الآمنة) بعد الرأس بخانتين — يجب أن تطابق offsetOf في الخادم
-const START_OFFSET = 2;
+// خانة خروج الحجر (البداية الآمنة) بعد الرأس بثلاث خانات — يجب أن تطابق offsetOf في الخادم
+const START_OFFSET = 3;
 const START_INDEX = HEAD_INDEX.map((h) => (h + START_OFFSET) % LOOP);
 // زاوية بيت النهاية/القاعدة تبقى عند رأس الجهة (لا تتأثّر بإزاحة البداية)
 function startAngle(seat) {
