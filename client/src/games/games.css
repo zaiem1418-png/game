@@ -730,6 +730,53 @@
     0 0 15px 3px rgba(168,85,247,0.7),
     inset 0 0 0 1.5px rgba(255,255,255,0.5);
 }
+/* بيدق يمشي خانةً خانة — يعلو فوق الباقي أثناء المشي */
+.jak-marble.walking {
+  z-index: 8;
+  box-shadow:
+    0 6px 12px rgba(0,0,0,0.6),
+    0 0 0 2px rgba(255,255,255,0.35),
+    inset 0 0 0 1.5px rgba(255,255,255,0.5),
+    inset 0 -3px 5px rgba(0,0,0,0.35);
+}
+
+/* معاينة الوجهة: الخطوط المنقّطة + القرص الشبحي */
+.jak-preview-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+  overflow: visible;
+}
+.jak-ghost {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: clamp(15px, 4.4vw, 22px);
+  height: clamp(15px, 4.4vw, 22px);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 4;
+  border: 2px dashed color-mix(in srgb, var(--mc, #fff) 80%, #fff);
+  background: color-mix(in srgb, var(--mc, #888) 28%, transparent);
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--mc, #fff) 55%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  animation: jakGhostPulse 1s ease-in-out infinite;
+}
+.jak-ghost.cap {
+  border-color: #ffd23f;
+  background: rgba(255, 210, 63, 0.28);
+  box-shadow: 0 0 10px 2px rgba(255, 210, 63, 0.6);
+}
+@keyframes jakGhostPulse {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.95; transform: translate(-50%, -50%) scale(1.12); }
+}
+
 /* هدف تبديل من فريقك (شريك) — وميض أخضر للتمييز عن الخصم */
 .jak-marble.swap-tgt.mate {
   box-shadow:

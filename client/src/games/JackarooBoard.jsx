@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 // (نقطتا العبور) — مطابق للخط الأحمر. 64 خانة: 16 لكل ربع بين المراسي.
 const LOOP = 64;
 const HOME_FIRST = 65;
+const HOME_LAST = 68;
+const PER_CELL = 0.13; // ثانية لكل خانة أثناء مشي البيدق
 
 // محيط المسار (٪، المركز 50,50) مع عقارب الساعة من منتصف الأعلى.
 // المراسي (بدايات اللاعبين): أعلى=فهرس 0، يمين=6، أسفل=12، يسار=18.
@@ -116,6 +118,27 @@ function marblePos(seat, step, mi) {
   return homeCells(seat)[step - HOME_FIRST];
 }
 
+// المواضع التي يمرّ بها البيدق من الخطوة prev إلى next (يشمل نقطتي البداية والنهاية)،
+// حتى «يمشي» خانةً خانة بدل القفز. الحالات الخاصة (خروج/أكل/عبور/تبديل) تُرجع موضعاً واحداً (قفزة).
+function walkPath(seat, mi, prev, next) {
+  if (prev === next || prev === 0 || next === 0) return [marblePos(seat, next, mi)];
+  const fwd = next - prev; // الترقيم خطّي للأمام على المسار ثم الحارة (1..68)
+  if (fwd >= 1 && fwd <= 18 && next <= HOME_LAST) {
+    const out = [];
+    for (let s = prev; s <= next; s++) out.push(marblePos(seat, s, mi));
+    return out;
+  }
+  // مشي للخلف (ورقة 4) مع الالتفاف على حدّ 1/64
+  const back = ((prev - next) % LOOP + LOOP) % LOOP;
+  if (back >= 1 && back <= 4 && prev <= LOOP && next <= LOOP) {
+    const out = [marblePos(seat, prev, mi)];
+    let cur = prev;
+    for (let k = 0; k < back; k++) { cur = cur - 1 < 1 ? LOOP : cur - 1; out.push(marblePos(seat, cur, mi)); }
+    return out;
+  }
+  return [marblePos(seat, next, mi)]; // عبور/تبديل/التفاف بعيد → قفزة مباشرة
+}
+
 const SUIT_COLOR = { "♥": "#e3405a", "♦": "#e3405a", "♠": "#1b2440", "♣": "#1b2440", "🃏": "#7a3aa6" };
 
 // صورة طاولة جاكارو (ضع الملف في client/public/games/jackaroo-table.png)
@@ -202,6 +225,26 @@ export default function JackarooBoard({ game, you, action, onExit }) {
   );
   // أعِد ضبط اختيار التبديل عند تغيير الورقة أو الدور
   useEffect(() => { setSwapFrom(null); }, [selCard, game.turn]);
+
+  // خطوات البيادق السابقة — لنعرف من أين إلى أين يمشي كل بيدق عند تغيّر الحالة
+  const prevSteps = useRef({});
+  useEffect(() => {
+    const m = {};
+    for (const p of players) p.marbles.forEach((s, mi) => { m[`${p.id}:${mi}`] = s; });
+    prevSteps.current = m;
+  }, [st]);
+
+  // معاينة الوجهة: عند اختيار ورقة، أين سيصل كل بيدق لو حُرّك بها
+  const previews = useMemo(() => {
+    if (selCard == null || swapMode || !me) return [];
+    const out = [];
+    for (const o of cardOpts) {
+      if (o.marble == null || o.marble < 0 || o.to == null) continue;
+      if (o.kind === "shove") out.push({ seat: o.ownerSeat, mi: o.marble, to: o.to, cap: o.cap });
+      else if (["move", "home", "exit", "back"].includes(o.kind)) out.push({ seat: me.seat, mi: o.marble, to: o.to, cap: o.cap });
+    }
+    return out;
+  }, [selCard, cardOpts, swapMode, me]);
 
   // نعرض لوحة خيارات عندما يحتاج اللاعب لاختيار (تقسيم/إيقاف/دفع) أو عند تعدّد الخيارات لنفس البيدق (إيس 1/11)
   // (التبديل يُدار على اللوحة بالنقر، فلا لوحة له)
@@ -364,6 +407,40 @@ export default function JackarooBoard({ game, you, action, onExit }) {
           <span className="jak-pile-card c2" />
         </div>
 
+        {/* معاينة الوجهة: خطوط منقّطة من كل بيدق إلى حيث سيصل + قرص شبحي عند الهدف */}
+        {previews.length > 0 && (
+          <svg className="jak-preview-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+            {previews.map((pv, i) => {
+              const owner = bySeat[pv.seat];
+              if (!owner) return null;
+              const src = marblePos(pv.seat, owner.marbles[pv.mi], pv.mi);
+              const dst = marblePos(pv.seat, pv.to, pv.mi);
+              return (
+                <line
+                  key={i}
+                  x1={src.x} y1={src.y} x2={dst.x} y2={dst.y}
+                  stroke={pv.cap ? "#ffd23f" : owner.color}
+                  strokeWidth="0.7" strokeDasharray="1.6 1.4" strokeLinecap="round" opacity="0.8"
+                />
+              );
+            })}
+          </svg>
+        )}
+        {previews.map((pv, i) => {
+          const owner = bySeat[pv.seat];
+          if (!owner) return null;
+          const dst = marblePos(pv.seat, pv.to, pv.mi);
+          return (
+            <span
+              key={`gh${i}`}
+              className={`jak-ghost ${pv.cap ? "cap" : ""}`}
+              style={{ left: `${dst.x}%`, top: `${dst.y}%`, "--mc": owner.color }}
+            >
+              {pv.cap ? "💥" : ""}
+            </span>
+          );
+        })}
+
         {/* البيادق */}
         {players.map((p) =>
           p.marbles.map((step, mi) => {
@@ -387,13 +464,24 @@ export default function JackarooBoard({ game, you, action, onExit }) {
                 cls = "movable";
               }
             }
+            const prevStep = prevSteps.current[`${p.id}:${mi}`];
+            const wp = walkPath(p.seat, mi, prevStep == null ? step : prevStep, step);
+            const walking = wp.length > 1;
             return (
               <motion.button
                 key={`${p.id}-${mi}`}
-                className={`jak-marble ${cls}`}
+                className={`jak-marble ${cls} ${walking ? "walking" : ""}`}
                 style={{ "--mc": p.color }}
-                animate={{ left: `${pos.x}%`, top: `${pos.y}%` }}
-                transition={{ type: "spring", stiffness: 320, damping: 19, mass: 0.7 }}
+                animate={
+                  walking
+                    ? { left: wp.map((w) => `${w.x}%`), top: wp.map((w) => `${w.y}%`) }
+                    : { left: `${pos.x}%`, top: `${pos.y}%` }
+                }
+                transition={
+                  walking
+                    ? { duration: (wp.length - 1) * PER_CELL, ease: "linear" }
+                    : { type: "spring", stiffness: 320, damping: 19, mass: 0.7 }
+                }
                 disabled={!clickable}
                 onClick={() => onMarbleClick(p, mi)}
               />
