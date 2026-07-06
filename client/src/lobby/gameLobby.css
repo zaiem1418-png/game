@@ -24,6 +24,23 @@
   z-index: 0;
   background: radial-gradient(120% 90% at 50% 0%, #6a2f8f 0%, #3a1850 45%, #1f0e2e 100%);
 }
+/* شفق حيّ: كتلتان ملوّنتان ضبابيّتان تنجرفان ببطء (خلفية غنية بلا صور) */
+.gl-bg::before, .gl-bg::after {
+  content: ""; position: absolute; border-radius: 50%;
+  filter: blur(46px); opacity: 0.5; pointer-events: none;
+}
+.gl-bg::before {
+  width: 260px; height: 260px; top: -50px; inset-inline-start: -60px;
+  background: radial-gradient(circle, var(--glow, #c98bff) 0%, transparent 68%);
+  animation: glAurora1 15s ease-in-out infinite;
+}
+.gl-bg::after {
+  width: 320px; height: 320px; bottom: -70px; inset-inline-end: -90px;
+  background: radial-gradient(circle, var(--gold, #f5c451) 0%, transparent 70%);
+  opacity: 0.35; animation: glAurora2 19s ease-in-out infinite;
+}
+@keyframes glAurora1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(46px,34px) scale(1.12); } }
+@keyframes glAurora2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-54px,-30px) scale(1.1); } }
 .gl > *:not(.gl-bg):not(.gl-stars) { position: relative; z-index: 2; }
 
 /* النجوم */
