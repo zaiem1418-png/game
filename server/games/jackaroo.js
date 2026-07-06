@@ -170,6 +170,8 @@ export default {
       const move = legal.find((m) => m.card === ci && m.opt === action.opt);
       if (!move) return { error: "حركة غير مسموحة بهذه الورقة" };
       applyMove(state, p, move);
+      // أرفِق الورقة الملعوبة بالحدث ليعرضها كل اللاعبين (أنميشن رمي الكرت)
+      if (state.lastEvent) state.lastEvent.card = { rank: card.rank, suit: card.suit };
       p.hand.splice(ci, 1);
       return finishTurn(state, p);
     }
@@ -177,9 +179,10 @@ export default {
     if (action.type === "discard") {
       if (legal.length > 0) return { error: "لديك حركة متاحة — يجب اللعب" };
       const ci = action.card;
-      if (!p.hand[ci]) return { error: "ورقة غير موجودة" };
+      const dcard = p.hand[ci];
+      if (!dcard) return { error: "ورقة غير موجودة" };
       p.hand.splice(ci, 1);
-      state.lastEvent = { type: "discard", player: p.id };
+      state.lastEvent = { type: "discard", player: p.id, card: { rank: dcard.rank, suit: dcard.suit } };
       return finishTurn(state, p);
     }
 

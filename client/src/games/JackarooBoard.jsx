@@ -120,6 +120,7 @@ const TABLE_IMG = "/games/jackaroo-table.png";
 export default function JackarooBoard({ game, you, action, onExit }) {
   const st = game?.state;
   const [selCard, setSelCard] = useState(null);
+  const [swapFrom, setSwapFrom] = useState(null); // كرت التبديل: بيدقك المختار (الخطوة الأولى)
   const [showRules, setShowRules] = useState(false);
   // لا نُفعّل صورة الطاولة إلا بعد التأكد من تحميلها (وإلا يبقى اللوح الخشبي)
   const [tableReady, setTableReady] = useState(false);
@@ -143,12 +144,18 @@ export default function JackarooBoard({ game, you, action, onExit }) {
     const t = setTimeout(() => setBurst((b) => (b && b.id === id ? null : b)), 900);
     return () => clearTimeout(t);
   }, [st?.lastEvent]);
+  // كرت الخصم: عند لعب/رمي لاعب آخر ورقة، اعرضها على الطاولة (ورقتي أُعرض فوراً عند اللعب)
+  useEffect(() => {
+    const e = st?.lastEvent;
+    if (!e || !e.card || e.player === you) return;
+    setPlayFx({ card: e.card, id: ++fxId.current, mode: "reveal" });
+  }, [st?.lastEvent]);
   if (!st) return <div className="grm-loading">جاري التحميل…</div>;
 
-  // يُطلق أنميشن «رمي الكرت على الطاولة» عند لعب/رمي ورقة
+  // يُطلق أنميشن «رمي الكرت على الطاولة» عند لعب/رمي ورقتي أنا
   const flyCard = (ci) => {
     const card = me?.hand?.[ci];
-    if (card) setPlayFx({ card, id: ++fxId.current });
+    if (card) setPlayFx({ card, id: ++fxId.current, mode: "throw" });
   };
 
   const players = st.players;
@@ -169,9 +176,34 @@ export default function JackarooBoard({ game, you, action, onExit }) {
     () => (selCard == null ? [] : legal.filter((m) => m.card === selCard)),
     [selCard, legal]
   );
-  // نعرض لوحة خيارات عندما يحتاج اللاعب لاختيار (تبديل/تقسيم/إيقاف) أو عند تعدّد الخيارات لنفس البيدق (إيس 1/11)
+  // كرت التبديل (J): اختيار من على اللوحة بخطوتين — بيدقك ثم بيدق الخصم
+  const swapMode = useMemo(
+    () => cardOpts.length > 0 && cardOpts.every((o) => o.kind === "swap"),
+    [cardOpts]
+  );
+  // بيادقك المؤهّلة كمصدر للتبديل (الخطوة الأولى)
+  const swapSrc = useMemo(
+    () => (swapMode ? [...new Set(cardOpts.map((o) => o.marble))] : []),
+    [swapMode, cardOpts]
+  );
+  // بيادق الخصم المؤهّلة كهدف بعد اختيار بيدقك (الخطوة الثانية)
+  const swapTargets = useMemo(
+    () =>
+      swapMode && swapFrom != null
+        ? cardOpts
+            .filter((o) => o.marble === swapFrom)
+            .map((o) => ({ seat: o.target.seat, marble: o.target.marble, name: o.targetName, opt: o.opt }))
+        : [],
+    [swapMode, swapFrom, cardOpts]
+  );
+  // أعِد ضبط اختيار التبديل عند تغيير الورقة أو الدور
+  useEffect(() => { setSwapFrom(null); }, [selCard, game.turn]);
+
+  // نعرض لوحة خيارات عندما يحتاج اللاعب لاختيار (تقسيم/إيقاف/دفع) أو عند تعدّد الخيارات لنفس البيدق (إيس 1/11)
+  // (التبديل يُدار على اللوحة بالنقر، فلا لوحة له)
   const needsPanel = useMemo(() => {
-    if (cardOpts.some((o) => ["swap", "split", "stop", "shove"].includes(o.kind))) return true;
+    if (swapMode) return false;
+    if (cardOpts.some((o) => ["split", "stop", "shove"].includes(o.kind))) return true;
     const seen = new Set();
     for (const o of cardOpts) {
       if (o.marble < 0) continue;
@@ -179,16 +211,33 @@ export default function JackarooBoard({ game, you, action, onExit }) {
       seen.add(o.marble);
     }
     return false;
-  }, [cardOpts]);
+  }, [cardOpts, swapMode]);
 
   // البيادق القابلة للتحريك مباشرةً (المسار البسيط بدون لوحة خيارات)
   const movableMarbles = useMemo(
-    () => (needsPanel ? [] : cardOpts.filter((o) => o.marble >= 0).map((o) => o.marble)),
-    [cardOpts, needsPanel]
+    () => (needsPanel || swapMode ? [] : cardOpts.filter((o) => o.marble >= 0).map((o) => o.marble)),
+    [cardOpts, needsPanel, swapMode]
   );
 
   function onMarbleClick(p, mi) {
-    if (!myTurn || selCard == null || p.id !== you || needsPanel) return;
+    if (!myTurn || selCard == null) return;
+    // كرت التبديل: الخطوة 1 = اختر بيدقك، الخطوة 2 = اختر بيدق الخصم
+    if (swapMode) {
+      if (p.id === you) {
+        if (!swapSrc.includes(mi)) return;
+        setSwapFrom((f) => (f === mi ? null : mi)); // النقر مجدداً يلغي الاختيار
+        return;
+      }
+      if (swapFrom == null) return;
+      const t = swapTargets.find((x) => x.seat === p.seat && x.marble === mi);
+      if (!t) return;
+      flyCard(selCard);
+      action({ type: "play", card: selCard, opt: t.opt });
+      setSelCard(null);
+      setSwapFrom(null);
+      return;
+    }
+    if (p.id !== you || needsPanel) return;
     const opt = cardOpts.find((o) => o.marble === mi);
     if (!opt) return;
     flyCard(selCard);
@@ -315,15 +364,30 @@ export default function JackarooBoard({ game, you, action, onExit }) {
         {players.map((p) =>
           p.marbles.map((step, mi) => {
             const pos = marblePos(p.seat, step, mi);
-            const movable = myTurn && p.id === you && movableMarbles.includes(mi);
+            let cls = "";
+            let clickable = false;
+            if (myTurn) {
+              if (swapMode) {
+                if (p.id === you && swapSrc.includes(mi)) {
+                  clickable = true;
+                  cls = swapFrom === mi ? "swap-src sel" : "swap-src";
+                } else if (swapFrom != null && swapTargets.some((t) => t.seat === p.seat && t.marble === mi)) {
+                  clickable = true;
+                  cls = "swap-tgt";
+                }
+              } else if (p.id === you && movableMarbles.includes(mi)) {
+                clickable = true;
+                cls = "movable";
+              }
+            }
             return (
               <motion.button
                 key={`${p.id}-${mi}`}
-                className={`jak-marble ${movable ? "movable" : ""}`}
+                className={`jak-marble ${cls}`}
                 style={{ "--mc": p.color }}
                 animate={{ left: `${pos.x}%`, top: `${pos.y}%` }}
                 transition={{ type: "spring", stiffness: 320, damping: 19, mass: 0.7 }}
-                disabled={!movable}
+                disabled={!clickable}
                 onClick={() => onMarbleClick(p, mi)}
               />
             );
@@ -358,11 +422,23 @@ export default function JackarooBoard({ game, you, action, onExit }) {
         {playFx && (
           <motion.div
             key={playFx.id}
-            className="jak-fly-card"
+            className={`jak-fly-card ${playFx.mode || "throw"}`}
             style={{ color: SUIT_COLOR[playFx.card.suit] || "#1b2440" }}
-            initial={{ opacity: 0.3, scale: 1.15, y: 30, rotate: -12 }}
-            animate={{ opacity: [1, 1, 0], scale: [1.15, 0.95, 0.5], y: [30, -170, -230], rotate: [-12, 6, 26] }}
-            transition={{ duration: 0.6, ease: "easeInOut", times: [0, 0.6, 1] }}
+            initial={
+              playFx.mode === "reveal"
+                ? { opacity: 0, scale: 0.4, x: "-50%", y: -24, rotate: -10 }
+                : { opacity: 0.3, scale: 1.15, x: "-50%", y: 30, rotate: -12 }
+            }
+            animate={
+              playFx.mode === "reveal"
+                ? { opacity: [0, 1, 1, 0], scale: [0.4, 1.18, 1, 0.9], x: "-50%", y: [-24, 0, 0, 8], rotate: [-10, 0, 0, 4] }
+                : { opacity: [1, 1, 0], scale: [1.15, 0.95, 0.5], x: "-50%", y: [30, -170, -230], rotate: [-12, 6, 26] }
+            }
+            transition={
+              playFx.mode === "reveal"
+                ? { duration: 0.95, ease: "easeInOut", times: [0, 0.2, 0.72, 1] }
+                : { duration: 0.6, ease: "easeInOut", times: [0, 0.6, 1] }
+            }
             onAnimationComplete={() => setPlayFx((f) => (f && f.id === playFx.id ? null : f))}
           >
             <b>{playFx.card.rank}</b>
@@ -381,9 +457,13 @@ export default function JackarooBoard({ game, you, action, onExit }) {
               ? "لا حركة متاحة — اختر ورقة للتخلّص منها"
               : selCard == null
                 ? "دورك — اختر ورقة"
-                : needsPanel
-                  ? "اختر الحركة من الأسفل"
-                  : "اختر بيدقاً متوهّجاً لتحريكه"
+                : swapMode
+                  ? swapFrom == null
+                    ? "🔄 كرت التبديل — اختر بيدقك المتوهّج"
+                    : "🔄 اختر بيدق الخصم لتبديله (أو انقر بيدقك للإلغاء)"
+                  : needsPanel
+                    ? "اختر الحركة من الأسفل"
+                    : "اختر بيدقاً متوهّجاً لتحريكه"
             : `دور ${turnPlayer?.name || "…"}`}
         {ev && ev.type === "capture" && <span className="jak-ev"> 💥 أكل!</span>}
         {ev && ev.type === "home" && <span className="jak-ev"> 🏁 بيدق وصل!</span>}
@@ -443,7 +523,7 @@ const RULE_CARDS = [
   { c: "A", t: "إخراج بيدق من البيت، أو التقدّم 1 أو 11 (اختيارك)", tag: "متعدد" },
   { c: "K", t: "إخراج بيدق من البيت، أو التقدّم 13 ويأكل ما يمرّ عليه ويخترق السدّ", tag: "متعدد" },
   { c: "Q", t: "التقدّم 12 خطوة", tag: "" },
-  { c: "J", t: "كرت التبديل — بدّل بيدقك مع بيدق خصم على المسار", tag: "تبديل" },
+  { c: "J", t: "كرت التبديل — اختر بيدقاً واحداً لك ثم بيدق خصم على المسار لتبديل موقعيهما (لا يُبدّل ما في البيت/القاعدة/الحارة)", tag: "تبديل" },
   { c: "10", t: "التقدّم 10، أو كرت الإيقاف — يُفقد اللاعب التالي دوره", tag: "إيقاف" },
   { c: "9", t: "التقدّم 9 خطوات", tag: "" },
   { c: "8", t: "التقدّم 8 خطوات", tag: "" },

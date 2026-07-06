@@ -483,14 +483,17 @@
 
 /* ===== أنميشنات اللعب ===== */
 /* كرت يُرمى نحو الطاولة عند اللعب/الرمي */
+/* التمركز الأفقي يتولّاه framer عبر x:"-50%" (لأنه يتحكّم في transform) */
 .jak-fly-card {
-  position: absolute; left: 50%; bottom: 16%; transform: translateX(-50%);
+  position: absolute; left: 50%; bottom: 16%;
   width: 52px; height: 72px; border-radius: 9px; z-index: 40; pointer-events: none;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   background: linear-gradient(160deg, #ffffff, #eef1f6 70%, #dfe4ee);
   border: 1px solid #c7ccd8;
   box-shadow: 0 10px 22px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.9);
 }
+/* كرت الخصم يُكشف قرب وسط الطاولة */
+.jak-fly-card.reveal { bottom: auto; top: 40%; box-shadow: 0 12px 26px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.25); }
 .jak-fly-card b { font-size: 20px; line-height: 1; }
 .jak-fly-card span { font-size: 18px; }
 
@@ -691,6 +694,45 @@
 @keyframes jakMarbleBob {
   0%, 100% { transform: translate(-50%, -50%) scale(1); }
   50% { transform: translate(-50%, -58%) scale(1.06); }
+}
+
+/* كرت التبديل — مصدر (بيدقك) قابل للاختيار */
+.jak-marble.swap-src {
+  cursor: pointer;
+  z-index: 6;
+  animation: jakMarbleBob 1.1s ease-in-out infinite;
+  box-shadow:
+    0 4px 9px rgba(0,0,0,0.55),
+    0 0 0 3px color-mix(in srgb, var(--mc, #fff) 55%, transparent),
+    0 0 14px 2px color-mix(in srgb, var(--mc, #fff) 70%, transparent),
+    inset 0 0 0 1.5px rgba(255,255,255,0.5),
+    inset 0 -3px 5px rgba(0,0,0,0.35);
+}
+/* مصدر مختار: حلقة بيضاء ثابتة */
+.jak-marble.swap-src.sel {
+  animation: none;
+  z-index: 7;
+  transform: translate(-50%, -50%) scale(1.12);
+  box-shadow:
+    0 5px 11px rgba(0,0,0,0.6),
+    0 0 0 3px #fff,
+    0 0 16px 3px rgba(255,255,255,0.85),
+    inset 0 0 0 1.5px rgba(255,255,255,0.6);
+}
+/* هدف التبديل — بيدق الخصم القابل للاختيار (وميض بنفسجي) */
+.jak-marble.swap-tgt {
+  cursor: pointer;
+  z-index: 6;
+  animation: jakSwapTgt 0.85s ease-in-out infinite;
+  box-shadow:
+    0 4px 9px rgba(0,0,0,0.55),
+    0 0 0 3px rgba(168,85,247,0.9),
+    0 0 15px 3px rgba(168,85,247,0.7),
+    inset 0 0 0 1.5px rgba(255,255,255,0.5);
+}
+@keyframes jakSwapTgt {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.12); }
 }
 
 /* مقاعد لاعبي جاكارو حول اللوحة */
