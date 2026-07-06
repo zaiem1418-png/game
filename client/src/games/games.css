@@ -478,7 +478,64 @@
   gap: 8px;
   padding: 8px;
   overflow-y: auto;
+  position: relative;
 }
+
+/* ===== أنميشنات اللعب ===== */
+/* كرت يُرمى نحو الطاولة عند اللعب/الرمي */
+.jak-fly-card {
+  position: absolute; left: 50%; bottom: 16%; transform: translateX(-50%);
+  width: 52px; height: 72px; border-radius: 9px; z-index: 40; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: linear-gradient(160deg, #ffffff, #eef1f6 70%, #dfe4ee);
+  border: 1px solid #c7ccd8;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.9);
+}
+.jak-fly-card b { font-size: 20px; line-height: 1; }
+.jak-fly-card span { font-size: 18px; }
+
+/* انفجار الأكل / وميض الوصول للبيت */
+/* نقطة الصفر عند إحداثيات الحدث؛ الأبناء يتمركزون حولها بأنفسهم.
+   لا نستخدم translate هنا لأن framer يتحكّم في transform (scale). */
+.jak-burst {
+  position: absolute; z-index: 30; pointer-events: none;
+  width: 0; height: 0;
+}
+.jak-burst-core { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%);
+  font-size: clamp(18px, 6vw, 30px); animation: jakBurstCore 0.6s ease-out; }
+.jak-burst-ring {
+  position: absolute; left: 0; top: 0; width: 14px; height: 14px; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 3px solid #ffd15c; animation: jakBurstRing 0.7s ease-out forwards;
+}
+.jak-burst.capture .jak-burst-ring { border-color: #ff5a3c; }
+.jak-burst-spark {
+  position: absolute; left: 0; top: 0; width: 4px; height: 4px; border-radius: 50%;
+  background: #ffd15c;
+  transform: translate(-50%, -50%) rotate(var(--a)) translateX(0);
+  animation: jakBurstSpark 0.6s ease-out forwards;
+}
+.jak-burst.capture .jak-burst-spark { background: #ff7a4d; }
+@keyframes jakBurstCore { 0% { transform: translate(-50%,-50%) scale(0.3); } 55% { transform: translate(-50%,-50%) scale(1.35); } 100% { transform: translate(-50%,-50%) scale(1); } }
+@keyframes jakBurstRing { 0% { width: 8px; height: 8px; opacity: 0.9; } 100% { width: 46px; height: 46px; opacity: 0; } }
+@keyframes jakBurstSpark {
+  0% { transform: translate(-50%,-50%) rotate(var(--a)) translateX(4px); opacity: 1; }
+  100% { transform: translate(-50%,-50%) rotate(var(--a)) translateX(26px); opacity: 0; }
+}
+
+/* اهتزاز اللوحة عند الأكل */
+.jak-board.shake { animation: jakShake 0.4s ease-in-out; }
+@keyframes jakShake {
+  0%,100% { transform: translate(0,0); }
+  20% { transform: translate(-4px, 2px) rotate(-0.6deg); }
+  40% { transform: translate(4px, -2px) rotate(0.6deg); }
+  60% { transform: translate(-3px, 1px) rotate(-0.4deg); }
+  80% { transform: translate(3px, -1px) rotate(0.4deg); }
+}
+
+/* ظهور نابض لشارة الحدث */
+.jak-ev { display: inline-block; animation: jakEvPop 0.4s cubic-bezier(0.2,1.4,0.3,1); }
+@keyframes jakEvPop { 0% { transform: scale(0.4); opacity: 0; } 60% { transform: scale(1.25); } 100% { transform: scale(1); opacity: 1; } }
 /* مسرح يحتوي اللوحة + مقاعد اللاعبين حول الحواف */
 .jak-stage {
   position: relative;

@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ===== هندسة مسار جاكارو: شكل «القناتين والانتفاخين» كما في الطاولة الحقيقية =====
 // قناتان ضيّقتان طويلتان (أعلى/أسفل) لممرّي البيت، وجسم عريض بانتفاخين جانبيّين
@@ -123,12 +123,33 @@ export default function JackarooBoard({ game, you, action, onExit }) {
   const [showRules, setShowRules] = useState(false);
   // لا نُفعّل صورة الطاولة إلا بعد التأكد من تحميلها (وإلا يبقى اللوح الخشبي)
   const [tableReady, setTableReady] = useState(false);
+  const [playFx, setPlayFx] = useState(null); // كرت يُلعب ويطير نحو الطاولة
+  const [burst, setBurst] = useState(null);    // انفجار الأكل/الوصول عند خانة معيّنة
+  const fxId = useRef(0);
   useEffect(() => {
     const img = new Image();
     img.onload = () => setTableReady(true);
     img.src = TABLE_IMG;
   }, []);
+  // عند كل حدث أكل/وصول: أطلق انفجاراً عند موضع البيدق المتحرّك
+  useEffect(() => {
+    const e = st?.lastEvent;
+    if (!e || (e.type !== "capture" && e.type !== "home")) return;
+    const pl = st.players.find((x) => x.id === e.player);
+    if (!pl || e.to == null || e.marble == null) return;
+    const pos = marblePos(pl.seat, e.to, e.marble);
+    const id = ++fxId.current;
+    setBurst({ id, type: e.type, x: pos.x, y: pos.y });
+    const t = setTimeout(() => setBurst((b) => (b && b.id === id ? null : b)), 900);
+    return () => clearTimeout(t);
+  }, [st?.lastEvent]);
   if (!st) return <div className="grm-loading">جاري التحميل…</div>;
+
+  // يُطلق أنميشن «رمي الكرت على الطاولة» عند لعب/رمي ورقة
+  const flyCard = (ci) => {
+    const card = me?.hand?.[ci];
+    if (card) setPlayFx({ card, id: ++fxId.current });
+  };
 
   const players = st.players;
   // فهرسة اللاعبين حسب المقعد (في 1ضد1 المقاعد 0 و2 وليست 0 و1)
@@ -170,11 +191,13 @@ export default function JackarooBoard({ game, you, action, onExit }) {
     if (!myTurn || selCard == null || p.id !== you || needsPanel) return;
     const opt = cardOpts.find((o) => o.marble === mi);
     if (!opt) return;
+    flyCard(selCard);
     action({ type: "play", card: selCard, opt: opt.opt });
     setSelCard(null);
   }
 
   function onOptClick(o) {
+    flyCard(selCard);
     action({ type: "play", card: selCard, opt: o.opt });
     setSelCard(null);
   }
@@ -182,6 +205,7 @@ export default function JackarooBoard({ game, you, action, onExit }) {
   function onCardClick(ci) {
     if (!myTurn) return;
     if (mustDiscard) {
+      flyCard(ci);
       action({ type: "discard", card: ci });
       setSelCard(null);
       return;
@@ -222,7 +246,7 @@ export default function JackarooBoard({ game, you, action, onExit }) {
 
       {/* اللوحة */}
       <div
-        className={`jak-board ${tableReady ? "has-photo" : ""}`}
+        className={`jak-board ${tableReady ? "has-photo" : ""} ${burst?.type === "capture" ? "shake" : ""}`}
         style={tableReady ? { "--jak-table": `url(${TABLE_IMG})` } : undefined}
       >
         {/* قواعد بهيئة زهرة في زوايا اللاعبين الموجودين فقط */}
@@ -298,15 +322,54 @@ export default function JackarooBoard({ game, you, action, onExit }) {
                 className={`jak-marble ${movable ? "movable" : ""}`}
                 style={{ "--mc": p.color }}
                 animate={{ left: `${pos.x}%`, top: `${pos.y}%` }}
-                transition={{ type: "spring", stiffness: 240, damping: 26 }}
+                transition={{ type: "spring", stiffness: 320, damping: 19, mass: 0.7 }}
                 disabled={!movable}
                 onClick={() => onMarbleClick(p, mi)}
               />
             );
           })
         )}
+
+        {/* انفجار الأكل / وميض الوصول للبيت عند خانة الحدث */}
+        <AnimatePresence>
+          {burst && (
+            <motion.div
+              key={burst.id}
+              className={`jak-burst ${burst.type}`}
+              style={{ left: `${burst.x}%`, top: `${burst.y}%` }}
+              initial={{ opacity: 0, scale: 0.4 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.3 }}
+              transition={{ duration: 0.25 }}
+            >
+              <span className="jak-burst-ring" />
+              <span className="jak-burst-core">{burst.type === "capture" ? "💥" : "✨"}</span>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <span key={i} className="jak-burst-spark" style={{ "--a": `${i * 45}deg` }} />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
         </div>
       </div>
+
+      {/* كرت يُرمى على الطاولة عند اللعب */}
+      <AnimatePresence>
+        {playFx && (
+          <motion.div
+            key={playFx.id}
+            className="jak-fly-card"
+            style={{ color: SUIT_COLOR[playFx.card.suit] || "#1b2440" }}
+            initial={{ opacity: 0.3, scale: 1.15, y: 30, rotate: -12 }}
+            animate={{ opacity: [1, 1, 0], scale: [1.15, 0.95, 0.5], y: [30, -170, -230], rotate: [-12, 6, 26] }}
+            transition={{ duration: 0.6, ease: "easeInOut", times: [0, 0.6, 1] }}
+            onAnimationComplete={() => setPlayFx((f) => (f && f.id === playFx.id ? null : f))}
+          >
+            <b>{playFx.card.rank}</b>
+            <span>{playFx.card.suit}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* حالة الدور + زر القواعد */}
       <div className="jak-turn">
