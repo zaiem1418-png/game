@@ -5,8 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 // قناتان ضيّقتان طويلتان (أعلى/أسفل) لممرّي البيت، وجسم عريض بانتفاخين جانبيّين
 // (نقطتا العبور) — مطابق للخط الأحمر. 64 خانة: 16 لكل ربع بين المراسي.
 const LOOP = 64;
-const HOME_FIRST = 65;
-const HOME_LAST = 68;
 const PER_CELL = 0.13; // ثانية لكل خانة أثناء مشي البيدق
 
 // محيط المسار (٪، المركز 50,50) مع عقارب الساعة من منتصف الأعلى.
@@ -79,6 +77,10 @@ const HEAD_INDEX = [0, 16, 32, 48];
 // خانة خروج الحجر (البداية الآمنة) بعد الرأس بخانتين — يجب أن تطابق offsetOf في الخادم
 const START_OFFSET = 2;
 const START_INDEX = HEAD_INDEX.map((h) => (h + START_OFFSET) % LOOP);
+// مسار كل بيدق = LOOP ناقص الإزاحة؛ يدخل الحارة من فمها عند الرأس (تطابق الخادم)
+const TRACK = LOOP - START_OFFSET; // خانات المسار (1..TRACK)
+const HOME_FIRST = TRACK + 1;      // أول خانة في حارة النهاية
+const HOME_LAST = TRACK + 4;       // آخر خانة في الحارة
 // زاوية بيت النهاية/القاعدة تبقى عند رأس الجهة (لا تتأثّر بإزاحة البداية)
 function startAngle(seat) {
   return (HEAD_INDEX[seat] / LOOP) * 2 * Math.PI - Math.PI / 2;
@@ -114,7 +116,7 @@ function yardSlots(seat) {
 
 function marblePos(seat, step, mi) {
   if (step === 0) return yardSlots(seat)[mi];
-  if (step >= 1 && step <= LOOP) return perimeter((START_INDEX[seat] + step - 1) % LOOP);
+  if (step >= 1 && step <= TRACK) return perimeter((START_INDEX[seat] + step - 1) % LOOP);
   return homeCells(seat)[step - HOME_FIRST];
 }
 
@@ -122,21 +124,19 @@ function marblePos(seat, step, mi) {
 // حتى «يمشي» خانةً خانة بدل القفز. الحالات الخاصة (خروج/أكل/عبور/تبديل) تُرجع موضعاً واحداً (قفزة).
 function walkPath(seat, mi, prev, next) {
   if (prev === next || prev === 0 || next === 0) return [marblePos(seat, next, mi)];
-  const fwd = next - prev; // الترقيم خطّي للأمام على المسار ثم الحارة (1..68)
+  const fwd = next - prev; // الترقيم خطّي للأمام على المسار ثم الحارة
   if (fwd >= 1 && fwd <= 18 && next <= HOME_LAST) {
     const out = [];
     for (let s = prev; s <= next; s++) out.push(marblePos(seat, s, mi));
     return out;
   }
-  // مشي للخلف (ورقة 4) مع الالتفاف على حدّ 1/64
-  const back = ((prev - next) % LOOP + LOOP) % LOOP;
-  if (back >= 1 && back <= 4 && prev <= LOOP && next <= LOOP) {
-    const out = [marblePos(seat, prev, mi)];
-    let cur = prev;
-    for (let k = 0; k < back; k++) { cur = cur - 1 < 1 ? LOOP : cur - 1; out.push(marblePos(seat, cur, mi)); }
+  // مشي بسيط للخلف (ورقة 4) بلا التفاف
+  if (next < prev && prev - next <= 4 && next >= 1) {
+    const out = [];
+    for (let s = prev; s >= next; s--) out.push(marblePos(seat, s, mi));
     return out;
   }
-  return [marblePos(seat, next, mi)]; // عبور/تبديل/التفاف بعيد → قفزة مباشرة
+  return [marblePos(seat, next, mi)]; // عبور/تبديل/التفاف → قفزة مباشرة
 }
 
 const SUIT_COLOR = { "♥": "#e3405a", "♦": "#e3405a", "♠": "#1b2440", "♣": "#1b2440", "🃏": "#7a3aa6" };

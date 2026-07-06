@@ -21,8 +21,12 @@ const COLORS = ["#e94f4f", "#37c26a", "#f5c451", "#3aa3ff"];
 const LOOP = 64; // خانات المسار
 const SEG = 16; // المسافة بين بدايات اللاعبين
 const START_OFFSET = 2; // خانة الخروج بعد رأس الجهة بخانتين (تطابق العميل)
-const HOME_FIRST = 65; // أول خانة في بيت النهاية
-const HOME_LAST = 68; // آخر خانة (4 خانات: 65..68)
+// مسار كل بيدق يبدأ من قاعدته (بعد الرأس بـ START_OFFSET) ويلتفّ حتى «فم» حارته عند الرأس.
+// عدد خانات مساره = LOOP ناقص الإزاحة؛ فلا يمرّ بالخانات الواقعة بين فم الحارة والقاعدة،
+// ولا يدخل الحارة إلا من فمها عند الرأس (لا من خانة وسطى).
+const TRACK = LOOP - START_OFFSET; // خانات مسار البيدق (1..TRACK)
+const HOME_FIRST = TRACK + 1; // أول خانة في حارة النهاية
+const HOME_LAST = TRACK + 4; // آخر خانة (4 خانات في الحارة)
 
 const SUITS = ["♠", "♥", "♦", "♣"];
 const RANKS = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
@@ -60,6 +64,7 @@ function crossStep(state, seat, to) {
   const other = c === CROSS_CELLS[0] ? CROSS_CELLS[1] : c === CROSS_CELLS[1] ? CROSS_CELLS[0] : -1;
   if (other < 0) return to;
   const s = relStep(seat, other);
+  if (s > TRACK) return to; // لا يقفز العبور إلى منطقة الحارة
   return s > to ? s : to;
 }
 
@@ -115,7 +120,7 @@ export default {
           seat: slot.seat,
           team: slot.team,
           color: COLORS[slot.seat],
-          marbles: [0, 0, 0, 0], // 0=البيت(القاعدة)، 1..64 مسار، 65..68 بيت النهاية
+          marbles: [0, 0, 0, 0], // 0=البيت، 1..TRACK مسار، HOME_FIRST..HOME_LAST حارة النهاية
           hand: [],
           homeCount: 0,
         };
@@ -268,10 +273,10 @@ function entriesForCard(state, p, card) {
   return E;
 }
 
-// مرّ على بيادق اللاعب الموجودة على المسار (1..64)
+// مرّ على بيادق اللاعب الموجودة على المسار (1..TRACK)
 function onPath(p, fn) {
   p.marbles.forEach((step, mi) => {
-    if (step >= 1 && step <= LOOP) fn(mi, step);
+    if (step >= 1 && step <= TRACK) fn(mi, step);
   });
 }
 
@@ -286,8 +291,8 @@ function exitEntry(state, p, mi) {
 // حركة للأمام بمقدار dist (مع أكل ما يمرّ عليه إن كانت through مثل K/JK)
 function fwd(state, p, mi, step, dist, opt, label, o = {}) {
   const to = step + dist;
-  if (to > HOME_LAST) return null; // تجاوز بيت النهاية ممنوع
-  const walkEnd = Math.min(to, LOOP);
+  if (to > HOME_LAST) return null; // تجاوز حارة النهاية ممنوع
+  const walkEnd = Math.min(to, TRACK);
   let caps = [];
   if (o.through) {
     // K/JK: يخترقان السدّ ويأكلان كل حجر خصم في الطريق (حتى المحميّ)
@@ -322,10 +327,12 @@ function fwd(state, p, mi, step, dist, opt, label, o = {}) {
   };
 }
 
-// الورقة 4 — للخلف
+// الورقة 4 — للخلف (نحسب الخانة المطلقة ثم نحوّلها لخطوة؛ إن وقعت خلف القاعدة
+// في منطقة فم الحارة/الخانات الوسطى فالخطوة تتجاوز TRACK ولا تجوز)
 function backEntry(state, p, mi, step) {
-  let to = step - 4;
-  if (to < 1) to += LOOP; // التفاف على المسار
+  const cell = ((absCell(p.seat, step) - 4) % LOOP + LOOP) % LOOP;
+  const to = relStep(p.seat, cell);
+  if (to > TRACK) return null; // خلف القاعدة (فم الحارة/الوسط) — ممنوع
   if (isWallAt(state, p, absCell(p.seat, to))) return null; // سدّ خصم على خانة الوصول
   if (occupiedByAlly(state, p, p.seat, to)) return null;
   return { marble: mi, kind: "back", to, ...capData(state, p, p.seat, to), opt: `b:${mi}`, label: "↩ للخلف 4" };
@@ -336,7 +343,7 @@ function shoveEntries(state, p) {
   const out = [];
   for (const owner of state.players) {
     owner.marbles.forEach((s, mi) => {
-      if (!(s >= 1 && s <= LOOP)) return; // على المسار فقط
+      if (!(s >= 1 && s <= TRACK)) return; // على المسار فقط
       if (isProtected(owner, mi)) return; // الحجر المحميّ (السدّ) لا يُحرَّك
       const e = shoveOne(state, owner, mi, 5);
       if (!e) return;
@@ -355,7 +362,7 @@ function shoveEntries(state, p) {
 function shoveOne(state, owner, mi, dist) {
   const step = owner.marbles[mi];
   const to = step + dist;
-  if (to > LOOP) return null; // لا يُدفَع الحجر إلى بيت نهايته
+  if (to > TRACK) return null; // لا يُدفَع الحجر إلى حارة نهايته
   for (let s = step + 1; s <= to; s++) {
     if (isWallAt(state, owner, absCell(owner.seat, s))) return null; // سدّ يمنع المرور
   }
@@ -371,13 +378,13 @@ function shoveOne(state, owner, mi, dist) {
 function swapEntries(state, p) {
   const out = [];
   const mine = [];
-  p.marbles.forEach((step, mi) => { if (step >= 2 && step <= LOOP) mine.push(mi); }); // ليس على بدايتي الآمنة
+  p.marbles.forEach((step, mi) => { if (step >= 2 && step <= TRACK) mine.push(mi); }); // ليس على بدايتي الآمنة
   for (const mi of mine) {
     for (const q of state.players) {
       if (q.id === p.id) continue; // لا تبديل مع بيادقك أنت
       const mate = q.team === p.team; // شريك أم خصم؟
       q.marbles.forEach((qs, qmi) => {
-        if (!(qs >= 1 && qs <= LOOP)) return; // الهدف على المسار
+        if (!(qs >= 1 && qs <= TRACK)) return; // الهدف على المسار
         if (isProtected(q, qmi)) return; // الهدف محميّ (سدّ/قاعدة) لا يُبدّل
         out.push({
           marble: mi, kind: "swap",
@@ -398,7 +405,7 @@ function splitEntries(state, p) {
   const out = [];
   const seen = new Set();
   const path = [];
-  p.marbles.forEach((step, mi) => { if (step >= 1 && step <= LOOP) path.push({ mi, step }); });
+  p.marbles.forEach((step, mi) => { if (step >= 1 && step <= TRACK) path.push({ mi, step }); });
 
   // كامل الـ7 على بيدق واحد
   for (const { mi, step } of path) {
@@ -443,10 +450,10 @@ function capData(state, p, seat, step) {
 // المحميّ لا يُؤكل ولا يُبدّل ولا يُتجاوز ولا يُحرَّك بورقة الغير (5).
 function isProtected(q, i) {
   const s = q.marbles[i];
-  if (!(s >= 1 && s <= LOOP)) return false;
+  if (!(s >= 1 && s <= TRACK)) return false;
   if (s === 1) return true; // على قاعدته (خانة البداية الآمنة)
   return q.marbles.some(
-    (s2, j) => j !== i && (s2 === s - 1 || s2 === s + 1) && s2 >= 1 && s2 <= LOOP
+    (s2, j) => j !== i && (s2 === s - 1 || s2 === s + 1) && s2 >= 1 && s2 <= TRACK
   );
 }
 
@@ -457,7 +464,7 @@ function isWallAt(state, p, c) {
     if (q.team === p.team) continue; // أسوار الخصوم فقط تصدّنا
     for (let i = 0; i < 4; i++) {
       const s = q.marbles[i];
-      if (s >= 1 && s <= LOOP && absCell(q.seat, s) === c && isProtected(q, i)) return true;
+      if (s >= 1 && s <= TRACK && absCell(q.seat, s) === c && isProtected(q, i)) return true;
     }
   }
   return false;
@@ -471,7 +478,7 @@ function occupiedByAlly(state, p, seat, step) {
     if (q.team !== p.team) continue;
     for (let i = 0; i < 4; i++) {
       const s = q.marbles[i];
-      if (s >= 1 && s <= LOOP && absCell(q.seat, s) === c) return true;
+      if (s >= 1 && s <= TRACK && absCell(q.seat, s) === c) return true;
     }
   }
   return false;
@@ -491,7 +498,7 @@ function captureAt(state, p, seat, step, ignoreProtection) {
     if (q.team === p.team) continue; // لا يُؤكل الفريق نفسه
     for (let i = 0; i < 4; i++) {
       const s = q.marbles[i];
-      if (s >= 1 && s <= LOOP && absCell(q.seat, s) === c) {
+      if (s >= 1 && s <= TRACK && absCell(q.seat, s) === c) {
         if (!ignoreProtection && isProtected(q, i)) continue; // محميّ (سدّ/قاعدة) لا يُؤكل
         return { seat: q.seat, marble: i };
       }
