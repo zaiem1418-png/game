@@ -385,12 +385,16 @@ button.gl-chip-plus:active { transform: scale(0.88); }
 .gl-nav-btn.active { color: var(--gold); }
 .gl-nav-ico {
   position: relative; display: flex; align-items: center; justify-content: center;
-  width: 26px; height: 26px; transition: transform 0.2s ease;
+  width: 40px; height: 40px; padding: 7px; border-radius: 15px;
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 .gl-nav-ico svg { display: block; width: 26px; height: 26px; }
+/* التبويب النشط: قرص كلاي ذهبي مرتفع ومتوهّج */
 .gl-nav-btn.active .gl-nav-ico {
-  transform: translateY(-1px);
-  filter: drop-shadow(0 2px 8px rgba(245, 196, 81, 0.55));
+  transform: translateY(-4px);
+  background: radial-gradient(circle at 50% 28%, rgba(245,196,81,0.42), rgba(245,196,81,0.06) 75%);
+  box-shadow: 0 7px 16px rgba(245,196,81,0.35), inset 0 1px 2px rgba(255,255,255,0.5), inset 0 -3px 7px rgba(0,0,0,0.25);
+  filter: drop-shadow(0 2px 6px rgba(245, 196, 81, 0.6));
 }
 .gl-nav-btn:not(.active):active .gl-nav-ico { transform: scale(0.9); }
 .gl-nav-dot {
