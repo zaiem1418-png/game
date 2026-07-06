@@ -20,6 +20,7 @@
 const COLORS = ["#e94f4f", "#37c26a", "#f5c451", "#3aa3ff"];
 const LOOP = 64; // خانات المسار
 const SEG = 16; // المسافة بين بدايات اللاعبين
+const START_OFFSET = 2; // خانة الخروج بعد رأس الجهة بخانتين (تطابق العميل)
 const HOME_FIRST = 65; // أول خانة في بيت النهاية
 const HOME_LAST = 68; // آخر خانة (4 خانات: 65..68)
 
@@ -32,7 +33,7 @@ const STEP = { Q: 12, "9": 9, "8": 8, "6": 6, "3": 3, "2": 2 };
 const CAN_EXIT = new Set(["A", "K", "JK"]); // أوراق تُخرج بيدقاً من البيت
 
 function offsetOf(seat) {
-  return seat * SEG;
+  return (seat * SEG + START_OFFSET) % LOOP;
 }
 function absCell(seat, step) {
   if (step < 1 || step > LOOP) return null;

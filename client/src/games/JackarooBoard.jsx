@@ -72,10 +72,14 @@ function perimeter(i) {
   return CELLS[((i % LOOP) + LOOP) % LOOP];
 }
 
-// بداية كل لاعب عند رأس الجهة (0=أعلى، 16=يمين، 32=أسفل، 48=يسار)
-const START_INDEX = [0, 16, 32, 48];
+// رؤوس الجهات (0=أعلى، 16=يمين، 32=أسفل، 48=يسار) — اتجاه بيت النهاية والقاعدة
+const HEAD_INDEX = [0, 16, 32, 48];
+// خانة خروج الحجر (البداية الآمنة) بعد الرأس بخانتين — يجب أن تطابق offsetOf في الخادم
+const START_OFFSET = 2;
+const START_INDEX = HEAD_INDEX.map((h) => (h + START_OFFSET) % LOOP);
+// زاوية بيت النهاية/القاعدة تبقى عند رأس الجهة (لا تتأثّر بإزاحة البداية)
 function startAngle(seat) {
-  return (START_INDEX[seat] / LOOP) * 2 * Math.PI - Math.PI / 2;
+  return (HEAD_INDEX[seat] / LOOP) * 2 * Math.PI - Math.PI / 2;
 }
 
 // قواعد (بيوت) اللاعبين: زهرة من 4 ثقوب في الأركان القُطرية (مزاحة 45° عن الرأس)
