@@ -20,6 +20,7 @@ import ReactionPicker from "./components/ReactionPicker.jsx";
 import WalletBar from "./components/WalletBar.jsx";
 import StoreModal from "./components/StoreModal.jsx";
 import OwnerLogin from "./components/OwnerLogin.jsx";
+import SplashScreen from "./components/SplashScreen.jsx";
 import { unlockAudio } from "./giftEngine/core/SoundManager.js";
 import { useReactions } from "./useReactions.js";
 import { getUid, getProfile, fetchWallet } from "./wallet.js";
@@ -29,6 +30,7 @@ export default function App() {
   // لوحة الإدارة: افتحها عبر ?admin في الرابط
   const isAdmin = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("admin");
 
+  const [splashOpen, setSplashOpen] = useState(true); // شاشة الترحيب الافتتاحية (الماسكوت)
   const [view, setView] = useState("lobby"); // "lobby" = واجهة الألعاب، "game" = طاولة لعبة، "app" = الغرفة الصوتية
   const [activeGame, setActiveGame] = useState(null); // { gameId, mode } للعبة المفتوحة
   const [pendingRoom, setPendingRoom] = useState(null); // الغرفة الصوتية المستهدفة { roomId, pin }
@@ -339,6 +341,7 @@ export default function App() {
         />
         {walletOverlays}
         {pinToast}
+        {splashOpen && <SplashScreen onDone={() => setSplashOpen(false)} />}
       </>
     );
 

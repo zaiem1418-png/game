@@ -455,3 +455,28 @@ button.gl-chip-plus:active { transform: scale(0.88); }
   border-radius: 50%; background: #ff3b50; border: 1.5px solid #0a0510;
 }
 .gl-nav-lbl { font-weight: 700; }
+
+/* ===== ماسكوت الترحيب (الشخصية الأساسية) ===== */
+.gl-mascot {
+  display: flex; align-items: center; gap: 12px; margin: 8px 12px 2px;
+  padding: 8px 12px; border-radius: 18px;
+  background:
+    radial-gradient(120% 90% at 90% 0%, rgba(155,92,255,0.20), transparent 60%),
+    linear-gradient(120deg, rgba(46, 28, 64, 0.72), rgba(24, 14, 34, 0.72));
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.32), inset 0 1px 2px rgba(255,255,255,0.18);
+}
+.gl-mascot-avatar {
+  position: relative; flex: 0 0 auto; width: 58px; height: 58px; border-radius: 50%;
+  overflow: hidden; border: 2.5px solid rgba(255,255,255,0.85);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.45), 0 0 0 4px rgba(155,92,255,0.22);
+}
+.gl-mascot-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gl-mascot-shine {
+  position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 42%, rgba(255,255,255,0.4) 50%, transparent 58%);
+  background-size: 250% 100%; animation: gxShine 3.4s linear infinite;
+}
+.gl-mascot-bubble { display: flex; flex-direction: column; gap: 2px; min-width: 0; text-align: start; }
+.gl-mascot-bubble b { font-size: 15px; font-weight: 900; color: #fff; text-shadow: 0 2px 8px rgba(155,92,255,0.5); }
+.gl-mascot-bubble span { font-size: 11.5px; color: #cbb8e6; line-height: 1.4; }

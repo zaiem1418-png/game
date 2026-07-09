@@ -138,6 +138,9 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
           </motion.button>
         </header>
 
+        {/* ===== ماسكوت الترحيب (الشخصية الأساسية) ===== */}
+        <MascotGreeter name={user?.name} />
+
         {/* ===== صفّ الترتيب ===== */}
         <div className="gl-rank-row">
           <RankCard icon="trophy" main="الترتيب +100" sub="ترتيب" onClick={() => setRankSys("players")} />
@@ -309,6 +312,32 @@ function HeroScene({ game }) {
         </>
       )}
     </div>
+  );
+}
+
+/* ماسكوت الترحيب — الشخصية الأساسية للّعبة، بإطار متوهّج وحركة عائمة */
+function MascotGreeter({ name }) {
+  const greet = name ? `أهلاً ${name}!` : "أهلاً بك!";
+  return (
+    <motion.div
+      className="gl-mascot"
+      initial={{ opacity: 0, x: 30 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ type: "spring", stiffness: 260, damping: 22, delay: 0.15 }}
+    >
+      <motion.div
+        className="gl-mascot-avatar"
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <img src="/mascot.png" alt="شخصية اللعبة" />
+        <span className="gl-mascot-shine" />
+      </motion.div>
+      <div className="gl-mascot-bubble">
+        <b>{greet}</b>
+        <span>جاهز للّعب والفوز؟ اختر لعبتك المفضّلة 👇</span>
+      </div>
+    </motion.div>
   );
 }
 
