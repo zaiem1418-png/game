@@ -7,8 +7,8 @@ export const GAMES = [
     id: "jackaroo",
     logo: "JACKAROO",
     tab: "جاكارو",
-    // المشهد المرسوم (SVG) هو الخلفية الافتراضية. لاستبداله بصورة جاهزة
-    // أضف حقل photo: "/games/jackaroo.jpg" وضع الملف في client/public/games.
+    // صورة المشهد الجاهزة (تُعرض بدل الرسم المتحرك SVG). الملف في client/public/games.
+    photo: "/games/jackaroo.png",
     // تدرّج خلفية المشهد + ألوان الثيم
     bg: "radial-gradient(120% 90% at 50% 0%, #6a2f8f 0%, #3a1850 45%, #1f0e2e 100%)",
     glow: "#b06bff",
