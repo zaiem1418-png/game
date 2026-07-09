@@ -54,6 +54,7 @@ export const GAMES = [
     id: "baloot",
     logo: "BALOOT",
     tab: "بلوت",
+    photo: "/games/baloot.png",
     bg: "radial-gradient(120% 90% at 50% 0%, #a8451c 0%, #6a2c12 45%, #2a1208 100%)",
     glow: "#ff8a3d",
     accent: "#ffce5a",
