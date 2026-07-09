@@ -74,6 +74,7 @@ export const GAMES = [
     id: "snake",
     logo: "SNAKE",
     tab: "السلم و الثعبان",
+    photo: "/games/snake.png",
     bg: "radial-gradient(120% 90% at 50% 0%, #1f6a8a 0%, #134a5a 45%, #0b2a2a 100%)",
     glow: "#3ad6c4",
     accent: "#7fffd4",
