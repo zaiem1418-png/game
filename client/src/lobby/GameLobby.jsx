@@ -177,6 +177,8 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
                 <HeroScene game={game} />
               </motion.div>
             </AnimatePresence>
+            {/* تاج ملكي — طابع «كنج» فوق المشهد */}
+            <span className="gl-crown-crest" aria-hidden>♛</span>
           </div>
 
           {/* أيقونات يمين */}
