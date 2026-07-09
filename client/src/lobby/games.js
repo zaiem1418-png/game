@@ -34,6 +34,7 @@ export const GAMES = [
     id: "ludo",
     logo: "LUDO",
     tab: "لودو",
+    photo: "/games/ludo.png",
     bg: "radial-gradient(120% 90% at 50% 0%, #8a4a22 0%, #5a2e16 45%, #2a160b 100%)",
     glow: "#ffb347",
     accent: "#ffd24a",
