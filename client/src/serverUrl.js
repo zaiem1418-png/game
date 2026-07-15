@@ -8,6 +8,15 @@ const PROD_SERVER = "https://voice-room-server.onrender.com";
 function resolveServerUrl() {
   const env = import.meta.env.VITE_SERVER_URL;
   if (env) return env.replace(/\/$/, "");
+  // داخل تطبيق الموبايل (Capacitor) يعمل الكود من داخل WebView على
+  // localhost/capacitor:// ولا يوجد سيرفر محلي على الجهاز → استخدم سيرفر
+  // Render الحقيقي دائماً، وإلا ستفشل كل النداءات بصمت.
+  const isNative =
+    typeof window !== "undefined" &&
+    window.Capacitor &&
+    typeof window.Capacitor.isNativePlatform === "function" &&
+    window.Capacitor.isNativePlatform();
+  if (isNative) return PROD_SERVER;
   const host = typeof window !== "undefined" ? window.location.hostname : "";
   if (host === "localhost" || host === "127.0.0.1") return "http://localhost:3001";
   return PROD_SERVER;
