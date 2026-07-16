@@ -114,13 +114,13 @@ const I = {
   ),
 };
 
-export default function SnakeHome({ user, onPlay, onBack }) {
+export default function SnakeHome({ user, onPlay, onBack, embedded }) {
   const countdown = useCountdown();
   const name = user?.name || "بك";
   const initial = (user?.name || "S").trim().charAt(0).toUpperCase();
 
   return (
-    <div className="sh">
+    <div className={`sh ${embedded ? "sh-embedded" : ""}`}>
       <span className="sh-spark" style={{ top: "18%", right: "12%", animationDelay: "0s" }} />
       <span className="sh-spark sh-spark-teal" style={{ top: "56%", left: "10%", animationDelay: ".8s" }} />
       <span className="sh-spark" style={{ top: "72%", right: "18%", animationDelay: "1.6s" }} />
@@ -133,7 +133,7 @@ export default function SnakeHome({ user, onPlay, onBack }) {
             <div className="sh-hi-name">أهلاً، {name}! 👋</div>
             <div className="sh-hi-sub">جاهز للفوز؟ اختر نمط اللعب المفضّل</div>
           </div>
-          <button className="sh-bell" onClick={onBack} aria-label="رجوع">{I.bell}</button>
+          <span className="sh-bell" aria-hidden>{I.bell}</span>
         </header>
 
         {/* ===== بطاقات الإحصاء ===== */}
@@ -218,7 +218,8 @@ export default function SnakeHome({ user, onPlay, onBack }) {
         </div>
       </div>
 
-      {/* ===== شريط التنقّل ===== */}
+      {/* ===== شريط التنقّل (في الوضع المستقل فقط) ===== */}
+      {!embedded && (
       <nav className="sh-nav">
         <button className="sh-nav-item active">
           <span className="sh-nav-ico">{I.home}</span>
@@ -237,6 +238,7 @@ export default function SnakeHome({ user, onPlay, onBack }) {
           <span className="sh-nav-lbl">أنا</span>
         </button>
       </nav>
+      )}
     </div>
   );
 }

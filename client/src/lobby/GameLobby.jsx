@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GAMES } from "./games.js";
 import GameArt from "./art/GameArt.jsx";
+import SnakeHome from "./SnakeHome.jsx";
 import GameIcon from "./GameIcons.jsx";
 import TasksModal from "./TasksModal.jsx";
 import CompetitionsModal from "./CompetitionsModal.jsx";
@@ -78,6 +79,7 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
   const n = GAMES.length;
   const idx = ((page % n) + n) % n;
   const game = GAMES[idx];
+  const isSnake = game.id === "snake"; // تبويب السلم يعرض تصميمه المخصّص
 
   const giftLeft = useCountdown(23 * 3600 + 28 * 60 + 17); // حزمة حصرية
   const gloryLeft = useCountdown(44 * 86400 + 23 * 3600); // بطاقة المجد
@@ -138,6 +140,17 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
           </motion.button>
         </header>
 
+        {isSnake ? (
+          /* ===== تصميم «السلم والثعابين» المخصّص ===== */
+          <SnakeHome
+            embedded
+            user={user}
+            onPlay={(modeId) =>
+              onPlay?.(game, game.modes.find((m) => m.id === modeId) || { id: modeId })
+            }
+          />
+        ) : (
+          <>
         {/* ===== ماسكوت الترحيب (الشخصية الأساسية) ===== */}
         <MascotGreeter name={user?.name} />
 
@@ -230,6 +243,8 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
             </motion.button>
           ))}
         </div>
+          </>
+        )}
 
         {/* ===== تبويبات الألعاب (السحب يبدّلها) ===== */}
         <div className="gl-tabs">

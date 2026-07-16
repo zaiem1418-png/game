@@ -12,6 +12,21 @@
   color: #f4f1e8;
 }
 
+/* ===== الوضع المضمَّن داخل اللوبي ===== */
+.sh-embedded {
+  position: relative;
+  inset: auto;
+  overflow: visible;
+  background: transparent;
+  min-height: 0;
+}
+.sh-embedded .sh-content {
+  max-width: none;
+  margin: 0;
+  padding: 4px 0 8px;
+}
+.sh-embedded .sh-header { padding-top: 0; }
+
 /* ومضات خلفية */
 .sh-spark {
   position: absolute;

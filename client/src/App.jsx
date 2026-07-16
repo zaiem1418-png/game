@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { socket } from "./socket.js";
 import { VoiceManager } from "./voice.js";
 import Shell from "./lobby/Shell.jsx";
-import SnakeHome from "./lobby/SnakeHome.jsx";
 // تقسيم الحزمة: شاشة اللعبة ومحرّك الهدايا ثقيلان ولا يحتاجهما المستخدم على
 // الشاشة الأولى — نحمّلهما عند فتحهما فعلياً فقط لتسريع التحميل الأولي.
 // نعرّف المصانع منفصلة لإعادة استخدامها في الجلب المسبق (prefetch) أثناء اللوبي.
@@ -336,12 +335,6 @@ export default function App() {
             handleJoin(roomId, pin);
           }}
           onPlay={(game, mode) => {
-            // السلم والثعبان يملك شاشة رئيسية مخصّصة — ندخلها قبل الطاولة
-            if (game.id === "snake") {
-              setActiveGame({ gameId: "snake", mode: mode?.id || "classic" });
-              setView("snakeHome");
-              return;
-            }
             setActiveGame({ gameId: game.id, mode: mode?.id || "default" });
             setView("game");
           }}
@@ -349,25 +342,6 @@ export default function App() {
         {walletOverlays}
         {pinToast}
         {splashOpen && <SplashScreen onDone={() => setSplashOpen(false)} />}
-      </>
-    );
-
-  // ===== الشاشة الرئيسية المخصّصة للسلم والثعبان =====
-  if (view === "snakeHome")
-    return (
-      <>
-        <SnakeHome
-          user={{ ...getProfile(), uid: getUid() }}
-          onPlay={(modeId) => {
-            setActiveGame({ gameId: "snake", mode: modeId });
-            setView("game");
-          }}
-          onBack={() => {
-            setActiveGame(null);
-            setView("lobby");
-          }}
-        />
-        {walletOverlays}
       </>
     );
 
