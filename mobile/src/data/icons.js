@@ -18,6 +18,8 @@ export const ICONS = {
   "baloot-play": require("../../assets/games/icons/baloot-play.png"),
   board: require("../../assets/games/icons/board.png"),
   bolt: require("../../assets/games/icons/bolt.png"),
+  // صور «هيرو» كاملة (رسمة المشهد)
+  "baloot-hero": require("../../assets/games/baloot.png"),
 };
 
 // إرجاع مصدر الأيقونة أو undefined إن لم توجد (نرجع للإيموجي حينها)

@@ -116,7 +116,6 @@ export default function LudoHome({
 
           <div className="lh-hero">
             <img className="lh-hero-img" src="/games/ludo.png" alt="لودو" />
-            <div className="lh-hero-title">لودو</div>
             <div className="lh-hero-cap">العب مع الأصدقاء والعائلة</div>
           </div>
 

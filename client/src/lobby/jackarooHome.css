@@ -109,7 +109,7 @@
 .jh-rail-timer { direction: ltr; font-size: 8px; }
 
 .jh-hero {
-  flex: 1; position: relative; border-radius: 22px; overflow: hidden;
+  flex: 1; position: relative; height: 160px; border-radius: 22px; overflow: hidden;
   box-shadow: 0 18px 40px -20px rgba(0, 0, 0, .7);
   border: 1px solid rgba(240, 192, 74, .35);
 }

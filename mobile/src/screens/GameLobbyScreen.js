@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { GAMES } from "../data/games";
 import GameHomeScreen from "./GameHomeScreen";
+import BalootHomeScreen from "./BalootHomeScreen";
 
 // تنسيق الأرقام الكبيرة (مطابق لـ fmtNum في نسخة الويب)
 function fmtNum(n) {
@@ -64,16 +65,30 @@ export default function GameLobbyScreen({ identity, wallet, onOpenRooms, onPlay,
       </View>
 
       {/* ===== محتوى اللعبة الحالية ===== */}
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <GameHomeScreen
-          game={game}
-          identity={identity}
-          onPlay={(modeId) => onPlay?.(game, modeId)}
-          onOpenRooms={onOpenRooms}
-          onTournaments={onTournaments}
-          onSelectGame={setIdx}
-        />
-      </ScrollView>
+      {game.id === "baloot" ? (
+        /* بلوت: لوحة كاملة تملأ الشاشة دون تمرير */
+        <View style={styles.board}>
+          <BalootHomeScreen
+            game={game}
+            identity={identity}
+            onPlay={(modeId) => onPlay?.(game, modeId)}
+            onOpenRooms={onOpenRooms}
+            onTournaments={onTournaments}
+            onSelectGame={setIdx}
+          />
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <GameHomeScreen
+            game={game}
+            identity={identity}
+            onPlay={(modeId) => onPlay?.(game, modeId)}
+            onOpenRooms={onOpenRooms}
+            onTournaments={onTournaments}
+            onSelectGame={setIdx}
+          />
+        </ScrollView>
+      )}
     </LinearGradient>
   );
 }
@@ -81,6 +96,7 @@ export default function GameLobbyScreen({ identity, wallet, onOpenRooms, onPlay,
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   scroll: { padding: 14, paddingBottom: 30 },
+  board: { flex: 1, paddingHorizontal: 14, paddingTop: 6, paddingBottom: 12 },
 
   top: { flexDirection: "row-reverse", alignItems: "center", gap: 8, paddingTop: 52, paddingHorizontal: 14, paddingBottom: 8 },
   topAv: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },

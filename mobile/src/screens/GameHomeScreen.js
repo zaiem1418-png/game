@@ -4,10 +4,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { GAMES } from "../data/games";
 import { ICONS } from "../data/icons";
 
-/* أيقونات ثلاثية الأبعاد (خلفية شفافة) — سجلّ require الثابت في ../data/icons.
-   الشخصيات الأربع أسفل الشاشة = الألعاب الأربع بالترتيب */
-const CAST_ICONS = ["jackaroo", "ludo-dice", "baloot", "snake"];
-
 /* أيقونة PNG بحجم قابل للتمرير مع إيموجي احتياطي */
 const Ico = ({ name, size = 22, fallback }) =>
   ICONS[name] ? (
@@ -177,7 +173,7 @@ export default function GameHomeScreen({ game, identity, onPlay, onOpenRooms, on
         </Pressable>
       </View>
 
-      {/* ===== بلاطات الألعاب (تبديل اللعبة) ===== */}
+      {/* ===== بلاطات الألعاب الـ3D (وسيلة التنقّل بين الألعاب) ===== */}
       <View style={styles.games}>
         {GAMES.map((g, i) => {
           const active = g.id === game.id;
@@ -187,26 +183,12 @@ export default function GameHomeScreen({ game, identity, onPlay, onOpenRooms, on
                 colors={active ? ["rgba(90,70,20,0.5)", "rgba(55,42,14,0.5)"] : ["rgba(30,90,86,0.5)", "rgba(18,55,54,0.5)"]}
                 style={[styles.game, active ? styles.gameBorderGold : styles.quickBorder]}
               >
-                <Ico name={g.icon} size={26} fallback={g.cast.find((c) => c.on)?.emoji || "🎲"} />
+                <Ico name={g.icon} size={40} fallback={g.cast.find((c) => c.on)?.emoji || "🎲"} />
                 <Text style={styles.gameName}>{g.tab}</Text>
               </LinearGradient>
             </Pressable>
           );
         })}
-      </View>
-
-      {/* ===== شريط الشخصيات ===== */}
-      <View style={styles.cast}>
-        <View style={styles.castRow}>
-          {game.cast.map((c, i) => (
-            <View style={styles.castItem} key={i}>
-              <View style={[styles.castAv, c.on && { borderColor: game.accent }]}>
-                <Ico name={CAST_ICONS[i]} size={34} fallback={c.emoji} />
-              </View>
-              <Text style={styles.castName}>{c.name}</Text>
-            </View>
-          ))}
-        </View>
       </View>
     </View>
   );
@@ -275,10 +257,4 @@ const styles = StyleSheet.create({
   game: { borderRadius: 14, paddingHorizontal: 4, paddingVertical: 12, alignItems: "center", gap: 6 },
   gameBorderGold: { borderWidth: 1, borderColor: "rgba(255,206,90,0.35)" },
   gameName: { fontWeight: "600", fontSize: 9, color: "#eaf6f3", textAlign: "center" },
-
-  cast: { backgroundColor: "rgba(6,20,20,0.4)", borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", borderRadius: 14, paddingHorizontal: 8, paddingTop: 12, paddingBottom: 10 },
-  castRow: { flexDirection: "row-reverse", justifyContent: "space-around" },
-  castItem: { alignItems: "center", gap: 5 },
-  castAv: { width: 50, height: 50, borderRadius: 25, backgroundColor: "#2a6b63", borderWidth: 2, borderColor: "rgba(255,255,255,0.15)", alignItems: "center", justifyContent: "center" },
-  castName: { fontSize: 9, color: "#a9ccc4" },
 });

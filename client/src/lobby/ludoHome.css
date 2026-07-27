@@ -130,7 +130,7 @@
 .lh-rail-item.hot .lh-rail-lbl { color: #f0a083; }
 
 .lh-hero {
-  flex: 1; position: relative; min-height: 140px;
+  flex: 1; position: relative; height: 160px;
   border-radius: 16px; overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex; align-items: center; justify-content: center;
