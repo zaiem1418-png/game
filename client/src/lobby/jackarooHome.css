@@ -159,6 +159,15 @@
 }
 .jh-play-green .jh-play-ico { background: rgba(255, 255, 255, .22); color: #fff; }
 .jh-play-gold .jh-play-ico { background: rgba(58, 44, 5, .18); color: #3a2c05; }
+/* أيقونات 3D لأزرار اللعب */
+.jh-play-ico-img {
+  width: 48px; height: 48px; object-fit: contain;
+  filter: drop-shadow(0 3px 5px rgba(0,0,0,.35));
+}
+.jh-vs-img {
+  width: 62px; height: 62px; object-fit: contain;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,.4));
+}
 .jh-play-title { font-size: 19px; font-weight: 900; }
 .jh-play-green .jh-play-title { color: #fff; }
 .jh-play-gold .jh-play-title { color: #3a2c05; }
@@ -209,6 +218,11 @@
 .jh-sec-ico { display: flex; }
 .jh-sec-ico.teal { color: #7fd8c0; }
 .jh-sec-ico.gold { color: #f0c04a; }
+/* أيقونات 3D للأزرار الثانوية */
+.jh-sec-ico-img {
+  width: 34px; height: 34px; object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.35));
+}
 .jh-sec-lbl { font-size: 11.5px; font-weight: 700; font-family: "Tajawal", sans-serif; }
 
 /* ===== فئات الألعاب ===== */
@@ -227,6 +241,11 @@
 .jh-cat-ico.blue { color: #4aa8ea; }
 .jh-cat-ico.purple { color: #c98cf0; }
 .jh-cat-ico.teal { color: #7fd8c0; }
+/* أيقونات 3D لفئات الألعاب */
+.jh-cat-ico-img {
+  width: 40px; height: 40px; object-fit: contain;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,.4));
+}
 .jh-cat.active { color: #f7e6b8; }
 .jh-cat.active .jh-cat-ico {
   background: linear-gradient(150deg, rgba(240, 192, 74, .2), rgba(20, 10, 38, .42));

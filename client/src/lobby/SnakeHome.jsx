@@ -187,7 +187,7 @@ export default function SnakeHome({ user, onPlay, onBack, embedded }) {
         {/* ===== الأزرار الأساسية ===== */}
         <motion.button className="sh-play sh-play-green" whileTap={{ scale: 0.97 }} onClick={() => onPlay("classic")}>
           <span className="sh-shine" />
-          <span className="sh-play-ico">{I.grid}</span>
+          <img className="sh-play-ico-img" src="/games/icons/board.png" alt="كلاسيكي" />
           <span className="sh-play-txt">
             <span className="sh-play-title">كلاسيكي</span>
             <span className="sh-play-sub">اللعبة التقليدية الكاملة</span>
@@ -197,7 +197,7 @@ export default function SnakeHome({ user, onPlay, onBack, embedded }) {
 
         <motion.button className="sh-play sh-play-gold" whileTap={{ scale: 0.97 }} onClick={() => onPlay("fast")}>
           <span className="sh-shine sh-shine-late" />
-          <span className="sh-play-ico">{I.bolt}</span>
+          <img className="sh-play-ico-img" src="/games/icons/bolt.png" alt="سريع" />
           <span className="sh-play-txt">
             <span className="sh-play-title">سريع</span>
             <span className="sh-play-sub">مباراة خاطفة في دقائق</span>
@@ -208,11 +208,11 @@ export default function SnakeHome({ user, onPlay, onBack, embedded }) {
         {/* ===== صفّ ثانوي ===== */}
         <div className="sh-secondary">
           <button className="sh-sec" onClick={() => onPlay("classic")}>
-            <span className="sh-sec-ico teal">{I.friends}</span>
+            <img className="sh-sec-ico-img" src="/games/icons/friends.png" alt="الأصدقاء" />
             <span className="sh-sec-lbl">مع الأصدقاء</span>
           </button>
           <button className="sh-sec" onClick={onBack}>
-            <span className="sh-sec-ico gold">{I.controller}</span>
+            <img className="sh-sec-ico-img" src="/games/icons/trophy.png" alt="المنافسات" />
             <span className="sh-sec-lbl">المنافسات</span>
           </button>
         </div>

@@ -4,6 +4,33 @@
       "points": 10,
       "claimed": [],
       "loginDay": "2026-07-17"
+    },
+    "u_7cb16bb4-316e-4cf2-849b-7fe6b66fe060": {
+      "points": 80,
+      "claimed": [
+        1
+      ],
+      "loginDay": "2026-07-27"
+    },
+    "u_d5939e72-60d5-44ed-99f5-ffe719fcd3dc": {
+      "points": 10,
+      "claimed": [],
+      "loginDay": "2026-07-25"
+    },
+    "u_cf66252a-da94-4de6-a176-1bb165932339": {
+      "points": 10,
+      "claimed": [],
+      "loginDay": "2026-07-26"
+    },
+    "test_verify_uid": {
+      "points": 10,
+      "claimed": [],
+      "loginDay": "2026-07-26"
+    },
+    "test_verify_uid3": {
+      "points": 20,
+      "claimed": [],
+      "loginDay": "2026-07-26"
     }
   }
 }

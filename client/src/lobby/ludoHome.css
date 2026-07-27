@@ -1,0 +1,269 @@
+/* ===== صفحة «لودو» الرئيسية المخصّصة (تصميم فيروزي/ذهبي) ===== */
+.lh {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  color: #eaf6f3;
+  font-family: "Cairo", -apple-system, BlinkMacSystemFont, sans-serif;
+  direction: rtl;
+}
+.lh-embedded { min-height: auto; }
+
+/* الوضع المستقل: بطاقة بخلفية متدرّجة */
+.lh:not(.lh-embedded) {
+  width: 392px;
+  min-height: 840px;
+  margin: 24px auto;
+  border-radius: 34px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #123840 0%, #0f2d34 22%, #0c242a 46%, #091a20 72%, #061216 100%);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+
+/* نجوم خافتة في الخلفية */
+.lh-stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.5px 1.5px at 60px 480px, rgba(120, 220, 200, 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 320px 600px, rgba(120, 220, 200, 0.32), transparent),
+    radial-gradient(1.5px 1.5px at 150px 700px, rgba(120, 220, 200, 0.28), transparent);
+}
+
+.lh-scroll {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 14px 24px;
+}
+.lh:not(.lh-embedded) .lh-scroll { padding-bottom: 84px; overflow-y: auto; }
+.lh-scroll::-webkit-scrollbar { width: 0; height: 0; }
+
+/* ===== شريط الحالة العلوي ===== */
+.lh-top { display: flex; align-items: center; gap: 8px; padding-top: 4px; }
+.lh-top-av {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(180deg, #3fd3ac, #1f9a7c);
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+.lh-chips { flex: 1; display: flex; align-items: center; gap: 6px; }
+.lh-chip {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px; padding: 4px 10px;
+}
+.lh-chip b { font-weight: 700; font-size: 13px; }
+.lh-dot { width: 16px; height: 16px; border-radius: 50%; }
+.lh-dot-green { background: linear-gradient(180deg, #5fe0bd, #2ba585); }
+.lh-dot-gold { background: linear-gradient(180deg, #ffce5a, #d99a2a); }
+.lh-diamond {
+  width: 14px; height: 14px; transform: rotate(45deg);
+  background: linear-gradient(180deg, #5fd0ff, #3a9ad9);
+}
+.lh-star { color: #ffce5a; font-size: 11px; }
+.lh-reward {
+  position: relative; width: 38px; height: 34px; flex-shrink: 0;
+  border-radius: 10px; border: none; cursor: pointer;
+  background: linear-gradient(180deg, #f08a4a, #d0632a);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  line-height: 1.1; color: #fff;
+}
+.lh-reward-ico { font-size: 11px; }
+.lh-reward-lbl { font-size: 7px; font-weight: 700; }
+.lh-reward-badge {
+  position: absolute; top: -4px; left: -4px; width: 14px; height: 14px;
+  border-radius: 7px; background: #e0483d; font-size: 9px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; color: #fff;
+}
+
+/* ===== لافتة الترحيب ===== */
+.lh-welcome {
+  display: flex; align-items: center; gap: 12px;
+  background: linear-gradient(90deg, rgba(30, 90, 86, 0.5), rgba(18, 55, 54, 0.5));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px; padding: 12px 14px;
+}
+.lh-welcome-av {
+  width: 46px; height: 46px; flex-shrink: 0; border-radius: 14px;
+  background: linear-gradient(180deg, #3fd3ac, #1f9a7c);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 20px; color: #04211b;
+}
+.lh-welcome-t { font-weight: 800; font-size: 16px; }
+.lh-welcome-t .name { color: #5fe0bd; }
+.lh-welcome-sub { font-size: 11px; color: #a9ccc4; margin-top: 2px; }
+
+/* ===== بطاقات الترتيب ===== */
+.lh-ranks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.lh-rank {
+  display: flex; align-items: center; gap: 10px;
+  background: linear-gradient(180deg, rgba(30, 90, 86, 0.45), rgba(18, 55, 54, 0.45));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px; padding: 11px 13px;
+}
+.lh-rank-ico {
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 13px;
+}
+.lh-rank-ico.teal { background: linear-gradient(180deg, #3fd3ac, #1f9a7c); }
+.lh-rank-ico.gold { background: linear-gradient(180deg, #ffce5a, #d99a2a); }
+.lh-rank-main { font-weight: 700; font-size: 14px; }
+.lh-rank-sub { font-size: 10px; color: #9dc0b8; }
+
+/* ===== المشهد + سكك جانبية ===== */
+.lh-stage { display: flex; gap: 8px; align-items: stretch; }
+.lh-rail { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+.lh-rail-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.lh-rail-btn {
+  width: 36px; height: 36px; border-radius: 11px; cursor: pointer;
+  background: rgba(18, 55, 54, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex; align-items: center; justify-content: center; font-size: 15px; color: #eaf6f3;
+}
+.lh-rail-btn.hot { background: linear-gradient(180deg, #e0603a, #a83f28); border: none; }
+.lh-rail-lbl { font-size: 8px; color: #9dc0b8; }
+.lh-rail-item.hot .lh-rail-lbl { color: #f0a083; }
+
+.lh-hero {
+  flex: 1; position: relative; min-height: 140px;
+  border-radius: 16px; overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex; align-items: center; justify-content: center;
+  background: repeating-linear-gradient(135deg, #2a6b63, #2a6b63 12px, #235a54 12px, #235a54 24px);
+}
+.lh-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.lh-hero-title {
+  position: absolute; top: 14px; left: 0; right: 0; text-align: center;
+  font-weight: 800; font-size: 24px; color: #ffce5a; letter-spacing: 2px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6); z-index: 2;
+}
+.lh-hero-cap {
+  position: absolute; bottom: 0; left: 0; right: 0; text-align: center;
+  font-size: 10px; background: rgba(0, 0, 0, 0.4); padding: 5px; z-index: 2;
+}
+
+/* ===== أزرار أنماط اللعب ===== */
+.lh-modes { display: flex; gap: 10px; }
+.lh-mode-big {
+  flex: 1; border: none; cursor: pointer; border-radius: 16px; padding: 16px;
+  background: linear-gradient(180deg, #2f9fe0, #1f74b8);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  color: #fff; font-family: inherit; min-height: 166px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+}
+.lh-vs { display: flex; align-items: center; gap: 8px; }
+.lh-vs-face {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+.lh-vs-txt { font-weight: 800; font-style: italic; font-size: 14px; }
+.lh-mode-big-title { font-weight: 800; font-size: 17px; }
+.lh-mode-big-sub { font-size: 11px; opacity: 0.85; margin-top: 3px; }
+.lh-mode-stack { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.lh-mode-sm {
+  flex: 1; border: none; cursor: pointer; border-radius: 16px; padding: 16px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35); font-family: inherit; min-height: 78px;
+  display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between;
+}
+.lh-mode-sm.green { background: linear-gradient(180deg, #2aa878, #1f8560); color: #fff; }
+.lh-mode-sm.gold { background: linear-gradient(180deg, #e0b24a, #b0832f); color: #3a2708; }
+.lh-mode-sm-ico {
+  width: 30px; height: 30px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center; font-size: 15px;
+}
+.lh-mode-sm.green .lh-mode-sm-ico { background: rgba(255, 255, 255, 0.18); }
+.lh-mode-sm.gold .lh-mode-sm-ico { background: rgba(0, 0, 0, 0.15); }
+.lh-mode-sm-lbl { font-weight: 800; font-size: 16px; }
+
+/* ===== أنماط سريعة (٣) ===== */
+.lh-quick { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.lh-quick-btn {
+  border: 1px solid rgba(255, 255, 255, 0.09); cursor: pointer; border-radius: 14px;
+  padding: 13px 8px; font-family: inherit; color: #eaf6f3;
+  background: linear-gradient(180deg, rgba(30, 90, 86, 0.5), rgba(18, 55, 54, 0.5));
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.lh-quick-btn.vip {
+  border-color: rgba(255, 206, 90, 0.35);
+  background: linear-gradient(180deg, rgba(90, 70, 20, 0.5), rgba(55, 42, 14, 0.5));
+}
+.lh-quick-ico { font-size: 16px; }
+.lh-quick-ico.gold { color: #ffce5a; }
+.lh-quick-lbl { font-weight: 700; font-size: 12px; }
+
+/* ===== بلاطات الألعاب (٤) ===== */
+.lh-games { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.lh-game {
+  cursor: pointer; border-radius: 14px; padding: 12px 4px; font-family: inherit; color: #eaf6f3;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: linear-gradient(180deg, rgba(30, 90, 86, 0.5), rgba(18, 55, 54, 0.5));
+}
+.lh-game.active {
+  border-color: rgba(255, 206, 90, 0.35);
+  background: linear-gradient(180deg, rgba(90, 70, 20, 0.5), rgba(55, 42, 14, 0.5));
+}
+.lh-game-ico { font-size: 17px; }
+/* أيقونات الألعاب 3D */
+.lh-game-ico-img {
+  width: 40px; height: 40px; object-fit: contain;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35));
+}
+.lh-game-name { font-weight: 600; font-size: 9px; text-align: center; }
+
+/* أيقونة النرد 3D داخل زر النمط الصغير */
+.lh-mode-sm-ico-img {
+  width: 34px; height: 34px; object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+/* أيقونة ذراع التحكّم 3D في السكة الجانبية */
+.lh-rail-ico-img {
+  width: 30px; height: 30px; object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+}
+
+/* ===== شريط الشخصيات ===== */
+.lh-cast {
+  background: rgba(6, 20, 20, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px; padding: 12px 8px 8px;
+}
+.lh-cast-row { display: flex; justify-content: space-around; }
+.lh-cast-item { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.lh-cast-av {
+  width: 50px; height: 50px; border-radius: 50%;
+  background: repeating-linear-gradient(45deg, #2a6b63, #2a6b63 5px, #235a54 5px, #235a54 10px);
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+}
+.lh-cast-av.on { border-color: #ffce5a; }
+.lh-cast-name { font-size: 9px; color: #a9ccc4; }
+.lh-cast-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+.lh-cast-dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, 0.25); }
+.lh-cast-dots span.on { width: 16px; border-radius: 3px; background: #ffce5a; }
+
+/* ===== شريط التنقّل السفلي (مستقل فقط) ===== */
+.lh-nav {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 66px;
+  background: linear-gradient(180deg, rgba(10, 28, 28, 0.85), rgba(5, 16, 15, 0.96));
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex; align-items: center; justify-content: space-around; padding: 0 18px 8px;
+}
+.lh-nav-btn {
+  background: none; border: none; cursor: pointer; font-family: inherit;
+  display: flex; flex-direction: column; align-items: center; gap: 3px; color: #6d8a84;
+}
+.lh-nav-btn.active { color: #5fe0bd; }
+.lh-nav-ico {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.lh-nav-btn.active .lh-nav-ico { background: linear-gradient(180deg, #3fd3ac, #1f9a7c); }
+.lh-nav-lbl { font-size: 9px; font-weight: 600; }

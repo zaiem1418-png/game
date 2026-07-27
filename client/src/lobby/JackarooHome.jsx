@@ -144,7 +144,7 @@ const I = {
   ),
 };
 
-export default function JackarooHome({ user, onPlay, onBack, onOpenRooms, onTournaments, embedded }) {
+export default function JackarooHome({ user, onPlay, onBack, onOpenRooms, onTournaments, onSelectGame, embedded }) {
   const countdown = useCountdown();
   const name = user?.name || "بك";
   const initial = (user?.name || "J").trim().charAt(0).toUpperCase();
@@ -216,18 +216,14 @@ export default function JackarooHome({ user, onPlay, onBack, onOpenRooms, onTour
           {/* كمبلكس (أخضر) */}
           <motion.button className="jh-play jh-play-green" whileTap={{ scale: 0.97 }} onClick={() => onPlay?.("complex")}>
             <span className="jh-shine" />
-            <span className="jh-play-ico">{I.cards}</span>
+            <img className="jh-play-ico-img" src="/games/icons/cards.png" alt="كمبلكس" />
             <span className="jh-play-title">كمبلكس</span>
           </motion.button>
 
           {/* واحد ضد واحد (أزرق — يمتد صفّين) */}
           <motion.button className="jh-play jh-play-blue jh-play-tall" whileTap={{ scale: 0.98 }} onClick={() => onPlay?.("1v1")}>
             <span className="jh-shine jh-shine-late" />
-            <span className="jh-vs">
-              <span className="jh-vs-face blue">{I.person}</span>
-              <span className="jh-vs-txt">VS</span>
-              <span className="jh-vs-face gold">{I.person}</span>
-            </span>
+            <img className="jh-vs-img" src="/games/icons/vs.png" alt="واحد ضد واحد" />
             <span className="jh-play-big">واحد ضد واحد</span>
             <span className="jh-play-note">تحدَّ خصماً الآن</span>
           </motion.button>
@@ -235,7 +231,7 @@ export default function JackarooHome({ user, onPlay, onBack, onOpenRooms, onTour
           {/* عادي (ذهبي) */}
           <motion.button className="jh-play jh-play-gold" whileTap={{ scale: 0.97 }} onClick={() => onPlay?.("normal")}>
             <span className="jh-shine jh-shine-later" />
-            <span className="jh-play-ico">{I.dice}</span>
+            <img className="jh-play-ico-img" src="/games/icons/ludo-dice.png" alt="عادي" />
             <span className="jh-play-title">عادي</span>
           </motion.button>
         </div>
@@ -243,36 +239,36 @@ export default function JackarooHome({ user, onPlay, onBack, onOpenRooms, onTour
         {/* ===== صفّ ثانوي ===== */}
         <div className="jh-secondary">
           <button className="jh-sec" onClick={rooms}>
-            <span className="jh-sec-ico teal">{I.friends2}</span>
+            <img className="jh-sec-ico-img" src="/games/icons/friends.png" alt="الأصدقاء" />
             <span className="jh-sec-lbl">العب مع الأصدقاء</span>
           </button>
           <button className="jh-sec jh-sec-vip" onClick={rooms}>
-            <span className="jh-sec-ico gold">{I.crown}</span>
+            <img className="jh-sec-ico-img" src="/games/icons/vip.png" alt="VIP" />
             <span className="jh-sec-lbl">غرفة VIP</span>
           </button>
           <button className="jh-sec" onClick={comp}>
-            <span className="jh-sec-ico gold">{I.cup}</span>
+            <img className="jh-sec-ico-img" src="/games/icons/trophy.png" alt="مسابقات" />
             <span className="jh-sec-lbl">مسابقات</span>
           </button>
         </div>
 
-        {/* ===== فئات الألعاب ===== */}
+        {/* ===== فئات الألعاب — كل بلاطة تنقل لصفحة لعبتها ===== */}
         <div className="jh-cats">
           <button className="jh-cat active">
-            <span className="jh-cat-ico gold">{I.cats.jack}</span>
+            <img className="jh-cat-ico-img" src="/games/icons/jackaroo.png" alt="جاكارو" />
             <span className="jh-cat-lbl">جاكارو</span>
           </button>
-          <button className="jh-cat" onClick={onBack}>
-            <span className="jh-cat-ico blue">{I.cats.ludo}</span>
+          <button className="jh-cat" onClick={() => onSelectGame?.(1)}>
+            <img className="jh-cat-ico-img" src="/games/icons/ludo-dice.png" alt="لودو" />
             <span className="jh-cat-lbl">لودو</span>
           </button>
-          <button className="jh-cat" onClick={onBack}>
-            <span className="jh-cat-ico purple">{I.cats.houses}</span>
-            <span className="jh-cat-lbl">بيوت</span>
+          <button className="jh-cat" onClick={() => onSelectGame?.(2)}>
+            <img className="jh-cat-ico-img" src="/games/icons/baloot.png" alt="بلوت" />
+            <span className="jh-cat-lbl">بلوت</span>
           </button>
-          <button className="jh-cat" onClick={onBack}>
-            <span className="jh-cat-ico teal">{I.cats.snake}</span>
-            <span className="jh-cat-lbl">السلم والثعبان</span>
+          <button className="jh-cat" onClick={() => onSelectGame?.(3)}>
+            <img className="jh-cat-ico-img" src="/games/icons/snake.png" alt="السلم والثعابين" />
+            <span className="jh-cat-lbl">السلم والثعابين</span>
           </button>
         </div>
       </div>

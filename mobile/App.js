@@ -3,9 +3,12 @@ import { View, ActivityIndicator, StyleSheet, I18nManager } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { theme } from "./src/theme";
 import { getIdentity } from "./src/identity";
+import { fetchWallet } from "./src/api";
+import { setUid, registerSocial } from "./src/gameApi";
 import IdentityScreen from "./src/screens/IdentityScreen";
-import LobbyScreen from "./src/screens/LobbyScreen";
+import ShellScreen from "./src/screens/ShellScreen";
 import RoomScreen from "./src/screens/RoomScreen";
+import GameRoomScreen from "./src/screens/GameRoomScreen";
 
 // فرض اتجاه من اليمين لليسار (عربي).
 try {
@@ -16,21 +19,26 @@ try {
 export default function App() {
   const [identity, setIdentity] = useState(null);
   const [loading, setLoading] = useState(true);
-  // التنقّل البسيط: identity → lobby → room
-  const [screen, setScreen] = useState("lobby");
+  // التنقّل البسيط: identity → shell(home/rooms/messages/me) → room | game
+  const [screen, setScreen] = useState("shell");
   const [activeRoom, setActiveRoom] = useState(null);
+  const [activeGame, setActiveGame] = useState(null); // { gameId, mode }
+  const [wallet, setWallet] = useState(null);
 
   useEffect(() => {
     getIdentity().then((id) => {
       setIdentity(id);
-      setScreen(id.name ? "lobby" : "identity");
+      setUid(id.uid); // يفعّل نداءات gameApi (المهام/VIP/المتجر)
+      registerSocial({ name: id.name, avatar: id.avatar }); // يمنح shortId للأصدقاء
+      setScreen(id.name ? "shell" : "identity");
       setLoading(false);
+      fetchWallet(id.uid).then(setWallet).catch(() => {});
     });
   }, []);
 
   const onSavedName = useCallback((name) => {
     setIdentity((p) => ({ ...p, name }));
-    setScreen("lobby");
+    setScreen("shell");
   }, []);
 
   const openRoom = useCallback((room) => {
@@ -40,7 +48,17 @@ export default function App() {
 
   const leaveRoom = useCallback(() => {
     setActiveRoom(null);
-    setScreen("lobby");
+    setScreen("shell");
+  }, []);
+
+  const openGame = useCallback((game, modeId) => {
+    setActiveGame({ gameId: game.id, mode: modeId || "default" });
+    setScreen("game");
+  }, []);
+
+  const exitGame = useCallback(() => {
+    setActiveGame(null);
+    setScreen("shell");
   }, []);
 
   if (loading) {
@@ -58,11 +76,22 @@ export default function App() {
       {screen === "identity" && (
         <IdentityScreen identity={identity} onSaved={onSavedName} />
       )}
-      {screen === "lobby" && (
-        <LobbyScreen
+      {screen === "shell" && (
+        <ShellScreen
           identity={identity}
+          wallet={wallet}
           onOpenRoom={openRoom}
           onEditProfile={() => setScreen("identity")}
+          onPlay={openGame}
+          onWalletUpdate={setWallet}
+        />
+      )}
+      {screen === "game" && activeGame && (
+        <GameRoomScreen
+          gameId={activeGame.gameId}
+          mode={activeGame.mode}
+          user={{ name: identity?.name || "زائر", avatar: identity?.avatar || "🧑🏻", uid: identity?.uid }}
+          onExit={exitGame}
         />
       )}
       {screen === "room" && activeRoom && (

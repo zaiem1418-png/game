@@ -14,8 +14,10 @@ export function fetchRooms(q = "") {
 }
 
 // محفظة المستخدم بالـuid.
+// النقطة تُعيد { wallet, isNew, starter } — نُرجع المحفظة الداخلية فقط لتطابق
+// شكل ما تُعيده عمليات الشراء/الاستلام (r.wallet) فيبقى الرصيد متّسقاً.
 export function fetchWallet(uid) {
-  return jget(`/api/wallet?uid=${encodeURIComponent(uid)}`);
+  return jget(`/api/wallet?uid=${encodeURIComponent(uid)}`).then((d) => d.wallet || d);
 }
 
 // كتالوج الهدايا.

@@ -162,6 +162,11 @@
 }
 .sh-play-green .sh-play-ico { background: rgba(255, 255, 255, .22); color: #fff; }
 .sh-play-gold .sh-play-ico { background: rgba(58, 44, 5, .18); color: #3a2c05; }
+/* أيقونة 3D لأزرار اللعب */
+.sh-play-ico-img {
+  width: 56px; height: 56px; object-fit: contain; flex-shrink: 0;
+  filter: drop-shadow(0 3px 5px rgba(0,0,0,.35));
+}
 .sh-play-txt { flex: 1; display: flex; flex-direction: column; }
 .sh-play-title { font-size: 21px; font-weight: 900; }
 .sh-play-green .sh-play-sub { font-size: 12.5px; color: rgba(255, 255, 255, .82); }
@@ -195,6 +200,11 @@
 .sh-sec-ico.teal { color: #7fe3bb; }
 .sh-sec-ico.gold { color: #e8c874; }
 .sh-sec-ico { display: flex; }
+/* أيقونات 3D للأزرار الثانوية */
+.sh-sec-ico-img {
+  width: 34px; height: 34px; object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.35));
+}
 .sh-sec-lbl { font-size: 14px; font-weight: 700; }
 
 /* ===== شريط التنقّل ===== */
