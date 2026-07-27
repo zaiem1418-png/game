@@ -114,7 +114,15 @@ const I = {
   ),
 };
 
-export default function SnakeHome({ user, onPlay, onBack, embedded }) {
+/* بلاطات «أنواع اللعب» الـ3D — الترتيب مطابق لقائمة GAMES */
+const GAME_TILES = [
+  { img: "/games/icons/jackaroo.png", name: "جاكارو", id: "jackaroo", target: 0 },
+  { img: "/games/icons/ludo-dice.png", name: "لودو", id: "ludo", target: 1 },
+  { img: "/games/icons/baloot.png", name: "بلوت", id: "baloot", target: 2 },
+  { img: "/games/icons/snake.png", name: "السلم والثعابين", id: "snake", target: 3 },
+];
+
+export default function SnakeHome({ user, onPlay, onBack, onOpenRooms, onSelectGame, embedded }) {
   const countdown = useCountdown();
   const name = user?.name || "بك";
   const initial = (user?.name || "S").trim().charAt(0).toUpperCase();
@@ -215,6 +223,20 @@ export default function SnakeHome({ user, onPlay, onBack, embedded }) {
             <img className="sh-sec-ico-img" src="/games/icons/trophy.png" alt="المنافسات" />
             <span className="sh-sec-lbl">المنافسات</span>
           </button>
+        </div>
+
+        {/* ===== أنواع اللعب — بلاطات 3D للتنقّل بين الألعاب ===== */}
+        <div className="sh-games">
+          {GAME_TILES.map((g) => (
+            <button
+              key={g.id}
+              className={`sh-game ${g.id === "snake" ? "active" : ""}`}
+              onClick={() => (g.id === "snake" ? onPlay("classic") : onSelectGame?.(g.target))}
+            >
+              <img className="sh-game-ico" src={g.img} alt={g.name} />
+              <span className="sh-game-name">{g.name}</span>
+            </button>
+          ))}
         </div>
       </div>
 

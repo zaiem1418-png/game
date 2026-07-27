@@ -21,13 +21,6 @@ const GAME_TILES = [
   { img: "/games/icons/snake.png", name: "السلم والثعابين", id: "snake", target: 3 },
 ];
 
-const CAST = [
-  { emoji: "🦊", name: "جاكارو", on: false },
-  { emoji: "🐯", name: "لودو", on: true },
-  { emoji: "🦁", name: "بلوت", on: false },
-  { emoji: "🐆", name: "السلم والثعابين", on: false },
-];
-
 export default function LudoHome({
   user,
   onPlay,
@@ -199,20 +192,6 @@ export default function LudoHome({
           ))}
         </div>
 
-        {/* ===== شريط الشخصيات ===== */}
-        <div className="lh-cast">
-          <div className="lh-cast-row">
-            {CAST.map((c, i) => (
-              <div className="lh-cast-item" key={i}>
-                <div className={`lh-cast-av ${c.on ? "on" : ""}`}>{c.emoji}</div>
-                <span className="lh-cast-name">{c.name}</span>
-              </div>
-            ))}
-          </div>
-          <div className="lh-cast-dots">
-            <span /><span className="on" /><span /><span />
-          </div>
-        </div>
       </div>
 
       {/* ===== شريط التنقّل (الوضع المستقل فقط) ===== */}

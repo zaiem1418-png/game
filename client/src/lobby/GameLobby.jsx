@@ -86,6 +86,7 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
   const isJackaroo = game.id === "jackaroo"; // تبويب جاكارو يعرض تصميمه المخصّص
   const isLudo = game.id === "ludo"; // تبويب لودو يعرض تصميمه المخصّص
   const isBaloot = game.id === "baloot"; // تبويب بلوت يعرض تصميمه المخصّص
+  const isCustomHome = isSnake || isJackaroo || isLudo || isBaloot; // شاشة مخصّصة لها تنقّلها الخاصّ
 
   const giftLeft = useCountdown(23 * 3600 + 28 * 60 + 17); // حزمة حصرية
   const gloryLeft = useCountdown(44 * 86400 + 23 * 3600); // بطاقة المجد
@@ -191,6 +192,8 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
             onPlay={(modeId) =>
               onPlay?.(game, game.modes.find((m) => m.id === modeId) || { id: modeId })
             }
+            onOpenRooms={onOpenRooms}
+            onSelectGame={goTo}
           />
         ) : (
           <>
@@ -289,27 +292,31 @@ export default function GameLobby({ onPlay, onOpenRooms, user, wallet, onRecharg
           </>
         )}
 
-        {/* ===== تبويبات الألعاب (السحب يبدّلها) ===== */}
-        <div className="gl-tabs">
-          {GAMES.map((g, i) => (
-            <button
-              key={g.id}
-              className={`gl-tab ${i === idx ? "active" : ""}`}
-              onClick={() => goTo(i)}
-            >
-              <span className="gl-tab-ico">{g.cast[0]}</span>
-              <span className="gl-tab-lbl">{g.tab}</span>
-              {i === idx && <motion.span layoutId="tab-underline" className="gl-tab-underline" />}
-            </button>
-          ))}
-        </div>
+        {/* ===== تبويبات الألعاب — تظهر فقط للشاشات بلا تصميم مخصّص ===== */}
+        {!isCustomHome && (
+          <>
+            <div className="gl-tabs">
+              {GAMES.map((g, i) => (
+                <button
+                  key={g.id}
+                  className={`gl-tab ${i === idx ? "active" : ""}`}
+                  onClick={() => goTo(i)}
+                >
+                  <span className="gl-tab-ico">{g.cast[0]}</span>
+                  <span className="gl-tab-lbl">{g.tab}</span>
+                  {i === idx && <motion.span layoutId="tab-underline" className="gl-tab-underline" />}
+                </button>
+              ))}
+            </div>
 
-        {/* نقاط الصفحات */}
-        <div className="gl-dots">
-          {GAMES.map((_, i) => (
-            <span key={i} className={`gl-dot ${i === idx ? "active" : ""}`} />
-          ))}
-        </div>
+            {/* نقاط الصفحات */}
+            <div className="gl-dots">
+              {GAMES.map((_, i) => (
+                <span key={i} className={`gl-dot ${i === idx ? "active" : ""}`} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <AnimatePresence>
