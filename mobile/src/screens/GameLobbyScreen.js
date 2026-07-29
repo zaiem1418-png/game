@@ -14,7 +14,7 @@ function fmtNum(n) {
   return String(n);
 }
 
-export default function GameLobbyScreen({ identity, wallet, onOpenRooms, onPlay, onTournaments }) {
+export default function GameLobbyScreen({ identity, wallet, onWalletUpdate, onOpenRooms, onPlay }) {
   const [idx, setIdx] = useState(1); // يبدأ عند «لودو» (كما في نسخة الويب)
   const game = GAMES[idx];
 
@@ -71,9 +71,10 @@ export default function GameLobbyScreen({ identity, wallet, onOpenRooms, onPlay,
           <BalootHomeScreen
             game={game}
             identity={identity}
+            wallet={wallet}
+            onWalletUpdate={onWalletUpdate}
             onPlay={(modeId) => onPlay?.(game, modeId)}
             onOpenRooms={onOpenRooms}
-            onTournaments={onTournaments}
             onSelectGame={setIdx}
           />
         </View>
@@ -82,9 +83,10 @@ export default function GameLobbyScreen({ identity, wallet, onOpenRooms, onPlay,
           <GameHomeScreen
             game={game}
             identity={identity}
+            wallet={wallet}
+            onWalletUpdate={onWalletUpdate}
             onPlay={(modeId) => onPlay?.(game, modeId)}
             onOpenRooms={onOpenRooms}
-            onTournaments={onTournaments}
             onSelectGame={setIdx}
           />
         </ScrollView>

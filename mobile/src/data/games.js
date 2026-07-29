@@ -94,9 +94,10 @@ export const GAMES = [
 ];
 
 // شريط التنقّل السفلي المشترك (مطابق لـ NAV في الويب)
+// icon = إيموجي احتياطي، img = مفتاح أيقونة 3D في ../data/icons.js
 export const NAV = [
-  { id: "me", label: "أنا", icon: "👤" },
-  { id: "messages", label: "الرسائل", icon: "💬" },
-  { id: "rooms", label: "غرف صوتية", icon: "🎙" },
-  { id: "home", label: "الرئيسية", icon: "🏠" },
+  { id: "me", label: "أنا", icon: "👤", img: "profile" },
+  { id: "messages", label: "الرسائل", icon: "💬", img: "messages" },
+  { id: "rooms", label: "غرف صوتية", icon: "🎙", img: "voice" },
+  { id: "home", label: "الرئيسية", icon: "🏠", img: "home" },
 ];

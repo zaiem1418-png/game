@@ -11,6 +11,7 @@ import AchievementsModal from "./modals/AchievementsModal";
 import FriendsModal from "./modals/FriendsModal";
 import CourtModal from "./modals/CourtModal";
 import MomentsModal from "./modals/MomentsModal";
+import SettingsModal from "./modals/SettingsModal";
 
 // شاشة «أنا» — تربط نوافذ المتجر/VIP/المهام (منقولة من الويب).
 export default function ProfileScreen({ identity, wallet, onEditProfile, onWalletUpdate }) {
@@ -36,7 +37,7 @@ export default function ProfileScreen({ identity, wallet, onEditProfile, onWalle
     { icon: "👥", label: "الأصدقاء", key: "friends" },
     { icon: "🏛️", label: "المحكمة", key: "court" },
     { icon: "✨", label: "اللحظات", key: "moments" },
-    { icon: "⚙️", label: "الإعدادات", key: null },
+    { icon: "⚙️", label: "الإعدادات", key: "settings" },
   ];
 
   return (
@@ -80,6 +81,7 @@ export default function ProfileScreen({ identity, wallet, onEditProfile, onWalle
       <FriendsModal visible={modal === "friends"} onClose={() => setModal(null)} />
       <CourtModal visible={modal === "court"} onClose={() => setModal(null)} />
       <MomentsModal visible={modal === "moments"} onClose={() => setModal(null)} />
+      <SettingsModal visible={modal === "settings"} onClose={() => setModal(null)} identity={identity} onEditProfile={onEditProfile} />
     </ScrollView>
   );
 }

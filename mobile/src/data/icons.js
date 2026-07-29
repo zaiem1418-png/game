@@ -18,6 +18,11 @@ export const ICONS = {
   "baloot-play": require("../../assets/games/icons/baloot-play.png"),
   board: require("../../assets/games/icons/board.png"),
   bolt: require("../../assets/games/icons/bolt.png"),
+  // أيقونات شريط التنقّل السفلي
+  home: require("../../assets/games/icons/home.png"),
+  voice: require("../../assets/games/icons/voice.png"),
+  messages: require("../../assets/games/icons/messages.png"),
+  profile: require("../../assets/games/icons/profile.png"),
   // صور «هيرو» كاملة (رسمة المشهد)
   "baloot-hero": require("../../assets/games/baloot.png"),
 };

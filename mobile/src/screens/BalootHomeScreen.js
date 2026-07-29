@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { GAMES } from "../data/games";
 import { ICONS } from "../data/icons";
+import GameModals from "./modals/GameModals";
 
 /* أيقونة PNG مع إيموجي احتياطي */
 const Ico = ({ name, size = 40, fallback }) =>
@@ -34,11 +35,13 @@ const Rail = ({ colors, emoji, label, timer, onPress }) => (
 );
 
 /* لوحة بلوت كاملة تملأ الشاشة دون تمرير (نظير BalootHome في الويب) */
-export default function BalootHomeScreen({ game, identity, onPlay, onOpenRooms, onTournaments, onSelectGame }) {
+export default function BalootHomeScreen({ game, identity, wallet, onWalletUpdate, onPlay, onOpenRooms, onSelectGame }) {
   const countdown = useCountdown();
   const name = identity?.name || "Mohammad";
   const initial = (identity?.name || "M").trim().slice(0, 1).toUpperCase();
   const rooms = () => onOpenRooms?.();
+  const [modal, setModal] = useState(null);
+  const open = (key) => () => setModal(key);
 
   return (
     <View style={styles.wrap}>
@@ -61,7 +64,7 @@ export default function BalootHomeScreen({ game, identity, onPlay, onOpenRooms, 
 
       {/* ===== بطاقات الترتيب ===== */}
       <View style={styles.ranks}>
-        <Pressable style={{ flex: 1 }} onPress={onTournaments}>
+        <Pressable style={{ flex: 1 }} onPress={open("ranking")}>
           <View style={styles.rank}>
             <LinearGradient colors={["#ffe08a", "#e2a532"]} style={styles.rankIco}>
               <Text style={{ fontSize: 15 }}>🏆</Text>
@@ -72,7 +75,7 @@ export default function BalootHomeScreen({ game, identity, onPlay, onOpenRooms, 
             </View>
           </View>
         </Pressable>
-        <Pressable style={{ flex: 1 }} onPress={onTournaments}>
+        <Pressable style={{ flex: 1 }} onPress={open("ranking")}>
           <View style={styles.rank}>
             <LinearGradient colors={["#b58cf0", "#7d4fd6"]} style={styles.rankIco}>
               <Text style={{ fontSize: 14, color: "#fff" }}>★</Text>
@@ -88,9 +91,9 @@ export default function BalootHomeScreen({ game, identity, onPlay, onOpenRooms, 
       {/* ===== المشهد + السكك الجانبية (يملأ المساحة المتبقّية) ===== */}
       <View style={styles.stage}>
         <View style={styles.rail}>
-          <Rail colors={["#5b6fd6", "#3a49a8"]} emoji="🌙" label="رأس السنة" onPress={onTournaments} />
-          <Rail colors={["#4bb06a", "#2f8149"]} emoji="🌍" label="كأس العالم" onPress={onTournaments} />
-          <Rail colors={["#d766a8", "#a83d81"]} emoji="✨" label={countdown} timer onPress={onTournaments} />
+          <Rail colors={["#5b6fd6", "#3a49a8"]} emoji="🌙" label="رأس السنة" onPress={open("ranking")} />
+          <Rail colors={["#4bb06a", "#2f8149"]} emoji="🌍" label="كأس العالم" onPress={open("ranking")} />
+          <Rail colors={["#d766a8", "#a83d81"]} emoji="✨" label={countdown} timer onPress={open("glory")} />
         </View>
 
         <View style={styles.hero}>
@@ -106,9 +109,9 @@ export default function BalootHomeScreen({ game, identity, onPlay, onOpenRooms, 
         </View>
 
         <View style={styles.rail}>
-          <Rail colors={["#3fb6c4", "#2a8a97"]} emoji="👥" label="الأصدقاء" onPress={rooms} />
-          <Rail colors={["#5aba5f", "#3c8c40"]} emoji="🗓️" label="اليومي" onPress={onTournaments} />
-          <Rail colors={["#e0a94a", "#b87a24"]} emoji="🏅" label="44د 22س" timer onPress={onTournaments} />
+          <Rail colors={["#3fb6c4", "#2a8a97"]} emoji="👥" label="الأصدقاء" onPress={open("friends")} />
+          <Rail colors={["#5aba5f", "#3c8c40"]} emoji="🗓️" label="اليومي" onPress={open("tasks")} />
+          <Rail colors={["#e0a94a", "#b87a24"]} emoji="🏅" label="44د 22س" timer onPress={open("achievements")} />
         </View>
       </View>
 
@@ -127,19 +130,19 @@ export default function BalootHomeScreen({ game, identity, onPlay, onOpenRooms, 
 
       {/* ===== أزرار الأنماط ===== */}
       <View style={styles.modes}>
-        <Pressable style={{ flex: 1 }} onPress={rooms}>
+        <Pressable style={{ flex: 1 }} onPress={open("friends")}>
           <LinearGradient colors={["rgba(58,72,140,0.85)", "rgba(38,48,98,0.9)"]} style={[styles.mode, styles.modeBlue]}>
             <Text style={styles.modeEmoji}>🧑‍🤝‍🧑</Text>
             <Text style={styles.modeLbl}>العب مع الأصدقاء</Text>
           </LinearGradient>
         </Pressable>
-        <Pressable style={{ flex: 1.15 }} onPress={rooms}>
+        <Pressable style={{ flex: 1.15 }} onPress={open("vip")}>
           <LinearGradient colors={["#7d5cc8", "#59379e"]} style={[styles.mode, styles.modeVip]}>
             <Text style={styles.modeEmoji}>👑</Text>
             <Text style={[styles.modeLbl, { fontSize: 13 }]}>غرفة VIP</Text>
           </LinearGradient>
         </Pressable>
-        <Pressable style={{ flex: 1 }} onPress={onTournaments}>
+        <Pressable style={{ flex: 1 }} onPress={open("ranking")}>
           <LinearGradient colors={["rgba(94,84,42,0.9)", "rgba(64,56,26,0.92)"]} style={[styles.mode, styles.modeGold]}>
             <Text style={styles.modeEmoji}>🏆</Text>
             <Text style={styles.modeLbl}>المنافسات</Text>
@@ -166,6 +169,15 @@ export default function BalootHomeScreen({ game, identity, onPlay, onOpenRooms, 
           );
         })}
       </View>
+
+      {/* ===== مضيف النوافذ (كل الأزرار أعلاه تفتح نظامها الخاص) ===== */}
+      <GameModals
+        modal={modal}
+        onClose={() => setModal(null)}
+        identity={identity}
+        wallet={wallet}
+        onWalletUpdate={onWalletUpdate}
+      />
     </View>
   );
 }

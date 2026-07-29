@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { NAV } from "../data/games";
+import { ICONS } from "../data/icons";
 import GameLobbyScreen from "./GameLobbyScreen";
 import LobbyScreen from "./LobbyScreen";
 import MessagesScreen from "./MessagesScreen";
@@ -19,8 +20,8 @@ export default function ShellScreen({ identity, wallet, onOpenRoom, onEditProfil
           <GameLobbyScreen
             identity={identity}
             wallet={wallet}
+            onWalletUpdate={onWalletUpdate}
             onOpenRooms={() => setTab("rooms")}
-            onTournaments={() => setTab("rooms")}
             onPlay={onPlay}
           />
         )}
@@ -39,7 +40,13 @@ export default function ShellScreen({ identity, wallet, onOpenRoom, onEditProfil
           const active = n.id === tab;
           return (
             <Pressable key={n.id} style={styles.navBtn} onPress={() => setTab(n.id)}>
-              {active ? (
+              {ICONS[n.img] ? (
+                <Image
+                  source={ICONS[n.img]}
+                  style={{ width: active ? 30 : 26, height: active ? 30 : 26, opacity: active ? 1 : 0.55 }}
+                  resizeMode="contain"
+                />
+              ) : active ? (
                 <LinearGradient colors={["#3fd3ac", "#1f9a7c"]} style={styles.navIco}>
                   <Text style={{ fontSize: 18 }}>{n.icon}</Text>
                 </LinearGradient>

@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { GAMES } from "../data/games";
 import { ICONS } from "../data/icons";
+import GameModals from "./modals/GameModals";
 
 /* أيقونة PNG بحجم قابل للتمرير مع إيموجي احتياطي */
 const Ico = ({ name, size = 22, fallback }) =>
@@ -55,11 +56,13 @@ const ModeSmall = ({ mode, onPress }) => (
   </Pressable>
 );
 
-export default function GameHomeScreen({ game, identity, onPlay, onOpenRooms, onTournaments, onSelectGame }) {
+export default function GameHomeScreen({ game, identity, wallet, onWalletUpdate, onPlay, onOpenRooms, onSelectGame }) {
   const countdown = useCountdown();
   const name = identity?.name || "Mohammad";
   const initial = (identity?.name || "M").trim().slice(0, 1).toUpperCase();
   const rooms = () => onOpenRooms?.();
+  const [modal, setModal] = useState(null);
+  const open = (key) => () => setModal(key);
 
   const bigMode = game.modes.find((m) => m.big) || game.modes[0];
   const smallModes = game.modes.filter((m) => m !== bigMode);
@@ -86,24 +89,28 @@ export default function GameHomeScreen({ game, identity, onPlay, onOpenRooms, on
 
       {/* ===== بطاقات الترتيب ===== */}
       <View style={styles.ranks}>
-        <LinearGradient colors={["rgba(30,90,86,0.45)", "rgba(18,55,54,0.45)"]} style={styles.rank}>
-          <LinearGradient colors={game.accentGrad} style={styles.rankIco}>
-            <Text style={{ fontSize: 13 }}>★</Text>
+        <Pressable style={{ flex: 1 }} onPress={open("ranking")}>
+          <LinearGradient colors={["rgba(30,90,86,0.45)", "rgba(18,55,54,0.45)"]} style={styles.rank}>
+            <LinearGradient colors={game.accentGrad} style={styles.rankIco}>
+              <Text style={{ fontSize: 13 }}>★</Text>
+            </LinearGradient>
+            <View>
+              <Text style={styles.rankMain}>الترتيب 16</Text>
+              <Text style={styles.rankSub}>سلسلة تصنيف</Text>
+            </View>
           </LinearGradient>
-          <View>
-            <Text style={styles.rankMain}>الترتيب 16</Text>
-            <Text style={styles.rankSub}>سلسلة تصنيف</Text>
-          </View>
-        </LinearGradient>
-        <LinearGradient colors={["rgba(30,90,86,0.45)", "rgba(18,55,54,0.45)"]} style={styles.rank}>
-          <LinearGradient colors={["#ffce5a", "#d99a2a"]} style={styles.rankIco}>
-            <Text style={{ fontSize: 13 }}>🏆</Text>
+        </Pressable>
+        <Pressable style={{ flex: 1 }} onPress={open("ranking")}>
+          <LinearGradient colors={["rgba(30,90,86,0.45)", "rgba(18,55,54,0.45)"]} style={styles.rank}>
+            <LinearGradient colors={["#ffce5a", "#d99a2a"]} style={styles.rankIco}>
+              <Text style={{ fontSize: 13 }}>🏆</Text>
+            </LinearGradient>
+            <View>
+              <Text style={styles.rankMain}>+100</Text>
+              <Text style={styles.rankSub}>الترتيب العام</Text>
+            </View>
           </LinearGradient>
-          <View>
-            <Text style={styles.rankMain}>+100</Text>
-            <Text style={styles.rankSub}>الترتيب العام</Text>
-          </View>
-        </LinearGradient>
+        </Pressable>
       </View>
 
       {/* ===== المشهد + السكك الجانبية ===== */}
@@ -111,7 +118,7 @@ export default function GameHomeScreen({ game, identity, onPlay, onOpenRooms, on
         <View style={styles.rail}>
           <RailItem icon="play" emoji="🎮" label="العب" onPress={() => onPlay?.(bigMode.id)} />
           <RailItem emoji="🏛" label="نادي الشباب" onPress={rooms} />
-          <RailItem emoji="⚔" label="العصبة" hot onPress={onTournaments} />
+          <RailItem emoji="⚔" label="العصبة" hot onPress={open("tribe")} />
         </View>
 
         <LinearGradient colors={game.heroGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
@@ -122,9 +129,9 @@ export default function GameHomeScreen({ game, identity, onPlay, onOpenRooms, on
         </LinearGradient>
 
         <View style={styles.rail}>
-          <RailItem icon="friends" emoji="👥" label="الأصدقاء" onPress={rooms} />
+          <RailItem icon="friends" emoji="👥" label="الأصدقاء" onPress={open("friends")} />
           <RailItem emoji="🔊" label="الصوت" onPress={rooms} />
-          <RailItem emoji="⏱" label={countdown} />
+          <RailItem emoji="⏱" label={countdown} onPress={open("tasks")} />
         </View>
       </View>
 
@@ -153,25 +160,34 @@ export default function GameHomeScreen({ game, identity, onPlay, onOpenRooms, on
 
       {/* ===== أنماط سريعة ===== */}
       <View style={styles.quick}>
-        <Pressable style={{ flex: 1 }} onPress={onTournaments}>
+        <Pressable style={{ flex: 1 }} onPress={open("ranking")}>
           <LinearGradient colors={["rgba(30,90,86,0.5)", "rgba(18,55,54,0.5)"]} style={[styles.quickBtn, styles.quickBorder]}>
             <Ico name="trophy" size={22} fallback="🏆" />
             <Text style={styles.quickLbl}>مسابقات</Text>
           </LinearGradient>
         </Pressable>
-        <Pressable style={{ flex: 1 }} onPress={rooms}>
+        <Pressable style={{ flex: 1 }} onPress={open("vip")}>
           <LinearGradient colors={["rgba(90,70,20,0.5)", "rgba(55,42,14,0.5)"]} style={[styles.quickBtn, styles.quickBorderGold]}>
             <Ico name="vip" size={22} fallback="👑" />
             <Text style={styles.quickLbl}>غرفة VIP</Text>
           </LinearGradient>
         </Pressable>
-        <Pressable style={{ flex: 1 }} onPress={rooms}>
+        <Pressable style={{ flex: 1 }} onPress={open("friends")}>
           <LinearGradient colors={["rgba(30,90,86,0.5)", "rgba(18,55,54,0.5)"]} style={[styles.quickBtn, styles.quickBorder]}>
             <Ico name="friends" size={22} fallback="👥" />
             <Text style={[styles.quickLbl, { fontSize: 11 }]}>العب مع الأصدقاء</Text>
           </LinearGradient>
         </Pressable>
       </View>
+
+      {/* ===== مضيف النوافذ (كل الأزرار أعلاه تفتح نظامها الخاص) ===== */}
+      <GameModals
+        modal={modal}
+        onClose={() => setModal(null)}
+        identity={identity}
+        wallet={wallet}
+        onWalletUpdate={onWalletUpdate}
+      />
 
       {/* ===== بلاطات الألعاب الـ3D (وسيلة التنقّل بين الألعاب) ===== */}
       <View style={styles.games}>
