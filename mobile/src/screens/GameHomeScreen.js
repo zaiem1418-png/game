@@ -121,12 +121,9 @@ export default function GameHomeScreen({ game, identity, wallet, onWalletUpdate,
           <RailItem emoji="⚔" label="العصبة" hot onPress={open("tribe")} />
         </View>
 
-        <LinearGradient colors={game.heroGrad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
-          <Text style={[styles.heroTitle, { color: game.accent }]}>{game.heroTitle}</Text>
-          <View style={styles.heroCapWrap}>
-            <Text style={styles.heroCap}>العب مع الأصدقاء والعائلة</Text>
-          </View>
-        </LinearGradient>
+        <View style={styles.hero}>
+          <Image source={ICONS[game.hero]} style={styles.heroImg} resizeMode="cover" />
+        </View>
 
         <View style={styles.rail}>
           <RailItem icon="friends" emoji="👥" label="الأصدقاء" onPress={open("friends")} />
@@ -231,7 +228,7 @@ const styles = StyleSheet.create({
   rankMain: { fontWeight: "700", fontSize: 14, color: "#eaf6f3", textAlign: "right" },
   rankSub: { fontSize: 10, color: "#9dc0b8", textAlign: "right" },
 
-  stage: { flexDirection: "row-reverse", gap: 8, alignItems: "stretch" },
+  stage: { flexDirection: "row-reverse", gap: 8, alignItems: "center" },
   rail: { gap: 8, justifyContent: "center" },
   railItem: { alignItems: "center", gap: 2 },
   railBtn: { width: 36, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(18,55,54,0.75)" },
@@ -239,16 +236,10 @@ const styles = StyleSheet.create({
   railEmoji: { fontSize: 15 },
   railLbl: { fontSize: 8, color: "#9dc0b8" },
   hero: {
-    flex: 1, minHeight: 140, borderRadius: 16, overflow: "hidden",
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", alignItems: "center", justifyContent: "center",
+    flex: 1, borderRadius: 16, overflow: "hidden",
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
   },
-  heroTitle: {
-    position: "absolute", top: 14, left: 0, right: 0, textAlign: "center",
-    fontWeight: "800", fontSize: 22, letterSpacing: 2,
-    textShadowColor: "rgba(0,0,0,0.6)", textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6,
-  },
-  heroCapWrap: { position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "rgba(0,0,0,0.4)", paddingVertical: 5 },
-  heroCap: { fontSize: 10, color: "#eaf6f3", textAlign: "center" },
+  heroImg: { width: "100%", aspectRatio: 1024 / 559 },
 
   modes: { flexDirection: "row-reverse", gap: 10 },
   modeBig: { borderRadius: 16, padding: 16, minHeight: 166, alignItems: "center", justifyContent: "center", gap: 12 },

@@ -23,8 +23,11 @@ export const ICONS = {
   voice: require("../../assets/games/icons/voice.png"),
   messages: require("../../assets/games/icons/messages.png"),
   profile: require("../../assets/games/icons/profile.png"),
-  // صور «هيرو» كاملة (رسمة المشهد)
+  // صور «هيرو» كاملة (رسمة المشهد — الاسم مدمج داخل الصورة)
   "baloot-hero": require("../../assets/games/baloot.png"),
+  "jackaroo-hero": require("../../assets/games/jackaroo.png"),
+  "ludo-hero": require("../../assets/games/ludo.png"),
+  "snake-hero": require("../../assets/games/snake.png"),
 };
 
 // إرجاع مصدر الأيقونة أو undefined إن لم توجد (نرجع للإيموجي حينها)

@@ -15,7 +15,7 @@ function fmtNum(n) {
 }
 
 export default function GameLobbyScreen({ identity, wallet, onWalletUpdate, onOpenRooms, onPlay }) {
-  const [idx, setIdx] = useState(1); // يبدأ عند «لودو» (كما في نسخة الويب)
+  const [idx, setIdx] = useState(0); // يبدأ عند «جاكارو» (الصفحة الرئيسية)
   const game = GAMES[idx];
 
   return (

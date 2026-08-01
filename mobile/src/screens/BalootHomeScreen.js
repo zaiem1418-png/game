@@ -97,15 +97,7 @@ export default function BalootHomeScreen({ game, identity, wallet, onWalletUpdat
         </View>
 
         <View style={styles.hero}>
-          <Image source={ICONS["baloot-hero"]} style={styles.heroImg} resizeMode="cover" />
-          <View style={styles.heroCap}>
-            <View style={styles.heroPlate}>
-              <Text style={styles.heroPlateTxt}>بلوت</Text>
-            </View>
-            <View style={styles.heroSubWrap}>
-              <Text style={styles.heroSub}>تحدَّ الأصدقاء والعائلة</Text>
-            </View>
-          </View>
+          <Image source={ICONS[game.hero]} style={styles.heroImg} resizeMode="cover" />
         </View>
 
         <View style={styles.rail}>
@@ -219,14 +211,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#0f5a2e",
   },
   heroImg: { width: "100%", height: "100%" },
-  heroCap: { position: "absolute", top: 10, left: 0, right: 0, alignItems: "center" },
-  heroPlate: {
-    paddingHorizontal: 30, paddingVertical: 5, borderRadius: 8,
-    backgroundColor: "#f6dfa5", borderWidth: 2, borderColor: "#c99a4e",
-  },
-  heroPlateTxt: { fontSize: 24, fontWeight: "800", color: "#7a4310", letterSpacing: 1 },
-  heroSubWrap: { marginTop: 5, paddingHorizontal: 12, paddingVertical: 3, borderRadius: 999, backgroundColor: "rgba(6,26,20,0.72)" },
-  heroSub: { fontSize: 10, color: "#f3e3c9" },
 
   play: {
     flexDirection: "row-reverse", alignItems: "center", gap: 12,
