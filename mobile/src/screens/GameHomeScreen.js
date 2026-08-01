@@ -228,8 +228,8 @@ const styles = StyleSheet.create({
   rankMain: { fontWeight: "700", fontSize: 14, color: "#eaf6f3", textAlign: "right" },
   rankSub: { fontSize: 10, color: "#9dc0b8", textAlign: "right" },
 
-  stage: { flexDirection: "row-reverse", gap: 8, alignItems: "center" },
-  rail: { gap: 8, justifyContent: "center" },
+  stage: { flexDirection: "row-reverse", gap: 8, alignItems: "stretch", height: 190 },
+  rail: { width: 52, gap: 8, justifyContent: "center" },
   railItem: { alignItems: "center", gap: 2 },
   railBtn: { width: 36, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(18,55,54,0.75)" },
   railBtnBorder: { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     flex: 1, borderRadius: 16, overflow: "hidden",
     borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
   },
-  heroImg: { width: "100%", aspectRatio: 1024 / 559 },
+  heroImg: { width: "100%", height: "100%" },
 
   modes: { flexDirection: "row-reverse", gap: 10 },
   modeBig: { borderRadius: 16, padding: 16, minHeight: 166, alignItems: "center", justifyContent: "center", gap: 12 },
