@@ -9,7 +9,7 @@ import { taskStore } from "../taskStore.js";
 
 const BOT_NAMES = ["نورة", "سعد", "ليان", "خالد", "ريم", "فهد", "جود", "ماجد"];
 const BOT_AVATARS = ["🦊", "🐼", "🐯", "🦉", "🐧", "🐵", "🐸", "🦁"];
-const BOT_TURN_DELAY = 850; // ms — تأخير لطيف ليبدو البوت طبيعياً
+const BOT_TURN_DELAY = 350; // ms — تأخير قصير: حركة طبيعية وسريعة
 
 function rid() {
   return Math.random().toString(36).slice(2, 9);

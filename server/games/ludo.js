@@ -28,6 +28,11 @@ export default {
   maxSeats: 4,
   defaultSeats: 4,
 
+  // «واحد ضد واحد» = مقعدان فقط؛ باقي الأنماط 4 مقاعد
+  seatsForMode(mode) {
+    return mode === "1v1" ? 2 : 4;
+  },
+
   create({ players }) {
     return {
       game: "ludo",
