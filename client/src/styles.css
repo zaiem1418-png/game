@@ -1,4 +1,21 @@
 /* ===== الغرفة الصوتية — تصميم RTL داكن يشبه تطبيقات الجلسات ===== */
+
+/* ===== خط التطبيق: Aref Ruqaa Ink (مستضاف ذاتيًا) ===== */
+@font-face {
+  font-family: "Aref Ruqaa Ink";
+  src: url("/fonts/ArefRuqaaInk-Regular.ttf") format("truetype");
+  font-weight: 100 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Aref Ruqaa Ink";
+  src: url("/fonts/ArefRuqaaInk-Bold.ttf") format("truetype");
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --bg: #1a1320;
   --bg2: #2a1f33;
@@ -8,14 +25,19 @@
   --text: #f4ecff;
   --muted: #b9a8cf;
   --panel: rgba(20, 12, 28, 0.55);
+  /* خط موحّد لكامل التطبيق مع بدائل احتياطية لتغطية الرموز */
+  --font-app: "Aref Ruqaa Ink", "Tajawal", "Cairo", "Segoe UI", Tahoma, "Noto Sans Arabic", sans-serif;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+/* فرض خط التطبيق في كل العناصر (يتجاوز التعريفات المحلّية في مكوّنات الألعاب) */
+* { font-family: var(--font-app); }
+
 html, body, #root { height: 100%; margin: 0; }
 
 body {
-  font-family: "Segoe UI", Tahoma, "Noto Sans Arabic", sans-serif;
+  font-family: var(--font-app);
   background: var(--bg);
   color: var(--text);
   overflow: hidden;

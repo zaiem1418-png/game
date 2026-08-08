@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { View, ActivityIndicator, StyleSheet, I18nManager } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { useFonts } from "expo-font";
+import { FONT_MAP } from "./src/fonts"; // يرقّع Text/TextInput لخط Aref Ruqaa Ink
 import { theme } from "./src/theme";
 import { getIdentity } from "./src/identity";
 import { fetchWallet } from "./src/api";
@@ -17,6 +19,7 @@ try {
 } catch {}
 
 export default function App() {
+  const [fontsLoaded] = useFonts(FONT_MAP);
   const [identity, setIdentity] = useState(null);
   const [loading, setLoading] = useState(true);
   // التنقّل البسيط: identity → shell(home/rooms/messages/me) → room | game
@@ -61,7 +64,7 @@ export default function App() {
     setScreen("shell");
   }, []);
 
-  if (loading) {
+  if (loading || !fontsLoaded) {
     return (
       <View style={[styles.fill, styles.center]}>
         <StatusBar style="light" />
