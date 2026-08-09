@@ -96,9 +96,8 @@ export default function BalootHomeScreen({ game, identity, wallet, onWalletUpdat
           <Rail colors={["#d766a8", "#a83d81"]} emoji="✨" label={countdown} timer onPress={open("glory")} />
         </View>
 
-        <View style={styles.hero}>
-          <Image source={ICONS[game.hero]} style={styles.heroImg} resizeMode="cover" />
-        </View>
+        {/* مساحة شفّافة تُظهر صورة الخلفية (الطاولة والأشخاص) بين السكتين */}
+        <View style={styles.heroGap} />
 
         <View style={styles.rail}>
           <Rail colors={["#3fb6c4", "#2a8a97"]} emoji="👥" label="الأصدقاء" onPress={open("friends")} />
@@ -205,12 +204,7 @@ const styles = StyleSheet.create({
   railLbl: { fontSize: 8, color: "#cbb193", textAlign: "center" },
   railTimer: { color: "#f0c46a", fontWeight: "700" },
 
-  hero: {
-    flex: 1, borderRadius: 20, overflow: "hidden",
-    borderWidth: 1, borderColor: "rgba(240,200,140,0.18)",
-    backgroundColor: "#0f5a2e",
-  },
-  heroImg: { width: "100%", height: "100%" },
+  heroGap: { flex: 1 },
 
   play: {
     flexDirection: "row-reverse", alignItems: "center", gap: 12,

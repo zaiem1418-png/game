@@ -1,9 +1,14 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, ScrollView, StyleSheet } from "react-native";
+import { View, Text, Pressable, ScrollView, StyleSheet, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { GAMES } from "../data/games";
+import { ICONS } from "../data/icons";
 import GameHomeScreen from "./GameHomeScreen";
 import BalootHomeScreen from "./BalootHomeScreen";
+
+// طبقة التعتيم فوق صورة الخلفية: غامقة أعلى/أسفل (لتوضّح الأزرار)
+// وفاتحة في الوسط (حيث الطاولة والأشخاص) ليبقوا واضحين.
+const SCRIM = ["rgba(6,18,20,0.82)", "rgba(6,18,20,0.30)", "rgba(6,18,20,0.40)", "rgba(6,18,20,0.90)"];
 
 // تنسيق الأرقام الكبيرة (مطابق لـ fmtNum في نسخة الويب)
 function fmtNum(n) {
@@ -19,7 +24,11 @@ export default function GameLobbyScreen({ identity, wallet, onWalletUpdate, onOp
   const game = GAMES[idx];
 
   return (
-    <LinearGradient colors={game.card} locations={[0, 0.22, 0.46, 0.72, 1]} style={styles.fill}>
+    <View style={styles.fill}>
+      {/* ===== صورة اللعبة كخلفية كاملة للشاشة (باك-إند) ===== */}
+      <Image source={ICONS[game.hero]} style={styles.bg} resizeMode="cover" />
+      <LinearGradient colors={SCRIM} locations={[0, 0.3, 0.62, 1]} style={styles.bg} />
+
       {/* ===== شريط الحالة العلوي ===== */}
       <View style={styles.top}>
         <LinearGradient colors={game.accentGrad} style={styles.topAv}>
@@ -91,12 +100,13 @@ export default function GameLobbyScreen({ identity, wallet, onWalletUpdate, onOp
           />
         </ScrollView>
       )}
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
+  fill: { flex: 1, backgroundColor: "#08161a" },
+  bg: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%" },
   scroll: { padding: 14, paddingBottom: 30 },
   board: { flex: 1, paddingHorizontal: 14, paddingTop: 6, paddingBottom: 12 },
 

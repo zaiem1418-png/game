@@ -121,9 +121,8 @@ export default function GameHomeScreen({ game, identity, wallet, onWalletUpdate,
           <RailItem emoji="⚔" label="العصبة" hot onPress={open("tribe")} />
         </View>
 
-        <View style={styles.hero}>
-          <Image source={ICONS[game.hero]} style={styles.heroImg} resizeMode="cover" />
-        </View>
+        {/* مساحة شفّافة تُظهر صورة الخلفية (الطاولة والأشخاص) بين السكتين */}
+        <View style={styles.heroGap} />
 
         <View style={styles.rail}>
           <RailItem icon="friends" emoji="👥" label="الأصدقاء" onPress={open("friends")} />
@@ -235,11 +234,7 @@ const styles = StyleSheet.create({
   railBtnBorder: { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
   railEmoji: { fontSize: 15 },
   railLbl: { fontSize: 8, color: "#9dc0b8" },
-  hero: {
-    flex: 1, borderRadius: 16, overflow: "hidden",
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
-  },
-  heroImg: { width: "100%", height: "100%" },
+  heroGap: { flex: 1 },
 
   modes: { flexDirection: "row-reverse", gap: 10 },
   modeBig: { borderRadius: 16, padding: 16, minHeight: 166, alignItems: "center", justifyContent: "center", gap: 12 },
