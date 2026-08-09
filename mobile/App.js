@@ -7,6 +7,7 @@ import { theme } from "./src/theme";
 import { getIdentity } from "./src/identity";
 import { fetchWallet } from "./src/api";
 import { setUid, registerSocial } from "./src/gameApi";
+import SplashScreen from "./src/screens/SplashScreen";
 import IdentityScreen from "./src/screens/IdentityScreen";
 import ShellScreen from "./src/screens/ShellScreen";
 import RoomScreen from "./src/screens/RoomScreen";
@@ -65,12 +66,7 @@ export default function App() {
   }, []);
 
   if (loading || !fontsLoaded) {
-    return (
-      <View style={[styles.fill, styles.center]}>
-        <StatusBar style="light" />
-        <ActivityIndicator color={theme.accent} size="large" />
-      </View>
-    );
+    return <SplashScreen />;
   }
 
   return (
