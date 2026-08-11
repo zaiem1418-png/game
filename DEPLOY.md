@@ -54,7 +54,7 @@ git push -u origin main
 4. في **Environment** أضف مفاتيح LiveKit الثلاثة من الخطوة 1:
    `LIVEKIT_URL` · `LIVEKIT_API_KEY` · `LIVEKIT_API_SECRET`
 5. اضغط **Create** — بعد دقيقة يعطيك رابطاً مثل:
-   `https://voice-room-server.onrender.com`
+   `https://game-2-zp6g.onrender.com`
    > (أو استخدم ملف `render.yaml` الجاهز عبر New ➜ Blueprint ثم أضف المفاتيح في Environment).
 
 > 🎙️ الصوت ينتقل عبر LiveKit Cloud مباشرة؛ السيرفر يُصدر توكن الدخول فقط.

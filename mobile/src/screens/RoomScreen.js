@@ -14,6 +14,7 @@ import {
 import { socket } from "../socket";
 import { theme } from "../theme";
 import GiftSheet from "../components/GiftSheet";
+import { VoiceManager } from "../voice";
 
 // شبكة المقاعد: مقعد واحد يعرض الأفاتار أو رقم المايك.
 function Seat({ seat, isSelf, onPress }) {
@@ -70,6 +71,7 @@ export default function RoomScreen({ identity, room, onLeave }) {
   const [connecting, setConnecting] = useState(true);
   const [giftOpen, setGiftOpen] = useState(false);
   const chatRef = useRef(null);
+  const voiceRef = useRef(null);
 
   // مقعد المستخدم الحالي (إن كان صاعداً على مايك)
   const mySeat = state?.seats?.find((s) => s.user && s.user.id === selfId);
@@ -129,8 +131,17 @@ export default function RoomScreen({ identity, room, onLeave }) {
     if (socket.connected) doJoin();
     else socket.once("connect", doJoin);
 
+    // الصوت الحقيقي عبر LiveKit (نفس سيرفر الويب). كشف التحدّث يُبثّ للسيرفر
+    // فيظهر توهّج المقعد لدى الجميع؛ نشر المايك يُدار في تأثير المقعد أدناه.
+    const voice = new VoiceManager();
+    voiceRef.current = voice;
+    voice.onSpeakingChange = (speaking) => socket.emit("seat:speaking", { speaking });
+    voice.init({ identity: identity.uid, name: identity.name, roomId: String(room.id) });
+
     return () => {
       socket.emit("seat:leave");
+      voice.destroy();
+      voiceRef.current = null;
       socket.off("room:joined", onJoined);
       socket.off("room:update", onUpdate);
       socket.off("chat:new", onChatNew);
@@ -142,18 +153,10 @@ export default function RoomScreen({ identity, room, onLeave }) {
     };
   }, [room.id, identity, onLeave]);
 
-  // مؤشر تحدّث بسيط: أثناء عدم الكتم نرسل نبضات "أتكلم" (محاكاة كالويب)
+  // المايك الحقيقي: يُنشر عند الصعود على مقعد وفكّ الكتم، ويتوقف غير ذلك.
+  // كشف التحدّث يأتي من LiveKit (onSpeakingChange أعلاه) لا من نبضات وهمية.
   useEffect(() => {
-    if (!mySeat || mySeat.muted) return;
-    let on = false;
-    const t = setInterval(() => {
-      on = !on;
-      socket.emit("seat:speaking", { speaking: on });
-    }, 900);
-    return () => {
-      clearInterval(t);
-      socket.emit("seat:speaking", { speaking: false });
-    };
+    voiceRef.current?.setMicEnabled(!!mySeat && !mySeat.muted);
   }, [mySeat?.index, mySeat?.muted]);
 
   const onSeatPress = useCallback(

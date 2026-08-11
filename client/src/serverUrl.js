@@ -3,7 +3,7 @@
 // 2) وإلا: إن كنا نعمل محلياً (localhost) → سيرفر التطوير على 3001.
 // 3) وإلا (موقع منشور بلا متغيّر بيئة) → سيرفر Render الحقيقي بدل localhost
 //    حتى لا تفشل العمليات (إنشاء غرفة/محفظة...) بصمت لدى الزوّار.
-const PROD_SERVER = "https://voice-room-server.onrender.com";
+const PROD_SERVER = "https://game-2-zp6g.onrender.com";
 
 function resolveServerUrl() {
   const env = import.meta.env.VITE_SERVER_URL;

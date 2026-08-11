@@ -39,7 +39,7 @@ cd android
 
 - **السيرفر:** داخل التطبيق يقرأ [src/serverUrl.js](src/serverUrl.js) أن المنصّة
   أصلية (Capacitor) فيتصل دائماً بسيرفر Render
-  (`https://voice-room-server.onrender.com`) لأنه لا يوجد سيرفر محلي على الجهاز.
+  (`https://game-2-zp6g.onrender.com`) لأنه لا يوجد سيرفر محلي على الجهاز.
 - **الصوت:** الأذونات (مايك/كاميرا/بلوتوث) مضافة في
   [android/app/src/main/AndroidManifest.xml](android/app/src/main/AndroidManifest.xml)
   للصوت الحقيقي (WebRTC/LiveKit).

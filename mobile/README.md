@@ -62,5 +62,5 @@ mobile/
 ## السيرفر
 
 `src/config.js` يشير افتراضياً إلى سيرفر Render:
-`https://voice-room-server.onrender.com`. للتطوير محلياً، غيّره لعنوان جهازك
+`https://game-2-zp6g.onrender.com`. للتطوير محلياً، غيّره لعنوان جهازك
 مثل `http://172.20.10.2:3001` وشغّل السيرفر من مجلد `server/`.
