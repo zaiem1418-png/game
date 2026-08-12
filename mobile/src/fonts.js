@@ -1,19 +1,19 @@
-// ===== خط التطبيق العالمي: Aref Ruqaa Ink =====
+// ===== خط التطبيق العالمي: Amiri =====
 // expo-font يسجّل كل ملف باسم عائلة منفصل، لذا نملك عائلتين:
-//   "ArefRuqaaInk"      → الوزن العادي
-//   "ArefRuqaaInk-Bold" → الوزن العريض
+//   "Amiri"      → الوزن العادي
+//   "Amiri-Bold" → الوزن العريض
 // نرقّع مكوّني Text و TextInput لحقن fontFamily المناسب حسب fontWeight،
 // حتى تُطبَّق الخط في كل الشاشات دون تعديل مئات أنماط StyleSheet.
 import React from "react";
 import { Text as RNText, TextInput as RNTextInput, StyleSheet } from "react-native";
 
-export const FONT_REGULAR = "ArefRuqaaInk";
-export const FONT_BOLD = "ArefRuqaaInk-Bold";
+export const FONT_REGULAR = "Amiri";
+export const FONT_BOLD = "Amiri-Bold";
 
 // خريطة الملفات لتمريرها إلى useFonts
 export const FONT_MAP = {
-  [FONT_REGULAR]: require("../assets/fonts/ArefRuqaaInk-Regular.ttf"),
-  [FONT_BOLD]: require("../assets/fonts/ArefRuqaaInk-Bold.ttf"),
+  [FONT_REGULAR]: require("../assets/fonts/Amiri-Regular.ttf"),
+  [FONT_BOLD]: require("../assets/fonts/Amiri-Bold.ttf"),
 };
 
 function isBold(style) {
