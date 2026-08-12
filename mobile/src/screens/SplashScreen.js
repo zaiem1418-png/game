@@ -16,7 +16,7 @@ import { ICONS } from "../data/icons";
 const HERO_KEY = "jackaroo-hero"; // مؤقّت — بدّله إلى "splash-hero" عند توفّر الصورة
 const HAS_FALCON = !!ICONS["falcon"];
 
-const SCRIM = ["rgba(20,8,30,0.55)", "rgba(20,8,30,0.30)", "rgba(20,8,30,0.85)"];
+const SCRIM = ["rgba(20,8,30,0.30)", "transparent", "rgba(20,8,30,0.82)"];
 
 export default function SplashScreen() {
   return (
