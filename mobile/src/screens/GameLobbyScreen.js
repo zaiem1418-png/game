@@ -9,7 +9,9 @@ import BalootHomeScreen from "./BalootHomeScreen";
 // صورة اللعبة تظهر كـ«بانر» في أعلى الشاشة (الطاولة والأشخاص في الأعلى)،
 // ثم تتلاشى تدريجياً إلى الخلفية الداكنة حيث تظهر الأزرار — كمرجع اللعبة.
 const DARK = "#08161a";
-const BANNER_FADE = ["rgba(8,22,26,0.55)", "transparent", "transparent", DARK];
+// شفّاف في معظم البانر (تظهر الصورة كاملة) مع تعتيم خفيف أعلى للأرقام،
+// وتلاشٍ إلى الداكن في الأسفل حيث تبدأ الأزرار.
+const BANNER_FADE = ["rgba(8,22,26,0.45)", "transparent", "transparent", DARK];
 
 // تنسيق الأرقام الكبيرة (مطابق لـ fmtNum في نسخة الويب)
 function fmtNum(n) {
@@ -26,9 +28,9 @@ export default function GameLobbyScreen({ identity, wallet, onWalletUpdate, onOp
 
   return (
     <View style={styles.fill}>
-      {/* ===== صورة اللعبة كبانر علوي يتلاشى إلى الأسفل الداكن ===== */}
-      <Image source={ICONS[game.hero]} style={styles.bgBanner} resizeMode="cover" />
-      <LinearGradient colors={BANNER_FADE} locations={[0, 0.16, 0.5, 1]} style={styles.bgBanner} />
+      {/* ===== صورة اللعبة كبانر علوي — كاملة بنسبتها ثم تتلاشى إلى الأسفل الداكن ===== */}
+      <Image source={ICONS[game.hero]} style={[styles.bgBanner, { aspectRatio: game.aspect }]} resizeMode="cover" />
+      <LinearGradient colors={BANNER_FADE} locations={[0, 0.12, 0.72, 1]} style={[styles.bgBanner, { aspectRatio: game.aspect }]} />
 
       {/* ===== شريط الحالة العلوي ===== */}
       <View style={styles.top}>
@@ -107,7 +109,7 @@ export default function GameLobbyScreen({ identity, wallet, onWalletUpdate, onOp
 
 const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: DARK },
-  bgBanner: { position: "absolute", top: 0, left: 0, right: 0, height: "66%" },
+  bgBanner: { position: "absolute", top: 0, left: 0, right: 0, width: "100%" },
   scroll: { padding: 14, paddingBottom: 30 },
   board: { flex: 1, paddingHorizontal: 14, paddingTop: 6, paddingBottom: 12 },
 

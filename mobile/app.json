@@ -9,9 +9,9 @@
     "backgroundColor": "#2a1f33",
     "primaryColor": "#2a1f33",
     "splash": {
-      "backgroundColor": "#2a1f33",
-      "resizeMode": "contain",
-      "image": "./assets/splash-icon.png"
+      "backgroundColor": "#08161a",
+      "resizeMode": "cover",
+      "image": "./assets/splash.png"
     },
     "ios": {
       "supportsTablet": true,
