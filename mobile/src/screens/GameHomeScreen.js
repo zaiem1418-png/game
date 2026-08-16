@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Pressable, StyleSheet, Image } from "react-native";
+import { View, Text, Pressable, StyleSheet, Image, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { GAMES } from "../data/games";
 import { ICONS } from "../data/icons";
 import GameModals from "./modals/GameModals";
+
+const DARK = "#08161a";
+const SCREEN_W = Dimensions.get("window").width;
 
 /* أيقونة PNG بحجم قابل للتمرير مع إيموجي احتياطي */
 const Ico = ({ name, size = 22, fallback }) =>
@@ -69,6 +72,17 @@ export default function GameHomeScreen({ game, identity, wallet, onWalletUpdate,
 
   return (
     <View style={styles.wrap}>
+      {/* ===== بانر الفنّ: الصورة كاملة (كل الشخصيات + الطاولة) بلا أي شيء يغطّيها ===== */}
+      <View style={[styles.banner, { aspectRatio: game.aspect }]}>
+        <Image source={ICONS[game.hero]} style={styles.bannerImg} resizeMode="cover" />
+        <LinearGradient
+          colors={["transparent", "transparent", DARK]}
+          locations={[0, 0.78, 1]}
+          style={styles.bannerFade}
+          pointerEvents="none"
+        />
+      </View>
+
       {/* ===== لافتة الترحيب ===== */}
       <LinearGradient
         colors={["rgba(30,90,86,0.5)", "rgba(18,55,54,0.5)"]}
@@ -113,22 +127,14 @@ export default function GameHomeScreen({ game, identity, wallet, onWalletUpdate,
         </Pressable>
       </View>
 
-      {/* ===== المشهد + السكك الجانبية ===== */}
-      <View style={styles.stage}>
-        <View style={styles.rail}>
-          <RailItem icon="play" emoji="🎮" label="العب" onPress={() => onPlay?.(bigMode.id)} />
-          <RailItem emoji="🏛" label="نادي الشباب" onPress={rooms} />
-          <RailItem emoji="⚔" label="العصبة" hot onPress={open("tribe")} />
-        </View>
-
-        {/* مساحة شفّافة تُظهر صورة الخلفية (الطاولة والأشخاص) بين السكتين */}
-        <View style={styles.heroGap} />
-
-        <View style={styles.rail}>
-          <RailItem icon="friends" emoji="👥" label="الأصدقاء" onPress={open("friends")} />
-          <RailItem emoji="🔊" label="الصوت" onPress={rooms} />
-          <RailItem emoji="⏱" label={countdown} onPress={open("tasks")} />
-        </View>
+      {/* ===== صفّ الأزرار السريعة (أسفل البانر) ===== */}
+      <View style={styles.railsRow}>
+        <RailItem icon="play" emoji="🎮" label="العب" onPress={() => onPlay?.(bigMode.id)} />
+        <RailItem emoji="🏛" label="نادي الشباب" onPress={rooms} />
+        <RailItem emoji="⚔" label="العصبة" hot onPress={open("tribe")} />
+        <RailItem icon="friends" emoji="👥" label="الأصدقاء" onPress={open("friends")} />
+        <RailItem emoji="🔊" label="الصوت" onPress={rooms} />
+        <RailItem emoji="⏱" label={countdown} onPress={open("tasks")} />
       </View>
 
       {/* ===== أنماط اللعب ===== */}
@@ -209,6 +215,12 @@ export default function GameHomeScreen({ game, identity, wallet, onWalletUpdate,
 const styles = StyleSheet.create({
   wrap: { gap: 12 },
 
+  banner: { width: SCREEN_W, marginLeft: -14, marginRight: -14, marginTop: -14, overflow: "hidden" },
+  bannerImg: { width: "100%", height: "100%" },
+  bannerFade: { position: "absolute", left: 0, right: 0, bottom: 0, top: 0 },
+
+  railsRow: { flexDirection: "row-reverse", justifyContent: "space-around", alignItems: "flex-start" },
+
   welcome: {
     flexDirection: "row-reverse", alignItems: "center", gap: 12,
     borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", borderRadius: 16, padding: 12,
@@ -227,14 +239,11 @@ const styles = StyleSheet.create({
   rankMain: { fontWeight: "700", fontSize: 14, color: "#eaf6f3", textAlign: "right" },
   rankSub: { fontSize: 10, color: "#9dc0b8", textAlign: "right" },
 
-  stage: { flexDirection: "row-reverse", gap: 8, alignItems: "stretch", height: 190 },
-  rail: { width: 52, gap: 8, justifyContent: "center" },
-  railItem: { alignItems: "center", gap: 2 },
-  railBtn: { width: 36, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(18,55,54,0.75)" },
+  railItem: { alignItems: "center", gap: 3, width: 52 },
+  railBtn: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(18,55,54,0.85)" },
   railBtnBorder: { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
-  railEmoji: { fontSize: 15 },
-  railLbl: { fontSize: 8, color: "#9dc0b8" },
-  heroGap: { flex: 1 },
+  railEmoji: { fontSize: 16 },
+  railLbl: { fontSize: 8, color: "#9dc0b8", textAlign: "center" },
 
   modes: { flexDirection: "row-reverse", gap: 10 },
   modeBig: { borderRadius: 16, padding: 16, minHeight: 166, alignItems: "center", justifyContent: "center", gap: 12 },

@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Pressable, StyleSheet, Image } from "react-native";
+import { View, Text, Pressable, StyleSheet, Image, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { GAMES } from "../data/games";
 import { ICONS } from "../data/icons";
 import GameModals from "./modals/GameModals";
+
+const DARK = "#08161a";
+const SCREEN_W = Dimensions.get("window").width;
 
 /* أيقونة PNG مع إيموجي احتياطي */
 const Ico = ({ name, size = 40, fallback }) =>
@@ -45,6 +48,17 @@ export default function BalootHomeScreen({ game, identity, wallet, onWalletUpdat
 
   return (
     <View style={styles.wrap}>
+      {/* ===== بانر الفنّ: الصورة كاملة (كل الشخصيات + الطاولة) بلا أي شيء يغطّيها ===== */}
+      <View style={[styles.banner, { aspectRatio: game.aspect }]}>
+        <Image source={ICONS[game.hero]} style={styles.bannerImg} resizeMode="cover" />
+        <LinearGradient
+          colors={["transparent", "transparent", DARK]}
+          locations={[0, 0.78, 1]}
+          style={styles.bannerFade}
+          pointerEvents="none"
+        />
+      </View>
+
       {/* ===== لافتة الترحيب ===== */}
       <LinearGradient
         colors={["rgba(26,74,60,0.9)", "rgba(12,44,36,0.85)"]}
@@ -88,22 +102,14 @@ export default function BalootHomeScreen({ game, identity, wallet, onWalletUpdat
         </Pressable>
       </View>
 
-      {/* ===== المشهد + السكك الجانبية (يملأ المساحة المتبقّية) ===== */}
-      <View style={styles.stage}>
-        <View style={styles.rail}>
-          <Rail colors={["#5b6fd6", "#3a49a8"]} emoji="🌙" label="رأس السنة" onPress={open("ranking")} />
-          <Rail colors={["#4bb06a", "#2f8149"]} emoji="🌍" label="كأس العالم" onPress={open("ranking")} />
-          <Rail colors={["#d766a8", "#a83d81"]} emoji="✨" label={countdown} timer onPress={open("glory")} />
-        </View>
-
-        {/* مساحة شفّافة تُظهر صورة الخلفية (الطاولة والأشخاص) بين السكتين */}
-        <View style={styles.heroGap} />
-
-        <View style={styles.rail}>
-          <Rail colors={["#3fb6c4", "#2a8a97"]} emoji="👥" label="الأصدقاء" onPress={open("friends")} />
-          <Rail colors={["#5aba5f", "#3c8c40"]} emoji="🗓️" label="اليومي" onPress={open("tasks")} />
-          <Rail colors={["#e0a94a", "#b87a24"]} emoji="🏅" label="44د 22س" timer onPress={open("achievements")} />
-        </View>
+      {/* ===== صفّ الأزرار السريعة (أسفل البانر) ===== */}
+      <View style={styles.railsRow}>
+        <Rail colors={["#5b6fd6", "#3a49a8"]} emoji="🌙" label="رأس السنة" onPress={open("ranking")} />
+        <Rail colors={["#4bb06a", "#2f8149"]} emoji="🌍" label="كأس العالم" onPress={open("ranking")} />
+        <Rail colors={["#d766a8", "#a83d81"]} emoji="✨" label={countdown} timer onPress={open("glory")} />
+        <Rail colors={["#3fb6c4", "#2a8a97"]} emoji="👥" label="الأصدقاء" onPress={open("friends")} />
+        <Rail colors={["#5aba5f", "#3c8c40"]} emoji="🗓️" label="اليومي" onPress={open("tasks")} />
+        <Rail colors={["#e0a94a", "#b87a24"]} emoji="🏅" label="44د" timer onPress={open("achievements")} />
       </View>
 
       {/* ===== زر اللعب الرئيسي ===== */}
@@ -174,7 +180,13 @@ export default function BalootHomeScreen({ game, identity, wallet, onWalletUpdat
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, gap: 10 },
+  wrap: { gap: 10 },
+
+  banner: { width: SCREEN_W, marginLeft: -14, marginRight: -14, marginTop: -6, overflow: "hidden" },
+  bannerImg: { width: "100%", height: "100%" },
+  bannerFade: { position: "absolute", left: 0, right: 0, bottom: 0, top: 0 },
+
+  railsRow: { flexDirection: "row-reverse", justifyContent: "space-around", alignItems: "flex-start" },
 
   welcome: {
     flexDirection: "row-reverse", alignItems: "center", gap: 12,
@@ -196,15 +208,11 @@ const styles = StyleSheet.create({
   rankMain: { fontWeight: "700", fontSize: 15, color: "#f6e8d3", textAlign: "right" },
   rankSub: { fontSize: 10, color: "#bfa588", textAlign: "right" },
 
-  stage: { flex: 1, flexDirection: "row-reverse", gap: 8, alignItems: "stretch" },
-  rail: { width: 52, gap: 10, justifyContent: "center" },
-  railItem: { alignItems: "center", gap: 3 },
-  railBtn: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  railEmoji: { fontSize: 20 },
+  railItem: { alignItems: "center", gap: 3, width: 52 },
+  railBtn: { width: 42, height: 42, borderRadius: 13, alignItems: "center", justifyContent: "center" },
+  railEmoji: { fontSize: 19 },
   railLbl: { fontSize: 8, color: "#cbb193", textAlign: "center" },
   railTimer: { color: "#f0c46a", fontWeight: "700" },
-
-  heroGap: { flex: 1 },
 
   play: {
     flexDirection: "row-reverse", alignItems: "center", gap: 12,
