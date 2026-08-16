@@ -71,20 +71,64 @@ export default function GameHomeScreen({ game, identity, wallet, onWalletUpdate,
   const smallModes = game.modes.filter((m) => m !== bigMode);
 
   return (
-    <View style={styles.root}>
-      {/* ===== الصورة كخلفية علوية كاملة (بلا قصّ لأسفلها) ===== */}
-      <Image source={ICONS[game.hero]} style={[styles.bg, { aspectRatio: game.aspect }]} resizeMode="cover" />
-      <LinearGradient
-        colors={["transparent", "rgba(8,22,26,0.22)", "rgba(8,22,26,0.92)"]}
-        locations={[0, 0.44, 0.8]}
-        style={styles.bgFade}
-        pointerEvents="none"
-      />
+    <View style={styles.wrap}>
+      {/* ===== بانر الفنّ: الصورة كاملة (كل الشخصيات + الطاولة) بلا أي شيء يغطّيها ===== */}
+      <View style={[styles.banner, { aspectRatio: game.aspect }]}>
+        <Image source={ICONS[game.hero]} style={styles.bannerImg} resizeMode="cover" />
+        <LinearGradient
+          colors={["transparent", "transparent", DARK]}
+          locations={[0, 0.78, 1]}
+          style={styles.bannerFade}
+          pointerEvents="none"
+        />
+      </View>
 
-      {/* ===== الأزرار تطفو فوق أسفل الصورة، مثبّتة للأسفل بلا سحب ===== */}
-      <View style={styles.body}>
-        {/* ===== صفّ الأزرار السريعة ===== */}
-        <View style={styles.railsRow}>
+      {/* ===== لافتة الترحيب ===== */}
+      <LinearGradient
+        colors={["rgba(30,90,86,0.5)", "rgba(18,55,54,0.5)"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.welcome}
+      >
+        <LinearGradient colors={game.accentGrad} style={styles.welcomeAv}>
+          <Text style={styles.welcomeAvTxt}>{initial}</Text>
+        </LinearGradient>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.welcomeT}>
+            <Text style={{ color: game.accent }}>👑</Text> أهلاً, <Text style={{ color: "#5fe0bd" }}>{name}</Text>!
+          </Text>
+          <Text style={styles.welcomeSub}>جاهز للعب والفوز؟ اختر نمط اللعب المفضّل</Text>
+        </View>
+      </LinearGradient>
+
+      {/* ===== بطاقات الترتيب ===== */}
+      <View style={styles.ranks}>
+        <Pressable style={{ flex: 1 }} onPress={open("ranking")}>
+          <LinearGradient colors={["rgba(30,90,86,0.45)", "rgba(18,55,54,0.45)"]} style={styles.rank}>
+            <LinearGradient colors={game.accentGrad} style={styles.rankIco}>
+              <Text style={{ fontSize: 13 }}>★</Text>
+            </LinearGradient>
+            <View>
+              <Text style={styles.rankMain}>الترتيب 16</Text>
+              <Text style={styles.rankSub}>سلسلة تصنيف</Text>
+            </View>
+          </LinearGradient>
+        </Pressable>
+        <Pressable style={{ flex: 1 }} onPress={open("ranking")}>
+          <LinearGradient colors={["rgba(30,90,86,0.45)", "rgba(18,55,54,0.45)"]} style={styles.rank}>
+            <LinearGradient colors={["#ffce5a", "#d99a2a"]} style={styles.rankIco}>
+              <Text style={{ fontSize: 13 }}>🏆</Text>
+            </LinearGradient>
+            <View>
+              <Text style={styles.rankMain}>+100</Text>
+              <Text style={styles.rankSub}>الترتيب العام</Text>
+            </View>
+          </LinearGradient>
+        </Pressable>
+      </View>
+
+      {/* ===== صفّ الأزرار السريعة (أسفل البانر) ===== */}
+      <View style={styles.railsRow}>
         <RailItem icon="play" emoji="🎮" label="العب" onPress={() => onPlay?.(bigMode.id)} />
         <RailItem emoji="🏛" label="نادي الشباب" onPress={rooms} />
         <RailItem emoji="⚔" label="العصبة" hot onPress={open("tribe")} />
@@ -138,8 +182,17 @@ export default function GameHomeScreen({ game, identity, wallet, onWalletUpdate,
         </Pressable>
       </View>
 
-        {/* ===== بلاطات الألعاب الـ3D (وسيلة التنقّل بين الألعاب) ===== */}
-        <View style={styles.games}>
+      {/* ===== مضيف النوافذ (كل الأزرار أعلاه تفتح نظامها الخاص) ===== */}
+      <GameModals
+        modal={modal}
+        onClose={() => setModal(null)}
+        identity={identity}
+        wallet={wallet}
+        onWalletUpdate={onWalletUpdate}
+      />
+
+      {/* ===== بلاطات الألعاب الـ3D (وسيلة التنقّل بين الألعاب) ===== */}
+      <View style={styles.games}>
         {GAMES.map((g, i) => {
           const active = g.id === game.id;
           return (
@@ -148,33 +201,44 @@ export default function GameHomeScreen({ game, identity, wallet, onWalletUpdate,
                 colors={active ? ["rgba(90,70,20,0.5)", "rgba(55,42,14,0.5)"] : ["rgba(30,90,86,0.5)", "rgba(18,55,54,0.5)"]}
                 style={[styles.game, active ? styles.gameBorderGold : styles.quickBorder]}
               >
-                <Ico name={g.icon} size={30} fallback={g.cast.find((c) => c.on)?.emoji || "🎲"} />
+                <Ico name={g.icon} size={40} fallback={g.cast.find((c) => c.on)?.emoji || "🎲"} />
                 <Text style={styles.gameName}>{g.tab}</Text>
               </LinearGradient>
             </Pressable>
           );
         })}
-        </View>
       </View>
-
-      <GameModals
-        modal={modal}
-        onClose={() => setModal(null)}
-        identity={identity}
-        wallet={wallet}
-        onWalletUpdate={onWalletUpdate}
-      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: DARK },
-  bg: { position: "absolute", top: 0, left: 0, right: 0, width: "100%" },
-  bgFade: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0 },
-  body: { flex: 1, justifyContent: "flex-end", paddingHorizontal: 14, paddingBottom: 12, gap: 9 },
+  wrap: { gap: 12 },
 
-  railsRow: { flexDirection: "row-reverse", justifyContent: "space-around", alignItems: "flex-start", marginBottom: 2 },
+  banner: { width: SCREEN_W, marginLeft: -14, marginRight: -14, marginTop: -14, overflow: "hidden" },
+  bannerImg: { width: "100%", height: "100%" },
+  bannerFade: { position: "absolute", left: 0, right: 0, bottom: 0, top: 0 },
+
+  railsRow: { flexDirection: "row-reverse", justifyContent: "space-around", alignItems: "flex-start" },
+
+  welcome: {
+    flexDirection: "row-reverse", alignItems: "center", gap: 12,
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", borderRadius: 16, padding: 12,
+  },
+  welcomeAv: { width: 46, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  welcomeAvTxt: { fontWeight: "800", fontSize: 20, color: "#04211b" },
+  welcomeT: { fontWeight: "800", fontSize: 16, color: "#eaf6f3", textAlign: "right" },
+  welcomeSub: { fontSize: 11, color: "#a9ccc4", marginTop: 2, textAlign: "right" },
+
+  ranks: { flexDirection: "row-reverse", gap: 10 },
+  rank: {
+    flex: 1, flexDirection: "row-reverse", alignItems: "center", gap: 10,
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", borderRadius: 14, paddingHorizontal: 13, paddingVertical: 11,
+  },
+  rankIco: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+  rankMain: { fontWeight: "700", fontSize: 14, color: "#eaf6f3", textAlign: "right" },
+  rankSub: { fontSize: 10, color: "#9dc0b8", textAlign: "right" },
+
   railItem: { alignItems: "center", gap: 3, width: 52 },
   railBtn: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(18,55,54,0.85)" },
   railBtnBorder: { borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
@@ -182,26 +246,26 @@ const styles = StyleSheet.create({
   railLbl: { fontSize: 8, color: "#9dc0b8", textAlign: "center" },
 
   modes: { flexDirection: "row-reverse", gap: 10 },
-  modeBig: { borderRadius: 16, padding: 12, minHeight: 104, alignItems: "center", justifyContent: "center", gap: 8 },
+  modeBig: { borderRadius: 16, padding: 16, minHeight: 166, alignItems: "center", justifyContent: "center", gap: 12 },
   vs: { flexDirection: "row-reverse", alignItems: "center", gap: 8 },
   vsFace: { width: 38, height: 38, borderRadius: 19, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" },
   vsTxt: { fontWeight: "800", fontStyle: "italic", fontSize: 14, color: "#fff" },
   modeBigTitle: { fontWeight: "800", fontSize: 17, color: "#fff" },
   modeBigSub: { fontSize: 11, color: "#fff", opacity: 0.85, marginTop: 3 },
   modeStack: { flex: 1, gap: 10 },
-  modeSm: { flex: 1, borderRadius: 14, padding: 11, minHeight: 47, alignItems: "flex-start", justifyContent: "space-between" },
+  modeSm: { flex: 1, borderRadius: 16, padding: 16, minHeight: 78, alignItems: "flex-start", justifyContent: "space-between" },
   modeSmIcoLight: { width: 30, height: 30, borderRadius: 9, backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" },
   modeSmIcoDark: { width: 30, height: 30, borderRadius: 9, backgroundColor: "rgba(0,0,0,0.15)", alignItems: "center", justifyContent: "center" },
   modeSmLbl: { fontWeight: "800", fontSize: 16 },
 
   quick: { flexDirection: "row-reverse", gap: 10 },
-  quickBtn: { borderRadius: 14, paddingHorizontal: 8, paddingVertical: 9, alignItems: "center", gap: 5 },
+  quickBtn: { borderRadius: 14, paddingHorizontal: 8, paddingVertical: 13, alignItems: "center", gap: 6 },
   quickBorder: { borderWidth: 1, borderColor: "rgba(255,255,255,0.09)" },
   quickBorderGold: { borderWidth: 1, borderColor: "rgba(255,206,90,0.35)" },
   quickLbl: { fontWeight: "700", fontSize: 12, color: "#eaf6f3", textAlign: "center" },
 
   games: { flexDirection: "row-reverse", gap: 10 },
-  game: { borderRadius: 14, paddingHorizontal: 4, paddingVertical: 7, alignItems: "center", gap: 4 },
+  game: { borderRadius: 14, paddingHorizontal: 4, paddingVertical: 12, alignItems: "center", gap: 6 },
   gameBorderGold: { borderWidth: 1, borderColor: "rgba(255,206,90,0.35)" },
   gameName: { fontWeight: "600", fontSize: 9, color: "#eaf6f3", textAlign: "center" },
 });

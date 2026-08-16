@@ -47,20 +47,63 @@ export default function BalootHomeScreen({ game, identity, wallet, onWalletUpdat
   const open = (key) => () => setModal(key);
 
   return (
-    <View style={styles.root}>
-      {/* ===== الصورة كخلفية علوية كاملة (بلا قصّ لأسفلها) ===== */}
-      <Image source={ICONS[game.hero]} style={[styles.bg, { aspectRatio: game.aspect }]} resizeMode="cover" />
-      <LinearGradient
-        colors={["transparent", "rgba(8,22,26,0.22)", "rgba(8,22,26,0.92)"]}
-        locations={[0, 0.44, 0.8]}
-        style={styles.bgFade}
-        pointerEvents="none"
-      />
+    <View style={styles.wrap}>
+      {/* ===== بانر الفنّ: الصورة كاملة (كل الشخصيات + الطاولة) بلا أي شيء يغطّيها ===== */}
+      <View style={[styles.banner, { aspectRatio: game.aspect }]}>
+        <Image source={ICONS[game.hero]} style={styles.bannerImg} resizeMode="cover" />
+        <LinearGradient
+          colors={["transparent", "transparent", DARK]}
+          locations={[0, 0.78, 1]}
+          style={styles.bannerFade}
+          pointerEvents="none"
+        />
+      </View>
 
-      {/* ===== الأزرار تطفو فوق أسفل الصورة، مثبّتة للأسفل بلا سحب ===== */}
-      <View style={styles.body}>
-        {/* ===== صفّ الأزرار السريعة ===== */}
-        <View style={styles.railsRow}>
+      {/* ===== لافتة الترحيب ===== */}
+      <LinearGradient
+        colors={["rgba(26,74,60,0.9)", "rgba(12,44,36,0.85)"]}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+        style={styles.welcome}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={styles.welcomeT} numberOfLines={1}>
+            أهلاً، <Text style={{ color: "#ffce5a" }}>{name}</Text> 👋
+          </Text>
+          <Text style={styles.welcomeSub} numberOfLines={1}>جاهز للّعب والفوز؟ اختر لعبتك المفضّلة</Text>
+        </View>
+        <LinearGradient colors={["#ffe08a", "#e2a532"]} style={styles.welcomeAv}>
+          <Text style={styles.welcomeAvTxt}>{initial}</Text>
+        </LinearGradient>
+      </LinearGradient>
+
+      {/* ===== بطاقات الترتيب ===== */}
+      <View style={styles.ranks}>
+        <Pressable style={{ flex: 1 }} onPress={open("ranking")}>
+          <View style={styles.rank}>
+            <LinearGradient colors={["#ffe08a", "#e2a532"]} style={styles.rankIco}>
+              <Text style={{ fontSize: 15 }}>🏆</Text>
+            </LinearGradient>
+            <View>
+              <Text style={styles.rankMain}>+100</Text>
+              <Text style={styles.rankSub}>الترتيب العام</Text>
+            </View>
+          </View>
+        </Pressable>
+        <Pressable style={{ flex: 1 }} onPress={open("ranking")}>
+          <View style={styles.rank}>
+            <LinearGradient colors={["#b58cf0", "#7d4fd6"]} style={styles.rankIco}>
+              <Text style={{ fontSize: 14, color: "#fff" }}>★</Text>
+            </LinearGradient>
+            <View>
+              <Text style={styles.rankMain}>16</Text>
+              <Text style={styles.rankSub}>سلسلة التصنيف</Text>
+            </View>
+          </View>
+        </Pressable>
+      </View>
+
+      {/* ===== صفّ الأزرار السريعة (أسفل البانر) ===== */}
+      <View style={styles.railsRow}>
         <Rail colors={["#5b6fd6", "#3a49a8"]} emoji="🌙" label="رأس السنة" onPress={open("ranking")} />
         <Rail colors={["#4bb06a", "#2f8149"]} emoji="🌍" label="كأس العالم" onPress={open("ranking")} />
         <Rail colors={["#d766a8", "#a83d81"]} emoji="✨" label={countdown} timer onPress={open("glory")} />
@@ -114,7 +157,7 @@ export default function BalootHomeScreen({ game, identity, wallet, onWalletUpdat
                 colors={active ? ["#8a5a24", "#6b4318"] : ["rgba(20,60,48,0.9)", "rgba(12,40,32,0.92)"]}
                 style={[styles.game, active ? styles.gameActive : styles.gameBorder]}
               >
-                <Ico name={g.icon} size={30} fallback="🎲" />
+                <Ico name={g.icon} size={40} fallback="🎲" />
                 <Text style={[styles.gameName, active && { color: "#fff", fontWeight: "700" }]} numberOfLines={1}>
                   {g.tab}
                 </Text>
@@ -122,9 +165,9 @@ export default function BalootHomeScreen({ game, identity, wallet, onWalletUpdat
             </Pressable>
           );
         })}
-        </View>
       </View>
 
+      {/* ===== مضيف النوافذ (كل الأزرار أعلاه تفتح نظامها الخاص) ===== */}
       <GameModals
         modal={modal}
         onClose={() => setModal(null)}
@@ -137,12 +180,34 @@ export default function BalootHomeScreen({ game, identity, wallet, onWalletUpdat
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: DARK },
-  bg: { position: "absolute", top: 0, left: 0, right: 0, width: "100%" },
-  bgFade: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0 },
-  body: { flex: 1, justifyContent: "flex-end", paddingHorizontal: 14, paddingBottom: 12, gap: 9 },
+  wrap: { gap: 10 },
 
-  railsRow: { flexDirection: "row-reverse", justifyContent: "space-around", alignItems: "flex-start", marginBottom: 2 },
+  banner: { width: SCREEN_W, marginLeft: -14, marginRight: -14, marginTop: -6, overflow: "hidden" },
+  bannerImg: { width: "100%", height: "100%" },
+  bannerFade: { position: "absolute", left: 0, right: 0, bottom: 0, top: 0 },
+
+  railsRow: { flexDirection: "row-reverse", justifyContent: "space-around", alignItems: "flex-start" },
+
+  welcome: {
+    flexDirection: "row-reverse", alignItems: "center", gap: 12,
+    borderWidth: 1, borderColor: "rgba(240,200,140,0.14)", borderRadius: 18, padding: 12,
+  },
+  welcomeAv: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  welcomeAvTxt: { fontWeight: "800", fontSize: 20, color: "#7a4310" },
+  welcomeT: { fontWeight: "800", fontSize: 17, color: "#fbf1e2", textAlign: "right" },
+  welcomeSub: { fontSize: 11.5, color: "#d3b89b", marginTop: 2, textAlign: "right" },
+
+  ranks: { flexDirection: "row-reverse", gap: 10 },
+  rank: {
+    flexDirection: "row-reverse", alignItems: "center", gap: 10,
+    borderWidth: 1, borderColor: "rgba(240,200,140,0.12)", borderRadius: 16,
+    paddingHorizontal: 12, paddingVertical: 10,
+    backgroundColor: "rgba(22,64,52,0.85)",
+  },
+  rankIco: { width: 36, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center" },
+  rankMain: { fontWeight: "700", fontSize: 15, color: "#f6e8d3", textAlign: "right" },
+  rankSub: { fontSize: 10, color: "#bfa588", textAlign: "right" },
+
   railItem: { alignItems: "center", gap: 3, width: 52 },
   railBtn: { width: 42, height: 42, borderRadius: 13, alignItems: "center", justifyContent: "center" },
   railEmoji: { fontSize: 19 },
@@ -151,14 +216,14 @@ const styles = StyleSheet.create({
 
   play: {
     flexDirection: "row-reverse", alignItems: "center", gap: 12,
-    borderRadius: 20, paddingHorizontal: 16, height: 56,
+    borderRadius: 20, paddingHorizontal: 16, height: 66,
   },
   playIco: { width: 44, height: 44, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.22)", alignItems: "center", justifyContent: "center" },
   playTitle: { fontSize: 22, fontWeight: "800", color: "#fff", textAlign: "right" },
   playSub: { fontSize: 11, color: "#ffe9d2", textAlign: "right" },
 
   modes: { flexDirection: "row-reverse", gap: 10 },
-  mode: { borderRadius: 16, paddingVertical: 9, paddingHorizontal: 4, alignItems: "center", gap: 5 },
+  mode: { borderRadius: 16, paddingVertical: 12, paddingHorizontal: 4, alignItems: "center", gap: 6 },
   modeBlue: { borderWidth: 1, borderColor: "rgba(140,160,240,0.2)" },
   modeVip: { borderWidth: 1, borderColor: "rgba(210,180,255,0.3)" },
   modeGold: { borderWidth: 1, borderColor: "rgba(240,210,120,0.2)" },
@@ -166,7 +231,7 @@ const styles = StyleSheet.create({
   modeLbl: { fontSize: 11, fontWeight: "700", color: "#eef1ff", textAlign: "center" },
 
   games: { flexDirection: "row-reverse", gap: 10 },
-  game: { borderRadius: 14, paddingHorizontal: 4, paddingVertical: 7, alignItems: "center", gap: 4 },
+  game: { borderRadius: 14, paddingHorizontal: 4, paddingVertical: 10, alignItems: "center", gap: 6 },
   gameBorder: { borderWidth: 1, borderColor: "rgba(240,200,140,0.12)" },
   gameActive: { borderWidth: 1.5, borderColor: "#f3c469" },
   gameName: { fontWeight: "600", fontSize: 9, color: "#d8c0a2", textAlign: "center" },
