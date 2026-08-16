@@ -69,8 +69,8 @@ export default function GameLobbyScreen({ identity, wallet, onWalletUpdate, onOp
         })}
       </View>
 
-      {/* ===== محتوى اللعبة الحالية (البانر في الأعلى + الأزرار أسفله) ===== */}
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      {/* ===== محتوى اللعبة الحالية — ثابت بلا سحب (البانر أعلى + الأزرار أسفله) ===== */}
+      <View style={styles.content}>
         {game.id === "baloot" ? (
           <BalootHomeScreen
             game={game}
@@ -92,15 +92,14 @@ export default function GameLobbyScreen({ identity, wallet, onWalletUpdate, onOp
             onSelectGame={setIdx}
           />
         )}
-      </ScrollView>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: DARK },
-  scroll: { padding: 14, paddingBottom: 30 },
-  board: { flex: 1, paddingHorizontal: 14, paddingTop: 6, paddingBottom: 12 },
+  content: { flex: 1 },
 
   top: { flexDirection: "row-reverse", alignItems: "center", gap: 8, paddingTop: 52, paddingHorizontal: 14, paddingBottom: 8 },
   topAv: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
