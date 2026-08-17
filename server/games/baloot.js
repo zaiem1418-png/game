@@ -137,6 +137,7 @@ function dealRound(st) {
   st.passes = 0;
   st.mode = null;
   st.trump = null;
+  st.ashkal = false;
   st.buyerSeat = null;
   st.buyerTeam = null;
   st.turn = (st.dealer + 1) % 4;
@@ -252,9 +253,22 @@ export default {
 };
 
 // ===== المزايدة =====
+// أشكل: متاح في الجولة الأولى للموزّع وللاعب على يساره (أول مزايد) فقط.
+function canAshkal(state) {
+  if (state.bidRound !== 1) return false;
+  const seat = state.bidTurn;
+  return seat === state.dealer || seat === (state.dealer + 1) % 4;
+}
+
 function bidOptions(state) {
   if (state.bidRound === 1) {
-    return { round: 1, flipped: state.flipped, actions: ["hokom", "pass"] };
+    const ashkal = canAshkal(state);
+    return {
+      round: 1,
+      flipped: state.flipped,
+      canAshkal: ashkal,
+      actions: ashkal ? ["hokom", "ashkal", "pass"] : ["hokom", "pass"],
+    };
   }
   return { round: 2, actions: ["sun", "hokom_suit", "pass"], suits: SUITS };
 }
@@ -271,6 +285,7 @@ function applyBid(state, playerId, action) {
         state.bidRound = 2;
         state.passes = 0;
         state.bidTurn = (state.dealer + 1) % 4;
+        state.lastEvent = { type: "bidRound", round: 2 };
         return { events: [{ type: "round2" }] };
       }
       // الجولة الثانية وكلهم مرّروا — يُجبر الموزّع على صن (تفادي التوقف)
@@ -283,6 +298,11 @@ function applyBid(state, playerId, action) {
   if (action.type === "hokom" && state.bidRound === 1) {
     return settleBid(state, p.seat, "hokom", state.flipped.suit);
   }
+  if (action.type === "ashkal" && state.bidRound === 1) {
+    if (!(p.seat === state.dealer || p.seat === (state.dealer + 1) % 4))
+      return { error: "أشكل متاح للموزّع واللاعب على يساره فقط" };
+    return settleBid(state, p.seat, "sun", null, { ashkal: true });
+  }
   if (action.type === "sun" && state.bidRound === 2) {
     return settleBid(state, p.seat, "sun", null);
   }
@@ -293,17 +313,23 @@ function applyBid(state, playerId, action) {
   return { error: "مزايدة غير صالحة" };
 }
 
-function settleBid(state, buyerSeat, mode, trump) {
+function settleBid(state, buyerSeat, mode, trump, opts = {}) {
+  const ashkal = !!opts.ashkal;
   state.mode = mode;
   state.trump = trump;
   state.buyerSeat = buyerSeat;
   state.buyerTeam = teamOf(buyerSeat);
+  state.ashkal = ashkal;
 
-  // المشتري في الحكم يأخذ الورقة المقلوبة، وإلا تُعاد للمجموعة
-  if (mode === "hokom") {
+  if (ashkal) {
+    // أشكل: اللعب صن، وتُعطى الورقة المقلوبة لشريك المشكِّل (المقابل)
+    const partner = (buyerSeat + 2) % 4;
+    state.players[partner].hand.push(state.flipped);
+  } else if (mode === "hokom") {
+    // المشتري في الحكم يأخذ الورقة المقلوبة
     state.players[buyerSeat].hand.push(state.flipped);
   } else {
-    state.deck.push(state.flipped);
+    state.deck.push(state.flipped); // الصن: تُعاد للمجموعة
   }
   state.flipped = null;
 
@@ -330,7 +356,7 @@ function settleBid(state, buyerSeat, mode, trump) {
   state.turn = (state.dealer + 1) % 4; // يسار الموزّع يبدأ أول حيلة
   state.leadSuit = null;
   state.trick = [];
-  state.lastEvent = { type: "bid", mode, trump, buyerSeat };
+  state.lastEvent = { type: "bid", mode, trump, buyerSeat, ashkal };
   return { events: [{ type: "bidDone" }] };
 }
 

@@ -1,7 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { sfx, say, announceBid, unlock, isMuted, setMuted } from "./balootSound.js";
 
 const SUIT_COLOR = { "♥": "#e3405a", "♦": "#e3405a", "♠": "#10182b", "♣": "#10182b" };
+
+// يترجم آخِر حدث في الحالة إلى مؤثر صوتي (نداء + نغمة)
+function playEventSound(ev, st) {
+  if (!ev) return;
+  switch (ev.type) {
+    case "deal":
+      sfx.deal();
+      setTimeout(() => say("أول"), 260); // بداية الجولة الأولى للمزايدة
+      break;
+    case "bidRound":
+      if (ev.round === 2) say("ثاني");
+      break;
+    case "pass":
+      say("بس");
+      break;
+    case "bid":
+      sfx.buy();
+      announceBid(ev.mode, ev.ashkal);
+      break;
+    case "play":
+      sfx.play();
+      break;
+    case "trick":
+      sfx.trick();
+      break;
+    case "roundOver":
+      if (st?.roundSummary?.qahar) sfx.qahar();
+      else sfx.trick();
+      break;
+    case "matchOver":
+      sfx.win();
+      break;
+    default:
+      break;
+  }
+}
 
 // موضع لاعب نسبةً لي: أنا أسفل، الشريك أعلى، الخصمان يمين/يسار
 function relPos(mySeat, seat) {
@@ -27,7 +64,34 @@ function Card({ card, onClick, disabled, dim, small }) {
 
 export default function BalootBoard({ game, you, action, onExit }) {
   const [showRules, setShowRules] = useState(false);
+  const [muted, setMutedState] = useState(isMuted());
   const st = game?.state;
+
+  // مؤثرات صوتية عند تغيّر آخر حدث (توقيع فريد يمنع التكرار)
+  const lastSig = useRef(null);
+  useEffect(() => {
+    if (!st) return;
+    const ev = st.lastEvent;
+    const sig = [
+      ev?.type,
+      st.phase,
+      st.roundNo,
+      st.bidRound,
+      st.passes,
+      st.trickCount,
+      st.trick?.length,
+      st.buyerSeat,
+    ].join("|");
+    if (sig === lastSig.current) return;
+    const first = lastSig.current === null;
+    lastSig.current = sig;
+    if (first && ev?.type === "deal") {
+      // لا نطلق نداء عند أول تحميل قبل تفاعل المستخدم (يُرفض على الجوال)
+      return;
+    }
+    playEventSound(ev, st);
+  }, [st]);
+
   if (!st) return <div className="grm-loading">جاري التحميل…</div>;
 
   const me = st.players.find((p) => p.id === you);
@@ -44,13 +108,25 @@ export default function BalootBoard({ game, you, action, onExit }) {
   const usPts = st.teamPoints[myTeam];
   const themPts = st.teamPoints[other];
 
+  const toggleMute = () => {
+    const v = !muted;
+    setMuted(v);
+    setMutedState(v);
+    if (!v) unlock();
+  };
+
   return (
-    <div className="bl">
-      {/* الشريط العلوي: زر القواعد + لوحة النقاط */}
+    <div className="bl" onPointerDown={() => unlock()}>
+      {/* الشريط العلوي: زر القواعد + كتم الصوت + لوحة النقاط */}
       <div className="bl-topbar">
-        <button className="bl-rules-btn" onClick={() => setShowRules(true)} title="قواعد وأنظمة البلوت">
-          📖 القواعد
-        </button>
+        <div className="bl-topbtns">
+          <button className="bl-rules-btn" onClick={() => setShowRules(true)} title="قواعد وأنظمة البلوت">
+            📖 القواعد
+          </button>
+          <button className="bl-rules-btn" onClick={toggleMute} title={muted ? "تشغيل الصوت" : "كتم الصوت"}>
+            {muted ? "🔇" : "🔊"}
+          </button>
+        </div>
         <div className="bl-scoreboard">
           <div className="bl-sb-target">السباق إلى {target}</div>
           <div className="bl-sb-row">
@@ -96,19 +172,25 @@ export default function BalootBoard({ game, you, action, onExit }) {
           );
         })}
 
-        {/* الحيلة في الوسط */}
+        {/* الحيلة في الوسط — كل ورقة في موضع ثابت حول المركز حسب جهة صاحبها */}
         <div className="bl-trick">
           <AnimatePresence>
-            {st.trick.map((t) => (
-              <motion.div
-                key={t.card.id}
-                className={`bl-trick-card ${relPos(mySeat, t.seat)}`}
-                initial={{ opacity: 0, scale: 0.6 }}
-                animate={{ opacity: 1, scale: 1 }}
-              >
-                <Card card={t.card} small disabled />
-              </motion.div>
-            ))}
+            {st.trick.map((t) => {
+              const pos = relPos(mySeat, t.seat);
+              return (
+                // الموضع بالـCSS (مضمون)، وframer-motion يحرّك الظهور/الحجم فقط
+                <div key={t.card.id} className={`bl-trick-slot ${pos}`}>
+                  <motion.div
+                    className="bl-trick-card"
+                    initial={{ opacity: 0, scale: 0.6 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: "spring", stiffness: 380, damping: 26 }}
+                  >
+                    <Card card={t.card} small disabled />
+                  </motion.div>
+                </div>
+              );
+            })}
           </AnimatePresence>
           {st.flipped && st.phase === "bid" && (
             <div className="bl-flipped">
@@ -122,10 +204,18 @@ export default function BalootBoard({ game, you, action, onExit }) {
       {/* منطقة الإجراء */}
       {st.phase === "over" ? (
         <BlOver st={st} you={you} onExit={onExit} />
-      ) : st.phase === "bid" ? (
-        <BidBar st={st} myTurn={myTurn} action={action} turnName={turnPlayer?.name} />
       ) : (
-        <PlayHand st={st} me={me} myTurn={myTurn} action={action} turnName={turnPlayer?.name} />
+        <>
+          {st.phase === "bid" ? (
+            <BidBar st={st} myTurn={myTurn} action={action} turnName={turnPlayer?.name} />
+          ) : (
+            <div className="bl-status">
+              {myTurn ? "دورك — العب ورقة" : `دور ${turnPlayer?.name || "…"}`}
+            </div>
+          )}
+          {/* يدك تظهر دائماً — أوراقك البدائية الخمس أثناء المزايدة ثم الثمانية أثناء اللعب */}
+          {me && <HandStrip st={st} me={me} myTurn={myTurn} action={action} />}
+        </>
       )}
     </div>
   );
@@ -134,18 +224,33 @@ export default function BalootBoard({ game, you, action, onExit }) {
 function BidBar({ st, myTurn, action, turnName }) {
   const bid = st.myBid;
   if (!myTurn || !bid) {
-    return <div className="bl-status">المزايدة — دور {turnName || "…"}…</div>;
+    return (
+      <div className="bl-status">
+        المزايدة ({st.bidRound === 2 ? "الجولة الثانية" : "الجولة الأولى"}) — دور {turnName || "…"}…
+      </div>
+    );
   }
   return (
     <div className="bl-bid">
       <div className="bl-status">
-        {bid.round === 1 ? `حكم على ${st.flipped.suit}؟` : "الجولة الثانية: اختر"}
+        {bid.round === 1 ? `الشراء — حكم على ${st.flipped.suit}؟` : "الجولة الثانية — اختر شراءك"}
       </div>
       <div className="bl-bid-btns">
         {bid.round === 1 && (
-          <button className="bl-btn hokom" onClick={() => action({ type: "hokom" })}>
-            🃏 حكم {st.flipped.suit}
-          </button>
+          <>
+            <button
+              className="bl-btn hokom"
+              style={{ color: SUIT_COLOR[st.flipped.suit] }}
+              onClick={() => action({ type: "hokom" })}
+            >
+              🃏 حكم {st.flipped.suit}
+            </button>
+            {bid.canAshkal && (
+              <button className="bl-btn ashkal" onClick={() => action({ type: "ashkal" })} title="أشكل: صن، وتُعطى المقلوبة لشريكك">
+                🔀 أشكل
+              </button>
+            )}
+          </>
         )}
         {bid.round === 2 && (
           <>
@@ -157,21 +262,22 @@ function BidBar({ st, myTurn, action, turnName }) {
             ))}
           </>
         )}
-        <button className="bl-btn pass" onClick={() => action({ type: "pass" })}>تمرير</button>
+        <button className="bl-btn pass" onClick={() => action({ type: "pass" })}>بس</button>
       </div>
     </div>
   );
 }
 
-function PlayHand({ st, me, myTurn, action, turnName }) {
+// شريط اليد — يظهر دائماً: أثناء المزايدة (5 أوراق، للعرض فقط) وأثناء اللعب (8، القابل منها للّعب مفعّل)
+function HandStrip({ st, me, myTurn, action }) {
+  const isPlay = st.phase === "play";
+  const playTurn = isPlay && myTurn;
   const legalIds = new Set((st.myLegal || []).map((c) => c.id));
   const myProjects = st.myProjects || [];
+  const hand = me.hand || [];
   return (
     <div className="bl-handwrap">
-      <div className="bl-status">
-        {myTurn ? "دورك — العب ورقة" : `دور ${turnName || "…"}`}
-      </div>
-      {myProjects.length > 0 && (
+      {isPlay && myProjects.length > 0 && (
         <div className="bl-myproj">
           مشاريعك:
           {myProjects.map((p, i) => (
@@ -179,14 +285,17 @@ function PlayHand({ st, me, myTurn, action, turnName }) {
           ))}
         </div>
       )}
+      {st.phase === "bid" && (
+        <div className="bl-hand-lbl">أوراقك ({hand.length}) — تكتمل إلى ٨ بعد الشراء</div>
+      )}
       <div className="bl-hand">
-        {me.hand.map((card) => {
-          const playable = myTurn && legalIds.has(card.id);
+        {hand.map((card) => {
+          const playable = playTurn && legalIds.has(card.id);
           return (
             <Card
               key={card.id}
               card={card}
-              dim={myTurn && !playable}
+              dim={playTurn && !playable}
               disabled={!playable}
               onClick={() => action({ type: "play", card: card.id })}
             />
@@ -272,7 +381,12 @@ function BalootRules({ onClose }) {
               </li>
               <li>
                 <b>الجولة الثانية:</b> من يرغب يختار <b>صن</b> أو <b>حُكم</b>
-                على لون آخر، أو يُمرِّر.
+                على لون آخر، أو يُمرِّر بقول <b>«بس»</b>.
+              </li>
+              <li>
+                <b>🔀 أشكل:</b> خيار خاص في الجولة الأولى <b>للموزّع واللاعب على يساره</b> فقط —
+                يجعل اللعب <b>صن</b>، وتُعطى الورقة المقلوبة إلى <b>الشريك المقابل</b>،
+                ويُعتبر من قالها هو المشتري.
               </li>
               <li>المشتري في الحُكم يأخذ الورقة المقلوبة ضمن أوراقه.</li>
             </ul>
@@ -296,7 +410,7 @@ function BalootRules({ onClose }) {
               <li><b>مية:</b> ٥ أوراق متتالية من نفس النوع.</li>
               <li><b>بلوت:</b> في الحُكم فقط — اجتماع الشايب (K) والبنت (Q) من لون الطرنيب عند نفس اللاعب.</li>
             </ul>
-            <p className="bl-rules-note">ملاحظة: نسخة اللعبة الحالية مبسّطة لجولة واحدة بدون احتساب المشاريع.</p>
+            <p className="bl-rules-note">تُحتسب المشاريع بقاعدة المقارنة: الفريق صاحب أعلى مشروع يأخذ كل مشاريعه.</p>
           </section>
 
           <section>

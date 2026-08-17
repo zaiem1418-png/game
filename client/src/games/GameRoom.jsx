@@ -50,7 +50,9 @@ export default function GameRoom({ gameId, mode, user, onExit }) {
         <Lobby lobby={lobby} you={you} onStart={table.start} onExit={onExit} />
       ) : (
         <>
-          <GameTopSeats players={game?.state?.players} turn={game?.turn} you={you} />
+          {gameId !== "baloot" && (
+            <GameTopSeats players={game?.state?.players} turn={game?.turn} you={you} />
+          )}
           <Board game={game} you={you} action={table.action} onExit={onExit} />
         </>
       )}
