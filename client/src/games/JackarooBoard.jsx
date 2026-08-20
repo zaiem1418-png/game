@@ -578,7 +578,7 @@ export default function JackarooBoard({ game, you, action, onExit }) {
         </div>
       )}
 
-      {showRules && <JakRules onClose={() => setShowRules(false)} />}
+      {showRules && <JakRules mode={st.mode} onClose={() => setShowRules(false)} />}
 
       {/* اليد + النهاية */}
       {st.phase === "over" ? (
@@ -631,12 +631,14 @@ const RULE_CARDS = [
   { c: "🃏", t: "إخراج بيدق، أو التقدّم 18 ويأكل ما يمرّ عليه", tag: "متعدد" },
 ];
 
-function JakRules({ onClose }) {
+function JakRules({ onClose, mode }) {
+  const normal = mode === "normal";
+  const modeLabel = mode === "1v1" ? "واحد ضد واحد" : mode === "complex" ? "كمبلكس" : "عادي";
   return (
     <div className="jak-rules-overlay" onClick={onClose}>
       <div className="jak-rules" onClick={(e) => e.stopPropagation()}>
         <div className="jak-rules-head">
-          <b>قواعد جاكارو</b>
+          <b>قواعد جاكارو — {modeLabel}</b>
           <button className="jak-rules-x" onClick={onClose}>✕</button>
         </div>
         <p className="jak-rules-intro">
@@ -646,8 +648,13 @@ function JakRules({ onClose }) {
           يفوز الفريق الذي تصل كل بيادقه للحارة.
         </p>
         <p className="jak-rules-intro">
-          🧱 <b>السدّ (التسنيد)</b>: بيدقك على قاعدته، أو بيدقان لك متلاصقان على المسار، يشكّلان سدّاً —
-          لا يستطيع الخصم تجاوزه ولا الهبوط عليه ولا أكله ولا تبديله، وحتى ورقة 5 لا تحرّكه — إلا الملك K فيخترقه ويأكله.
+          🧱 <b>السدّ (التسنيد)</b>:{" "}
+          {normal ? (
+            <>في نمط <b>«العادي»</b> لا يوجد تسنيد بالتجاور — تبقى فقط حماية <b>خانة البداية</b> (لا يُؤكل ولا يُبدّل البيدق عليها).</>
+          ) : (
+            <>بيدقك على قاعدته، أو بيدقان لك متلاصقان على المسار، يشكّلان سدّاً —
+            لا يستطيع الخصم تجاوزه ولا الهبوط عليه ولا أكله ولا تبديله، وحتى ورقة 5 لا تحرّكه — إلا الملك K فيخترقه ويأكله.</>
+          )}
         </p>
         <p className="jak-rules-intro">
           ⇄ <b>نقطتا العبور</b> (في 1ضد1): الخانتان الذهبيتان على منتصف الجانبين — عند وصول بيدقك

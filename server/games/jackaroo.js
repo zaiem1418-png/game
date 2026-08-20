@@ -107,9 +107,13 @@ export default {
   create({ players, mode }) {
     const deck = buildDeck();
     const layout = seatLayout(players.length);
+    const _mode = mode || (players.length <= 2 ? "1v1" : "normal");
     const st = {
       game: "jackaroo",
-      mode: mode || (players.length <= 2 ? "1v1" : "normal"),
+      mode: _mode,
+      // السدّ/التسنيد (حجران متجاوران = جدار يصدّ ويحمي) خاصية «الكمبلكس».
+      // في «العادي» لا تسنيد: تبقى فقط حماية خانة البداية.
+      wallsEnabled: _mode !== "normal",
       players: players.map((p, i) => {
         const slot = layout[i] || { seat: i, team: teamOf(i) };
         return {
@@ -344,7 +348,7 @@ function shoveEntries(state, p) {
   for (const owner of state.players) {
     owner.marbles.forEach((s, mi) => {
       if (!(s >= 1 && s <= TRACK)) return; // على المسار فقط
-      if (isProtected(owner, mi)) return; // الحجر المحميّ (السدّ) لا يُحرَّك
+      if (isProtected(state, owner, mi)) return; // الحجر المحميّ (السدّ) لا يُحرَّك
       const e = shoveOne(state, owner, mi, 5);
       if (!e) return;
       const who = owner.id === p.id ? "حجرك" : owner.name;
@@ -385,7 +389,7 @@ function swapEntries(state, p) {
       const mate = q.team === p.team; // شريك أم خصم؟
       q.marbles.forEach((qs, qmi) => {
         if (!(qs >= 1 && qs <= TRACK)) return; // الهدف على المسار
-        if (isProtected(q, qmi)) return; // الهدف محميّ (سدّ/قاعدة) لا يُبدّل
+        if (isProtected(state, q, qmi)) return; // الهدف محميّ (سدّ/قاعدة) لا يُبدّل
         out.push({
           marble: mi, kind: "swap",
           target: { seat: q.seat, marble: qmi },
@@ -448,10 +452,11 @@ function capData(state, p, seat, step) {
 // ===== السدّ (التسنيد) =====
 // حجر «محميّ» إذا كان على خانة بدايته (القاعدة)، أو ملاصقاً لحجر آخر لنفس اللاعب (زوج = سدّ).
 // المحميّ لا يُؤكل ولا يُبدّل ولا يُتجاوز ولا يُحرَّك بورقة الغير (5).
-function isProtected(q, i) {
+function isProtected(state, q, i) {
   const s = q.marbles[i];
   if (!(s >= 1 && s <= TRACK)) return false;
-  if (s === 1) return true; // على قاعدته (خانة البداية الآمنة)
+  if (s === 1) return true; // على قاعدته (خانة البداية الآمنة) — في كل الأنماط
+  if (!state.wallsEnabled) return false; // «العادي»: لا تسنيد بالتجاور
   return q.marbles.some(
     (s2, j) => j !== i && (s2 === s - 1 || s2 === s + 1) && s2 >= 1 && s2 <= TRACK
   );
@@ -464,7 +469,7 @@ function isWallAt(state, p, c) {
     if (q.team === p.team) continue; // أسوار الخصوم فقط تصدّنا
     for (let i = 0; i < 4; i++) {
       const s = q.marbles[i];
-      if (s >= 1 && s <= TRACK && absCell(q.seat, s) === c && isProtected(q, i)) return true;
+      if (s >= 1 && s <= TRACK && absCell(q.seat, s) === c && isProtected(state, q, i)) return true;
     }
   }
   return false;
@@ -499,7 +504,7 @@ function captureAt(state, p, seat, step, ignoreProtection) {
     for (let i = 0; i < 4; i++) {
       const s = q.marbles[i];
       if (s >= 1 && s <= TRACK && absCell(q.seat, s) === c) {
-        if (!ignoreProtection && isProtected(q, i)) continue; // محميّ (سدّ/قاعدة) لا يُؤكل
+        if (!ignoreProtection && isProtected(state, q, i)) continue; // محميّ (سدّ/قاعدة) لا يُؤكل
         return { seat: q.seat, marble: i };
       }
     }

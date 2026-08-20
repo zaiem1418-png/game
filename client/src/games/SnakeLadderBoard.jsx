@@ -38,7 +38,7 @@ export default function SnakeLadderBoard({ game, you, action, onExit }) {
     <div className="snl">
       <RulesButton onClick={() => setShowRules(true)} />
       <AnimatePresence>
-        {showRules && <SnakeRules onClose={() => setShowRules(false)} />}
+        {showRules && <SnakeRules mode={st.mode} onClose={() => setShowRules(false)} />}
       </AnimatePresence>
 
       {/* شريط اللاعبين */}
@@ -139,9 +139,18 @@ export default function SnakeLadderBoard({ game, you, action, onExit }) {
 
 const DICE = { 1: "⚀", 2: "⚁", 3: "⚂", 4: "⚃", 5: "⚄", 6: "⚅" };
 
-function SnakeRules({ onClose }) {
+function SnakeRules({ onClose, mode }) {
+  const fast = mode === "fast";
   return (
     <GameRules title="📖 قواعد وأنظمة السلم والثعبان" onClose={onClose}>
+      <section>
+        <h4>🕹️ النمط: {fast ? "سريع ⚡" : "كلاسيكي"}</h4>
+        <p>
+          {fast
+            ? "في النمط السريع لا يلزم الوصول إلى ١٠٠ بالرقم المضبوط — بلوغها أو تجاوزها يفوز مباشرةً، فتنتهي الجولة أسرع."
+            : "في النمط الكلاسيكي يجب الوصول إلى ١٠٠ بالرقم المضبوط، وإذا تجاوزت رميتُك ١٠٠ يبقى بيدقك مكانه."}
+        </p>
+      </section>
       <section>
         <h4>🎯 الهدف</h4>
         <p>
@@ -167,8 +176,14 @@ function SnakeRules({ onClose }) {
       <section>
         <h4>🏁 الوصول و الفوز</h4>
         <ul>
-          <li>يجب الوصول إلى ١٠٠ <b>بالرقم المضبوط</b>.</li>
-          <li>إذا تجاوزت رميتُك ١٠٠ يبقى بيدقك مكانه ولا يتحرك.</li>
+          {fast ? (
+            <li>بلوغ ١٠٠ <b>أو تجاوزها</b> يفوز مباشرةً (النمط السريع).</li>
+          ) : (
+            <>
+              <li>يجب الوصول إلى ١٠٠ <b>بالرقم المضبوط</b>.</li>
+              <li>إذا تجاوزت رميتُك ١٠٠ يبقى بيدقك مكانه ولا يتحرك.</li>
+            </>
+          )}
           <li>تستمر اللعبة حتى يصل الجميع، ويُعلَن الترتيب 🥇🥈🥉.</li>
         </ul>
       </section>

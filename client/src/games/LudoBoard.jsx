@@ -95,7 +95,7 @@ export default function LudoBoard({ game, you, action, onExit }) {
     <div className="ludo">
       <RulesButton onClick={() => setShowRules(true)} />
       <AnimatePresence>
-        {showRules && <LudoRules onClose={() => setShowRules(false)} />}
+        {showRules && <LudoRules mode={st.mode} onClose={() => setShowRules(false)} />}
       </AnimatePresence>
 
       {/* اللوحة مع مقاعد اللاعبين في الزوايا */}
@@ -261,9 +261,18 @@ function hexA(hex, a) {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-function LudoRules({ onClose }) {
+function LudoRules({ onClose, mode }) {
+  const arrow = mode === "arrow";
   return (
     <GameRules title="📖 قواعد وأنظمة لودو" onClose={onClose}>
+      <section>
+        <h4>🕹️ النمط: {arrow ? "سهم 🏹" : "كلاسيكي"}</h4>
+        <p>
+          {arrow
+            ? "في نمط السهم يخرج البيدق من القاعدة بأي رقم من النرد (ليس بالـ٦ فقط)، فتكون البداية أسرع وأكثر حركة."
+            : "في النمط الكلاسيكي لا يخرج البيدق من القاعدة إلا برمي ٦."}
+        </p>
+      </section>
       <section>
         <h4>🎯 الهدف</h4>
         <p>
@@ -272,9 +281,13 @@ function LudoRules({ onClose }) {
         </p>
       </section>
       <section>
-        <h4>🎲 الخروج بالستة</h4>
+        <h4>🎲 الخروج {arrow ? "بأي رقم" : "بالستة"}</h4>
         <ul>
-          <li>تبدأ البيادق داخل القاعدة، ولا يخرج البيدق إلا عند رمي <b>٦</b>.</li>
+          <li>
+            تبدأ البيادق داخل القاعدة، {arrow
+              ? <>ويخرج البيدق <b>بأي رقم</b> (نمط السهم).</>
+              : <>ولا يخرج البيدق إلا عند رمي <b>٦</b>.</>}
+          </li>
           <li>رمي <b>٦</b> يمنحك <b>رمية إضافية</b>.</li>
           <li>إن لم تكن لديك حركة ممكنة، ينتقل الدور للاعب التالي.</li>
         </ul>

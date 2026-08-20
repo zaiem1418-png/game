@@ -33,9 +33,12 @@ export default {
     return mode === "1v1" ? 2 : 4;
   },
 
-  create({ players }) {
+  create({ players, mode }) {
     return {
       game: "ludo",
+      mode: mode || "classic",
+      // نمط «السهم»: يخرج البيدق من القاعدة بأي رقم (ليس بالـ6 فقط) — بداية أسرع
+      anyExit: mode === "arrow",
       players: players.map((p, i) => ({
         id: p.id,
         name: p.name,
@@ -122,7 +125,7 @@ function movableTokens(state, p, dice) {
   p.tokens.forEach((s, i) => {
     if (s === HOME_STEP) return; // وصل البيت
     if (s === 0) {
-      if (dice === 6) out.push(i); // يخرج بالـ6 فقط
+      if (dice === 6 || state.anyExit) out.push(i); // يخرج بالـ6 (أو بأي رقم في نمط السهم)
     } else if (s + dice <= HOME_STEP) {
       out.push(i); // لا تجاوز للبيت
     }

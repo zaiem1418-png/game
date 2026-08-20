@@ -25,9 +25,12 @@ export default {
     return mode === "1v1" ? 2 : 4;
   },
 
-  create({ players }) {
+  create({ players, mode }) {
     return {
       game: "snake",
+      mode: mode || "classic",
+      // النمط السريع: لا يلزم بلوغ ١٠٠ بالضبط — الوصول أو تجاوزها يفوز
+      fast: mode === "fast",
       snakes: SNAKES,
       ladders: LADDERS,
       players: players.map((p, i) => ({
@@ -76,7 +79,11 @@ export default {
     let via = null;
 
     if (to > 100) {
-      to = from; // زيادة — يبقى مكانه
+      if (state.fast) {
+        to = 100; // النمط السريع: التجاوز يفوز مباشرةً (لا يلزم الرقم بالضبط)
+      } else {
+        to = from; // كلاسيكي: زيادة — يبقى مكانه
+      }
     } else {
       if (SNAKES[to] != null) {
         to = SNAKES[to];
