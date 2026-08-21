@@ -181,7 +181,7 @@ export default function LudoBoard({ game, you, action, onExit }) {
               <motion.button
                 key={`${p.id}-${ti}`}
                 className={`ludo-token ${movable ? "movable" : ""}`}
-                style={{ background: p.color }}
+                style={{ "--tc": p.color }}
                 animate={{ top: pos.top, left: pos.left }}
                 transition={{ type: "spring", stiffness: 240, damping: 26 }}
                 disabled={!movable}

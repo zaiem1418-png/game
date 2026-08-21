@@ -78,7 +78,7 @@ export default function SnakeLadderBoard({ game, you, action, onExit }) {
                         key={p.id}
                         layoutId={`tok-${p.id}`}
                         className="snl-token"
-                        style={{ background: p.color }}
+                        style={{ "--tc": p.color }}
                         transition={{ type: "spring", stiffness: 260, damping: 26 }}
                       >
                         {p.avatar}
@@ -97,7 +97,7 @@ export default function SnakeLadderBoard({ game, you, action, onExit }) {
         <div className="snl-start">
           <span>البداية:</span>
           {atStart.map((p) => (
-            <motion.span key={p.id} layoutId={`tok-${p.id}`} className="snl-token" style={{ background: p.color }}>
+            <motion.span key={p.id} layoutId={`tok-${p.id}`} className="snl-token" style={{ "--tc": p.color }}>
               {p.avatar}
             </motion.span>
           ))}
