@@ -150,24 +150,30 @@ const SYNTH = {
     tone("sine", 1568, 2093, 0.4, v * 0.4, 0.05);
   },
   engine: (v) => {
-    // محرك رياضي (فيراري): نغمة احتراق سَوتوث تتبع الدورات + توافقي حادّ + سَب +
-    // تشويه + فلتر رنيني يتتبّع + انطلاقات (blips) مع طقطقة عادم + هسهسة سحب.
+    // محرك فيراري V12: نبضات احتراق فردية (firing pulses) عبر مذبذب نبضي يتبع الدورات،
+    // + طبقة توافقيات معدنية + سَب هدير + تشويه + فلتر رنيني يتتبّع الدورات +
+    // بلِپات انطلاق (throttle blips) مع طقطقة عادم على الرفع (overrun) + هسهسة توربو/سحب.
     const c = ac();
     const t0 = c.currentTime;
+    const DUR = 3.4;
     const out = c.createGain();
     out.connect(masterGain);
-    sendReverb(out, 0.18);
-    // مغلّف عام (دخول/خروج ناعم)
+    sendReverb(out, 0.22);
     out.gain.setValueAtTime(0.0001, t0);
-    out.gain.exponentialRampToValueAtTime(v, t0 + 0.08);
-    out.gain.setValueAtTime(v, t0 + 2.5);
-    out.gain.exponentialRampToValueAtTime(0.0001, t0 + 3.0);
+    out.gain.exponentialRampToValueAtTime(v, t0 + 0.1);
+    out.gain.setValueAtTime(v, t0 + DUR - 0.5);
+    out.gain.exponentialRampToValueAtTime(0.0001, t0 + DUR);
 
-    // منحنى الدورات (0..1): خمول → انطلاقات متتالية
-    const revAt = [[0, 0.3], [0.4, 1.0], [0.85, 0.55], [1.25, 1.0], [1.7, 0.65], [2.1, 1.0], [2.7, 0.5]];
-    const firing = (x) => 42 + x * 150; // تردد الاحتراق Hz
+    // منحنى الدورات (0..1): خمول → 3 انطلاقات حادّة متصاعدة → ثبات على redline
+    const revAt = [
+      [0, 0.22], [0.35, 0.95], [0.7, 0.42], [1.05, 1.0],
+      [1.45, 0.5], [1.8, 1.0], [2.25, 0.72], [2.7, 1.0], [3.2, 0.85],
+    ];
+    // نبضات الاحتراق: V12 = 6 نبضات لكل دورة. نمثّل التردد الأساسي للاشتعال.
+    const firing = (x) => 55 + x * 205; // Hz
 
-    const mkOsc = (type, mul, detune, gain) => {
+    // مذبذب نبضي حاد (نبض الاحتراق) — sawtooth عبر فلتر highpass لإبراز الحوافّ
+    const mkRev = (type, mul, detune, gain) => {
       const o = c.createOscillator();
       o.type = type;
       o.detune.value = detune;
@@ -177,39 +183,113 @@ const SYNTH = {
       og.gain.value = gain;
       o.connect(og);
       o.start(t0);
-      o.stop(t0 + 3.05);
+      o.stop(t0 + DUR + 0.05);
       return og;
     };
 
     const shaper = c.createWaveShaper();
-    shaper.curve = distortionCurve(45);
+    shaper.curve = distortionCurve(60);
     const lp = c.createBiquadFilter();
     lp.type = "lowpass";
-    lp.Q.value = 9;
-    lp.frequency.setValueAtTime(600, t0);
-    revAt.forEach(([tt, x]) => lp.frequency.linearRampToValueAtTime(700 + x * 2400, t0 + tt));
+    lp.Q.value = 11;
+    lp.frequency.setValueAtTime(500, t0);
+    revAt.forEach(([tt, x]) => lp.frequency.linearRampToValueAtTime(650 + x * 3200, t0 + tt));
 
-    mkOsc("sawtooth", 1, 0, 0.5).connect(shaper);
-    mkOsc("sawtooth", 1, 16, 0.4).connect(shaper); // جسم متنافر
-    mkOsc("square", 2, 0, 0.12).connect(shaper); // صفير الدوران العالي
+    mkRev("sawtooth", 1, 0, 0.5).connect(shaper);   // النبض الأساسي
+    mkRev("sawtooth", 1, 18, 0.34).connect(shaper); // beat خفيف = خشونة اسطوانات
+    mkRev("sawtooth", 2, -9, 0.22).connect(shaper); // الأوكتاف = رنّة معدنية
+    mkRev("square", 3, 0, 0.09).connect(shaper);    // صفير الدوران العالي (V12 shriek)
     shaper.connect(lp).connect(out);
 
-    const sub = c.createOscillator(); // هدير منخفض
+    // سَب هدير يتبع الدورات (نصف تردد الاشتعال)
+    const sub = c.createOscillator();
     sub.type = "sine";
-    sub.frequency.value = 40;
+    sub.frequency.setValueAtTime(firing(0.22) * 0.5, t0);
+    revAt.forEach(([tt, x]) => sub.frequency.linearRampToValueAtTime(firing(x) * 0.5, t0 + tt));
     const subG = c.createGain();
-    subG.gain.value = 0.4;
+    subG.gain.value = 0.42;
     sub.connect(subG).connect(out);
     sub.start(t0);
-    sub.stop(t0 + 3.05);
+    sub.stop(t0 + DUR + 0.05);
 
-    // طقطقة العادم عند كل انطلاقة
-    [0.4, 1.25, 2.1].forEach((tt) => {
+    // طقطقة العادم (crackle/pops) على لحظات رفع القدم بعد كل انطلاقة
+    [0.7, 1.45, 2.25].forEach((tt) => {
       setTimeout(() => {
-        for (let i = 0; i < 4; i++) playNoise(0.05, "bandpass", 1300, 380, v * 0.3);
+        for (let i = 0; i < 6; i++) {
+          setTimeout(() => playNoise(0.04, "bandpass", 1600, 300, v * 0.35), i * 32 + Math.random() * 20);
+        }
       }, tt * 1000);
     });
-    playNoise(2.6, "bandpass", 600, 1500, v * 0.18); // سحب الهواء
+    playNoise(DUR - 0.6, "bandpass", 700, 1700, v * 0.16); // هسهسة سحب الهواء/التوربو
+  },
+  helicopter: (v) => {
+    // هليكوبتر واقعي: صفعة الشفرات الرئيسية (blade slap) = ضوضاء منخفضة معدّلة سعوياً
+    // بتردد ~11Hz (thump-thump)، + همهمة التوربين المستمرة، + صفير الدوّار الخلفي (tail rotor).
+    const c = ac();
+    const t0 = c.currentTime;
+    const DUR = 3.4;
+    const out = c.createGain();
+    out.connect(masterGain);
+    sendReverb(out, 0.3);
+    out.gain.setValueAtTime(0.0001, t0);
+    out.gain.exponentialRampToValueAtTime(v, t0 + 0.25); // اقتراب تدريجي
+    out.gain.setValueAtTime(v, t0 + DUR - 0.6);
+    out.gain.exponentialRampToValueAtTime(0.0001, t0 + DUR);
+
+    // 1) صفعة الشفرات: مصدر ضوضاء عبر lowpass، مضروب بمذبذب نبضي (سعة) 10.5→12Hz
+    const blade = c.createBufferSource();
+    blade.buffer = noiseBuffer(DUR);
+    blade.loop = true;
+    const bladeLp = c.createBiquadFilter();
+    bladeLp.type = "lowpass";
+    bladeLp.frequency.value = 420;
+    bladeLp.Q.value = 6;
+    const bladeAmp = c.createGain();
+    bladeAmp.gain.value = 0.0;
+    // مذبذب السعة (chop)
+    const chop = c.createOscillator();
+    chop.type = "sawtooth";
+    chop.frequency.setValueAtTime(9, t0);
+    chop.frequency.linearRampToValueAtTime(12, t0 + 0.8); // يتسارع مع الإقلاع
+    chop.frequency.setValueAtTime(12, t0 + DUR - 0.6);
+    const chopShape = c.createWaveShaper();
+    chopShape.curve = distortionCurve(30); // نبضة أحدّ = "thwop"
+    const chopDepth = c.createGain();
+    chopDepth.gain.value = 0.6;
+    const chopBias = c.createConstantSource();
+    chopBias.offset.value = 0.4;
+    chop.connect(chopShape).connect(chopDepth).connect(bladeAmp.gain);
+    chopBias.connect(bladeAmp.gain);
+    blade.connect(bladeLp).connect(bladeAmp);
+    const bladeVol = c.createGain();
+    bladeVol.gain.value = 0.8;
+    bladeAmp.connect(bladeVol).connect(out);
+
+    // 2) هدير التوربين (سَب مستمر)
+    const turb = c.createOscillator();
+    turb.type = "sawtooth";
+    turb.frequency.setValueAtTime(58, t0);
+    turb.frequency.linearRampToValueAtTime(72, t0 + 1.2);
+    const turbLp = c.createBiquadFilter();
+    turbLp.type = "lowpass";
+    turbLp.frequency.value = 240;
+    const turbG = c.createGain();
+    turbG.gain.value = 0.18;
+    turb.connect(turbLp).connect(turbG).connect(out);
+
+    // 3) صفير الدوّار الخلفي / التوربين العالي
+    const whine = c.createOscillator();
+    whine.type = "triangle";
+    whine.frequency.setValueAtTime(900, t0);
+    whine.frequency.linearRampToValueAtTime(1350, t0 + 1.0);
+    const whineG = c.createGain();
+    whineG.gain.value = 0.05;
+    whine.connect(whineG).connect(out);
+    playNoise(DUR - 0.4, "highpass", 3000, 4200, v * 0.05); // هسهسة عالية خفيفة
+
+    [chop, turb, whine].forEach((o) => { o.start(t0); o.stop(t0 + DUR + 0.05); });
+    chopBias.start(t0); chopBias.stop(t0 + DUR + 0.05);
+    blade.start(t0); blade.stop(t0 + DUR + 0.05);
   },
   jet: (v) => {
     playNoise(3.2, "bandpass", 1800, 600, v * 0.6);
@@ -232,13 +312,18 @@ const SYNTH = {
     const src = c.createGain();
     const o1 = c.createOscillator();
     o1.type = "sawtooth";
-    o1.frequency.setValueAtTime(165, t0);
-    o1.frequency.exponentialRampToValueAtTime(72, t0 + 1.1);
+    // منحنى نبرة الزئير: نأمة أولية → ذروة عالية → هبوط مهدِّد
+    o1.frequency.setValueAtTime(120, t0);
+    o1.frequency.linearRampToValueAtTime(190, t0 + 0.12); // اندفاع الزئير
+    o1.frequency.exponentialRampToValueAtTime(70, t0 + 1.15);
     const o2 = c.createOscillator();
     o2.type = "sawtooth";
-    o2.detune.value = -12;
-    o2.frequency.setValueAtTime(150, t0);
-    o2.frequency.exponentialRampToValueAtTime(64, t0 + 1.1);
+    o2.detune.value = -14;
+    o2.frequency.setValueAtTime(108, t0);
+    o2.frequency.linearRampToValueAtTime(172, t0 + 0.12);
+    o2.frequency.exponentialRampToValueAtTime(62, t0 + 1.15);
+    // نأمة/زمجرة تمهيدية منخفضة (chuff) قبل الزئير
+    for (let i = 0; i < 3; i++) playNoise(0.09, "lowpass", 300, 160, v * 0.25);
     o1.connect(src);
     o2.connect(src);
     const nb = c.createBufferSource(); // زفير
@@ -355,6 +440,27 @@ const SYNTH = {
     playNoise(2, "bandpass", 200, 1500, v * 0.18);
   },
   countdown: (v) => tone("square", 880, 880, 0.12, v * 0.5),
+  whale: (v) => {
+    // نداء حوت: نغمة منخفضة تتموّج صعوداً/هبوطاً مع صدى واسع
+    const c = ac();
+    const o = c.createOscillator();
+    o.type = "sine";
+    o.frequency.setValueAtTime(180, c.currentTime);
+    o.frequency.linearRampToValueAtTime(320, c.currentTime + 0.7);
+    o.frequency.linearRampToValueAtTime(150, c.currentTime + 1.8);
+    const vib = c.createOscillator();
+    vib.frequency.value = 5;
+    const vibG = c.createGain();
+    vibG.gain.value = 22;
+    vib.connect(vibG).connect(o.frequency);
+    const g = envGain(0, 0.5, 2, v * 0.5);
+    o.connect(g);
+    sendReverb(g, 0.7);
+    o.start();
+    vib.start();
+    o.stop(c.currentTime + 2.1);
+    vib.stop(c.currentTime + 2.1);
+  },
 
   // ===== أصوات التفاعلات =====
   clap: (v) => {
@@ -418,7 +524,7 @@ async function loadBuffer(url) {
   return buf;
 }
 
-async function playUrl(url, vol) {
+async function playUrl(url, vol, fallback) {
   try {
     const buf = await loadBuffer(url);
     const c = ac();
@@ -427,23 +533,34 @@ async function playUrl(url, vol) {
     const g = c.createGain();
     g.gain.value = vol;
     src.connect(g).connect(masterGain);
+    sendReverb(g, 0.15);
     src.start();
   } catch (e) {
-    console.warn("تعذّر تشغيل الصوت:", url, e.message);
+    // فشل تحميل/فك الملف الحقيقي (غير موجود بعد أو CORS) → استخدم المؤثر المُولّد كبديل
+    if (fallback && SYNTH[fallback] && !muted) {
+      try {
+        SYNTH[fallback](vol);
+      } catch {}
+    }
   }
+}
+
+function isUrl(s) {
+  return /^https?:\/\//.test(s) || s.startsWith("/") || /\.(mp3|wav|ogg|m4a|aac)$/i.test(s);
 }
 
 /**
  * تشغيل صوت هدية. sound يمكن أن يكون:
- *  - معرّف مدمج (engine, roar, rocket, ...)
- *  - رابط ملف صوت (يبدأ بـ http أو /)
+ *  - معرّف مدمج (engine, roar, helicopter, ...)
+ *  - رابط ملف صوت حقيقي (يبدأ بـ http أو / أو ينتهي بامتداد صوتي)
+ * fallback: اسم مؤثر مُولّد يُشغَّل تلقائياً إذا تعذّر تحميل الملف الحقيقي.
  */
-export function playSound(sound, volume = 0.8) {
+export function playSound(sound, volume = 0.8, fallback = null) {
   if (!sound || muted) return;
   try {
     ac();
-    if (/^https?:\/\//.test(sound) || sound.startsWith("/") || sound.endsWith(".mp3")) {
-      playUrl(sound, volume);
+    if (isUrl(sound)) {
+      playUrl(sound, volume, fallback);
     } else if (SYNTH[sound]) {
       SYNTH[sound](volume);
     }

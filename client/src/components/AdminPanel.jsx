@@ -35,7 +35,10 @@ export default function AdminPanel() {
   const [gifts, setGifts] = useState([]);
   const [form, setForm] = useState(BLANK);
   const [msg, setMsg] = useState("");
+  const [uploading, setUploading] = useState("");
   const stageRef = useRef(null);
+  const assetInputRef = useRef(null);
+  const soundInputRef = useRef(null);
 
   async function loadGifts() {
     const res = await fetch(`${SERVER_URL}/api/gifts`);
@@ -78,6 +81,52 @@ export default function AdminPanel() {
     if (res.status === 401) return setMsg("❌ رمز إدارة خاطئ");
     setMsg("🗑️ تم الحذف");
     loadGifts();
+  }
+
+  // استنتاج نوع العرض من امتداد الملف المرفوع
+  function inferRenderer(ext) {
+    return ext === ".json" ? "lottie" : ext === ".gif" ? "gif" : ext === ".riv" ? "rive" : "video";
+  }
+
+  // رفع ملف أصل (فيديو/Lottie/GIF إلى gifts، أو صوت إلى sounds) → يملأ الحقل تلقائياً
+  async function uploadFile(kind, file) {
+    if (!file) return;
+    const ext = "." + (file.name.split(".").pop() || "").toLowerCase();
+    const stem = (form.id.trim() || file.name.replace(/\.[^.]+$/, ""))
+      .toLowerCase()
+      .replace(/[^a-z0-9_.-]/g, "_");
+    const fname = stem + ext;
+    setUploading(kind);
+    setMsg("⏳ جارٍ الرفع…");
+    try {
+      const res = await fetch(
+        `${SERVER_URL}/api/admin/upload?kind=${kind}&name=${encodeURIComponent(fname)}`,
+        {
+          method: "POST",
+          headers: { "x-admin-token": token, "Content-Type": file.type || "application/octet-stream" },
+          body: file,
+        }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) return setMsg("❌ رمز إدارة خاطئ");
+      if (!res.ok) return setMsg("❌ " + (data.error || "فشل الرفع"));
+      if (kind === "sounds") {
+        // اربط الملف الحقيقي بحدث الصوت الأساسي للهدية (سيناريو يشغّله عبر api.sound)،
+        // مع إبقاء معرّف الـsynth كبديل تلقائي إن تعذّر الملف.
+        const isUrl = /^https?:|^\//.test(form.sound || "");
+        const key = form.sound && !isUrl ? form.sound : "main";
+        set("sounds", { ...(form.sounds || {}), [key]: data.url });
+        setMsg(`✅ رُفع الصوت ورُبط بالحدث «${key}» — لا تنسَ حفظ الهدية`);
+      } else {
+        set("asset", data.url);
+        if (form.renderer === "scenario") set("renderer", inferRenderer(ext));
+        setMsg(`✅ رُفع الأنيميشن (${Math.round((data.bytes || 0) / 1024)}KB) — لا تنسَ حفظ الهدية`);
+      }
+    } catch (e) {
+      setMsg("❌ " + e.message);
+    } finally {
+      setUploading("");
+    }
   }
 
   function preview(g) {
@@ -165,6 +214,55 @@ export default function AdminPanel() {
           <label className="af-check"><input type="checkbox" checked={form.fullscreen} onChange={(e) => set("fullscreen", e.target.checked)} /> ملء الشاشة</label>
           <label className="af-check"><input type="checkbox" checked={form.loopAsset} onChange={(e) => set("loopAsset", e.target.checked)} /> تكرار الوسيط</label>
         </div>
+        <div className="af-uploads">
+          <span className="af-up-label">📤 رفع أصول حقيقية:</span>
+          <button
+            type="button"
+            className="btn-upload"
+            disabled={!!uploading}
+            onClick={() => assetInputRef.current?.click()}
+          >
+            {uploading === "gifts" ? "⏳ جارٍ الرفع…" : "🎬 أنيميشن (MP4/Lottie/GIF)"}
+          </button>
+          <input
+            ref={assetInputRef}
+            type="file"
+            accept=".mp4,.webm,.json,.gif,.riv,video/*"
+            hidden
+            onChange={(e) => {
+              uploadFile("gifts", e.target.files[0]);
+              e.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            className="btn-upload"
+            disabled={!!uploading}
+            onClick={() => soundInputRef.current?.click()}
+          >
+            {uploading === "sounds" ? "⏳ جارٍ الرفع…" : "🔊 صوت واقعي (MP3)"}
+          </button>
+          <input
+            ref={soundInputRef}
+            type="file"
+            accept=".mp3,.wav,.ogg,.m4a,audio/*"
+            hidden
+            onChange={(e) => {
+              uploadFile("sounds", e.target.files[0]);
+              e.target.value = "";
+            }}
+          />
+          {(form.asset || (form.sounds && Object.keys(form.sounds).length > 0)) && (
+            <div className="af-up-status">
+              {form.asset && <div>🎬 {form.asset}</div>}
+              {form.sounds &&
+                Object.entries(form.sounds).map(([k, v]) => (
+                  <div key={k}>🔊 {k}: {v}</div>
+                ))}
+            </div>
+          )}
+        </div>
+
         <div className="af-actions">
           <button className="btn-save" onClick={save}>💾 حفظ</button>
           <button className="btn-prev" onClick={() => preview(form)}>👁️ معاينة</button>

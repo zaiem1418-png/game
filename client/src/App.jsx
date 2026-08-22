@@ -22,6 +22,7 @@ import StoreModal from "./components/StoreModal.jsx";
 import OwnerLogin from "./components/OwnerLogin.jsx";
 import SplashScreen from "./components/SplashScreen.jsx";
 import { unlockAudio } from "./giftEngine/core/SoundManager.js";
+import { prewarmGifts } from "./giftEngine/core/assetProbe.js";
 import { useReactions } from "./useReactions.js";
 import { getUid, getProfile, fetchWallet } from "./wallet.js";
 import { registerSocial } from "./lobby/social.js";
@@ -117,7 +118,10 @@ export default function App() {
       giftStageRef.current?.enqueue(payload);
     });
 
-    socket.on("gift:list", (list) => setGifts(list));
+    socket.on("gift:list", (list) => {
+      setGifts(list);
+      prewarmGifts(list); // افحص ملفات الفيديو/الصوت مسبقاً حتى يعمل التراجع بسلاسة
+    });
 
     // تفاعل جديد فوق أحد المقاعد — يُدفع لطابور المقعد
     socket.on("reaction:new", (payload) => reactions.push(payload));

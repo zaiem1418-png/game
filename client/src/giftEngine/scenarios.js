@@ -200,6 +200,45 @@ export const SCENARIOS = {
     }
   },
 
+  // ══ هليكوبتر: تقترب من الأعلى، تحوم في المنتصف مع دوّار يهزّ وغبار downwash، ثم تغادر ══
+  helicopter(api, t) {
+    api.bg("sky");
+    const [cx] = api.px(0.5, 0);
+    const hoverY = api.H * 0.36;
+    const groundY = api.H * 0.82;
+    // صوت الدوّار يبدأ فوراً ويستمر (blade slap)
+    api.once("rotor", () => api.sound("helicopter", 0.95));
+    let x, y, tilt;
+    if (t < 0.32) {
+      // دخول قطري من أعلى اليمين
+      const p = phase(t, 0, 0.32);
+      x = lerp(api.W * 1.2, cx, E.easeOutCubic(p));
+      y = lerp(-api.H * 0.15, hoverY, E.easeOutCubic(p));
+      tilt = lerp(0.25, 0.04, p);
+    } else if (t < 0.72) {
+      // تحويم: تمايل خفيف + اهتزاز دوّار
+      const h = phase(t, 0.32, 0.72);
+      x = cx + Math.sin(h * Math.PI * 4) * api.W * 0.03;
+      y = hoverY + Math.sin(h * Math.PI * 6) * 6;
+      tilt = Math.sin(h * Math.PI * 4) * 0.04;
+      // غبار/رياح الدوّار على الأرض
+      if (Math.random() < 0.7) api.emit("dust", cx + (Math.random() - 0.5) * api.W * 0.5, groundY, 2, { power: 0.7 });
+      api.shake(1.5 + Math.sin(t * 40) * 0.8); // اهتزاز الدوّار
+    } else {
+      // مغادرة صاعدة لليسار
+      const p = phase(t, 0.72, 1);
+      x = lerp(cx, -api.W * 0.35, E.easeInCubic(p));
+      y = lerp(hoverY, -api.H * 0.1, E.easeInCubic(p));
+      tilt = lerp(0.04, -0.25, p);
+    }
+    const opacity = clamp01(Math.min(t * 8, (1 - t) * 8));
+    // اهتزاز أفقي سريع = دوران الدوّار الرئيسي
+    const blade = Math.sin(t * 90) * 2;
+    api.hero({ x: x + blade, y, scale: 1.15, opacity, rot: tilt, glow: 0.25 });
+    // شعاع كشّاف أسفل الطائرة أثناء التحويم
+    if (within(t, 0.35, 0.7)) api.beam(cx, y + 40, 0.2 + 0.1 * Math.sin(t * 12));
+  },
+
   // ══ سيارة رياضية: تندفع داخلة، دخان إطارات، توقف بفلاش وإضاءة ══
   sportscar(api, t) {
     api.bg("speed");
@@ -385,6 +424,26 @@ export const SCENARIOS = {
       api.emit("confetti", x, api.H + 10, 1);
       api.emit("glitter", cx + sway, y + 30, 1, { spread: 30 });
     }
+  },
+
+  // ══ حوت: يعبر بقوس صاعد، ينفث الماء عند القمة، ويغطس برذاذ ══
+  whale(api, t) {
+    api.bg("sky");
+    const x = lerp(-api.W * 0.3, api.W * 1.3, E.easeInOutQuad(t));
+    // قوس: يصعد ثم يغطس
+    const arc = Math.sin(t * Math.PI) * api.H * 0.28;
+    const y = api.H * 0.7 - arc;
+    const opacity = clamp01(Math.min(t * 6, (1 - t) * 6));
+    const rot = Math.cos(t * Math.PI) * 0.18; // ميل مع القوس
+    api.hero({ x, y, scale: 1.3, opacity, rot, glow: 0.3 });
+    api.once("s", () => api.sound("whale", 0.9));
+    // نفث الماء عند قمة القوس
+    if (within(t, 0.44, 0.56)) {
+      api.emit("trail", x, y - 60, 3, {});
+      api.emit("glitter", x + (Math.random() - 0.5) * 40, y - 70, 2, { spread: 10 });
+    }
+    // رذاذ عند الدخول/الغطس
+    if (t < 0.12 || t > 0.88) api.emit("trail", x, api.H * 0.72, 3);
   },
 
   // ══ مجرّة: دوامة كونية تتوسّع وتلمع ══

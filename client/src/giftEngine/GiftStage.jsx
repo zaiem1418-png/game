@@ -10,6 +10,7 @@ import { playSound, unlockAudio } from "./core/SoundManager.js";
 import { lerp, phase, clamp01 } from "./core/easing.js";
 import { Easing } from "./core/easing.js";
 import { MediaRenderer } from "./renderers/MediaRenderers.jsx";
+import { known as assetKnown, markMissing } from "./core/assetProbe.js";
 
 const RARITY = {
   common: { label: "عادية", color: "#9fb0c9" },
@@ -30,6 +31,7 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
   const [playing, setPlaying] = useState(null); // الـpayload الجاري عرضه
   const [combo, setCombo] = useState(1);
   const [queueLen, setQueueLen] = useState(0);
+  const [mediaMode, setMediaMode] = useState(false); // true = عرض ملف MP4/Lottie حقيقي
 
   const canvasRef = useRef(null);
   const heroRef = useRef(null);
@@ -105,14 +107,27 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
 
   function startPlay(payload) {
     const gift = payload.gift;
+    // هل نعرض ملف وسائط حقيقياً؟
+    //  - أصل محلي (/gifts/..): نعتمد فحص الوجود (probe) لتفادي وميض ملف مفقود.
+    //  - أصل بعيد على CDN (http..): لا يمكن فحصه بـfetch بسبب CORS، لكن وسم <video>/<img>
+    //    يحمّل عبر الأصول بلا مشاكل → نكون متفائلين ونعتمد onError للتراجع.
+    const isRemote = /^https?:\/\//.test(gift.asset || "");
+    const useMedia =
+      gift.renderer !== "scenario" &&
+      !!gift.asset &&
+      (isRemote ? true : assetKnown(gift.asset) !== false);
+
     setPlaying(payload);
     setCombo(payload.combo || 1);
+    setMediaMode(useMedia);
     psRef.current.clear();
 
     const st = {
       payload,
       gift,
-      scenario: gift.renderer === "scenario" ? getScenario(gift.scenario) : null,
+      // السيناريو متاح دائماً كتراجع مضمون (يعمل بلا أي ملفات)
+      scenario: getScenario(gift.scenario || "default"),
+      mediaMode: useMedia,
       duration: gift.duration || 4000,
       start: performance.now(),
       once: new Set(),
@@ -126,11 +141,30 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
     // خلفية المشهد
     if (bgRef.current) bgRef.current.style.background = "transparent";
 
-    // صوت افتتاحي لهدايا الوسائط (السيناريوهات تشغّل صوتها بنفسها داخلياً)
-    if (gift.renderer !== "scenario" && gift.sound) {
-      playSound(gift.sound, gift.volume ?? 0.8);
+    // الصوت الافتتاحي:
+    //  - فيديو بصوت مدمج (assetAudio افتراضياً true): لا نشغّل شيئاً (الصوت داخل الملف).
+    //  - فيديو صامت/لقطة واقعية (assetAudio=false) أو Lottie/GIF: نشغّل ملف صوت حقيقياً إن وُجد وإلا synth.
+    //  - وضع السيناريو: السيناريوهات تشغّل أصواتها بنفسها عبر api.sound.
+    const videoHasOwnAudio = gift.renderer === "video" && gift.assetAudio !== false;
+    if (useMedia && !videoHasOwnAudio) {
+      const url = gift.sounds?.main || (gift.sound && gift.sounds?.[gift.sound]);
+      playSound(url || gift.sound, gift.volume ?? 0.8, gift.sound);
     }
 
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(loop);
+  }
+
+  // فشل تحميل/عرض ملف الوسائط (غير موجود بعد أو تالف) → تراجع فوري للسيناريو المُولّد.
+  function onMediaError() {
+    const st = playStateRef.current;
+    if (!st || !st.mediaMode) return;
+    if (st.gift.asset) markMissing(st.gift.asset);
+    st.mediaMode = false;
+    st.start = performance.now(); // أعد توقيت السيناريو من البداية
+    st.once.clear();
+    psRef.current.clear();
+    setMediaMode(false);
     cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(loop);
   }
@@ -192,7 +226,11 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
           fn();
         }
       },
-      sound: (id, vol = 1) => playSound(id, clamp01(vol * (st.gift.volume ?? 0.8))),
+      sound: (id, vol = 1) => {
+        // يفضّل ملف صوت حقيقياً إن عرّفته الهدية لهذا الحدث (gift.sounds[id])، وإلا مؤثّر synth.
+        const url = st.gift.sounds && st.gift.sounds[id];
+        playSound(url || id, clamp01(vol * (st.gift.volume ?? 0.8)), id);
+      },
     };
     return { api, get: () => ({ hero, beam, bgName, textVal, textStyle }) };
   }
@@ -209,7 +247,7 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
     st.shake = 0;
     let frameOut = { hero: null, beam: null, bgName: null, textVal: "", textStyle: null };
 
-    if (st.scenario) {
+    if (!st.mediaMode && st.scenario) {
       const built = buildApi(st, t);
       st.scenario(built.api, t);
       frameOut = built.get();
@@ -314,7 +352,7 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
 
   const gift = playing.gift;
   const rar = RARITY[gift.rarity] || RARITY.common;
-  const isMedia = gift.renderer !== "scenario";
+  const isMedia = mediaMode;
 
   return (
     <div className="gx-stage" ref={stageRef}>
@@ -330,7 +368,7 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
       {/* هدايا الوسائط */}
       {isMedia && (
         <div className="gx-media-wrap">
-          <MediaRenderer key={playing.id} gift={gift} />
+          <MediaRenderer key={playing.id} gift={gift} onError={onMediaError} />
         </div>
       )}
 

@@ -16,3 +16,9 @@ server/tasks.json
 server/competitions.json
 server/shop.json
 server/vip.json
+
+# أصول الهدايا المرفوعة (محتوى مستخدم)
+server/uploads/
+
+# فيديوهات الهدايا تُستضاف على GitHub Releases (CDN) لا في المستودع
+client/public/gifts/*.mp4

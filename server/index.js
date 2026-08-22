@@ -8,6 +8,9 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
+import { writeFileSync, mkdirSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join, extname } from "path";
 import { AccessToken } from "livekit-server-sdk";
 import { giftStore } from "./giftStore.js";
 import { walletStore } from "./walletStore.js";
@@ -159,6 +162,57 @@ app.post("/api/admin/gifts-reset", requireAdmin, (_req, res) => {
   broadcastGiftList();
   res.json(giftStore.all());
 });
+
+// ===== رفع أصول الهدايا (فيديو/Lottie/صوت) من لوحة الإدارة =====
+// تُخزَّن على قرص السيرفر وتُقدَّم عبر /uploads، والرابط المُعاد مطلق (absolute)
+// حتى يعمل من أصل العميل المختلف. ملاحظة: على استضافة بلا قرص دائم (مثل Render free)
+// تُمسح الملفات عند إعادة النشر — استخدم قرصاً دائماً للإنتاج.
+const __dirnameSrv = dirname(fileURLToPath(import.meta.url));
+const UPLOADS_DIR = join(__dirnameSrv, "uploads");
+const ALLOWED_EXT = {
+  gifts: [".mp4", ".webm", ".json", ".gif", ".riv"],
+  sounds: [".mp3", ".wav", ".ogg", ".m4a", ".aac"],
+};
+try {
+  mkdirSync(join(UPLOADS_DIR, "gifts"), { recursive: true });
+  mkdirSync(join(UPLOADS_DIR, "sounds"), { recursive: true });
+} catch {}
+
+app.set("trust proxy", true); // ليكون req.protocol=https خلف بروكسي الاستضافة
+app.use("/uploads", express.static(UPLOADS_DIR, { maxAge: "7d" }));
+
+function safeName(name) {
+  return String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_.-]/g, "_")
+    .replace(/_+/g, "_")
+    .slice(0, 60);
+}
+
+app.post(
+  "/api/admin/upload",
+  requireAdmin,
+  express.raw({ type: "*/*", limit: "30mb" }),
+  (req, res) => {
+    try {
+      const kind = req.query.kind === "sounds" ? "sounds" : "gifts";
+      let name = safeName(req.query.name);
+      if (!name) return res.status(400).json({ error: "اسم الملف مطلوب" });
+      const ext = extname(name).toLowerCase();
+      if (!ALLOWED_EXT[kind].includes(ext)) {
+        return res.status(400).json({ error: `صيغة غير مسموحة (${kind}): ${ext || "بلا امتداد"}` });
+      }
+      if (!req.body || !req.body.length) return res.status(400).json({ error: "الملف فارغ" });
+
+      writeFileSync(join(UPLOADS_DIR, kind, name), req.body);
+      const rel = `/uploads/${kind}/${name}`;
+      const base = process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`;
+      res.json({ ok: true, url: `${base}${rel}`, path: rel, bytes: req.body.length });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  }
+);
 
 function broadcastGiftList() {
   io.emit("gift:list", giftStore.all());
