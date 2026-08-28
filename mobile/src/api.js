@@ -7,6 +7,25 @@ async function jget(path) {
   return res.json();
 }
 
+async function jpost(path, body) {
+  const res = await fetch(`${SERVER_URL}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body || {}),
+  });
+  let data = null;
+  try {
+    data = await res.json();
+  } catch {}
+  if (!res.ok) throw new Error((data && data.error) || `POST ${path} → ${res.status}`);
+  return data;
+}
+
+// دخول مالك اللعبة بكلمة السر — يمنحه رصيداً لانهائياً (نفس /api/owner/login في الويب).
+export function ownerLogin(uid, key) {
+  return jpost("/api/owner/login", { uid, key });
+}
+
 // قائمة الغرف الصوتية (نفس /api/rooms في الويب).
 export function fetchRooms(q = "") {
   const qs = q ? `?q=${encodeURIComponent(q)}` : "";

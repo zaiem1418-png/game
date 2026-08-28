@@ -12,12 +12,27 @@ import FriendsModal from "./modals/FriendsModal";
 import CourtModal from "./modals/CourtModal";
 import MomentsModal from "./modals/MomentsModal";
 import SettingsModal from "./modals/SettingsModal";
+import OwnerLoginModal from "./modals/OwnerLoginModal";
 
 // شاشة «أنا» — تربط نوافذ المتجر/VIP/المهام (منقولة من الويب).
 export default function ProfileScreen({ identity, wallet, onEditProfile, onWalletUpdate }) {
   const name = identity?.name || "زائر";
   const initial = name.trim().slice(0, 1).toUpperCase();
+  const owner = !!wallet?.infinite;
   const [modal, setModal] = useState(null); // "tasks" | "shop" | "vip"
+  const [ownerOpen, setOwnerOpen] = useState(false); // نافذة دخول المالك (نقرة مزدوجة على الأفاتار)
+  const lastTap = React.useRef(0);
+
+  // نقرة مزدوجة على الأفاتار تفتح دخول المالك (مطابق للويب)
+  function onAvatarPress() {
+    const now = Date.now();
+    if (now - lastTap.current < 400) {
+      lastTap.current = 0;
+      setOwnerOpen(true);
+    } else {
+      lastTap.current = now;
+    }
+  }
 
   const fmt = (n) => (n == null ? null : n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, "") + "K" : String(n));
   const stats = [
@@ -43,9 +58,11 @@ export default function ProfileScreen({ identity, wallet, onEditProfile, onWalle
   return (
     <ScrollView style={styles.fill} contentContainerStyle={{ paddingBottom: 30 }}>
       <LinearGradient colors={["#123840", "#0c242a"]} style={styles.header}>
-        <LinearGradient colors={["#3fd3ac", "#1f9a7c"]} style={styles.av}>
-          <Text style={styles.avTxt}>{initial}</Text>
-        </LinearGradient>
+        <Pressable onPress={onAvatarPress}>
+          <LinearGradient colors={owner ? ["#ffd76a", "#e0a52c"] : ["#3fd3ac", "#1f9a7c"]} style={styles.av}>
+            <Text style={styles.avTxt}>{owner ? "👑" : initial}</Text>
+          </LinearGradient>
+        </Pressable>
         <Text style={styles.name}>{name}</Text>
         <Pressable style={styles.editBtn} onPress={onEditProfile}>
           <Text style={styles.editTxt}>تعديل الملف</Text>
@@ -82,6 +99,12 @@ export default function ProfileScreen({ identity, wallet, onEditProfile, onWalle
       <CourtModal visible={modal === "court"} onClose={() => setModal(null)} />
       <MomentsModal visible={modal === "moments"} onClose={() => setModal(null)} />
       <SettingsModal visible={modal === "settings"} onClose={() => setModal(null)} identity={identity} onEditProfile={onEditProfile} />
+      <OwnerLoginModal
+        visible={ownerOpen}
+        onClose={() => setOwnerOpen(false)}
+        uid={identity?.uid}
+        onSuccess={(w) => onWalletUpdate?.(w)}
+      />
     </ScrollView>
   );
 }
