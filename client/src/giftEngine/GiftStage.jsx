@@ -31,7 +31,11 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
   const [playing, setPlaying] = useState(null); // الـpayload الجاري عرضه
   const [combo, setCombo] = useState(1);
   const [queueLen, setQueueLen] = useState(0);
-  const [mediaMode, setMediaMode] = useState(false); // true = عرض ملف MP4/Lottie حقيقي
+  // نموذج العرض: السيناريو المُولّد هو القاعدة المرئية دائماً (يظهر فوراً بلا شبكة).
+  // إن كانت الهدية فيديو/Lottie، نُحمّله في الخلفية ونستبدل السيناريو به فقط عندما يصبح
+  // جاهزاً فعلاً (loadeddata) — فلا تظهر شاشة فارغة إن كان الملف بطيئاً أو فشل.
+  const [showVideo, setShowVideo] = useState(false); // ركّب عنصر الوسائط (تحميل مسبق)
+  const [videoReady, setVideoReady] = useState(false); // بدّل السيناريو←الفيديو
 
   const canvasRef = useRef(null);
   const heroRef = useRef(null);
@@ -112,22 +116,27 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
     //  - أصل بعيد على CDN (http..): لا يمكن فحصه بـfetch بسبب CORS، لكن وسم <video>/<img>
     //    يحمّل عبر الأصول بلا مشاكل → نكون متفائلين ونعتمد onError للتراجع.
     const isRemote = /^https?:\/\//.test(gift.asset || "");
-    const useMedia =
+    // هل نحاول عرض ملف وسائط؟ (لا يزال السيناريو يعمل كقاعدة حتى يصبح الملف جاهزاً)
+    const wantMedia =
       gift.renderer !== "scenario" &&
       !!gift.asset &&
       (isRemote ? true : assetKnown(gift.asset) !== false);
 
     setPlaying(payload);
     setCombo(payload.combo || 1);
-    setMediaMode(useMedia);
+    setShowVideo(wantMedia);
+    setVideoReady(false);
     psRef.current.clear();
 
     const st = {
       payload,
       gift,
-      // السيناريو متاح دائماً كتراجع مضمون (يعمل بلا أي ملفات)
+      // السيناريو متاح دائماً كقاعدة مرئية مضمونة (يعمل بلا أي ملفات)
       scenario: getScenario(gift.scenario || "default"),
-      mediaMode: useMedia,
+      wantMedia,
+      swapped: false, // صار الفيديو جاهزاً وحلّ محل السيناريو؟
+      // للهدايا فيديو: نُسكِت أصوات السيناريو لأن الصوت الحقيقي يُشغّل مرة واحدة عند البداية
+      silentScenario: gift.renderer === "video",
       duration: gift.duration || 4000,
       start: performance.now(),
       once: new Set(),
@@ -144,35 +153,49 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
     // الصوت الافتتاحي:
     //  - فيديو بصوت مدمج (assetAudio افتراضياً true): لا نشغّل شيئاً (الصوت داخل الملف).
     //  - فيديو صامت/لقطة واقعية (assetAudio=false) أو Lottie/GIF: نشغّل ملف صوت حقيقياً إن وُجد وإلا synth.
-    //  - وضع السيناريو: السيناريوهات تشغّل أصواتها بنفسها عبر api.sound.
+    //  - سيناريو خالص: السيناريو يشغّل صوته بنفسه عبر api.sound.
     const videoHasOwnAudio = gift.renderer === "video" && gift.assetAudio !== false;
-    if (useMedia && !videoHasOwnAudio) {
+    if (wantMedia && !videoHasOwnAudio) {
       const url = gift.sounds?.main || (gift.sound && gift.sounds?.[gift.sound]);
       playSound(url || gift.sound, gift.volume ?? 0.8, gift.sound);
     }
 
     cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(loop);
+    // مؤقّت أمان: يضمن انتهاء الهدية حتى لو تعطّلت حلقة rAF (خلفية/موبايل)،
+    // فلا يعلق الطابور ويمنع ظهور بقية الهدايا.
+    st.safety = setTimeout(() => finishPlay(), st.duration + 1500);
   }
 
-  // فشل تحميل/عرض ملف الوسائط (غير موجود بعد أو تالف) → تراجع فوري للسيناريو المُولّد.
+  // الفيديو/Lottie أصبح جاهزاً (أول إطار) → بدّل من السيناريو إلى الملف الحقيقي.
+  function onMediaReady() {
+    const st = playStateRef.current;
+    if (!st || !st.wantMedia || st.swapped) return;
+    st.swapped = true;
+    setVideoReady(true);
+  }
+
+  // فشل تحميل/عرض ملف الوسائط (غير موجود أو تالف أو بطيء) → أبقِ السيناريو المُولّد يعمل.
   function onMediaError() {
     const st = playStateRef.current;
-    if (!st || !st.mediaMode) return;
+    if (!st || !st.wantMedia) return;
     if (st.gift.asset) markMissing(st.gift.asset);
-    st.mediaMode = false;
-    st.start = performance.now(); // أعد توقيت السيناريو من البداية
-    st.once.clear();
-    psRef.current.clear();
-    setMediaMode(false);
-    cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(loop);
+    st.wantMedia = false;
+    st.swapped = false;
+    setShowVideo(false);
+    setVideoReady(false);
+    // السيناريو مستمر أصلاً في الحلقة (لم نبدّل) → لا حاجة لإعادة تشغيل شيء
   }
 
   function finishPlay() {
+    const st = playStateRef.current;
+    if (!st) return; // حماية من الاستدعاء المزدوج (rAF + مؤقّت الأمان)
+    if (st.safety) clearTimeout(st.safety);
     cancelAnimationFrame(rafRef.current);
     playStateRef.current = null;
     setPlaying(null);
+    setShowVideo(false);
+    setVideoReady(false);
     psRef.current.clear();
     // نظّف المسرح
     if (stageRef.current) stageRef.current.style.transform = "";
@@ -227,6 +250,8 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
         }
       },
       sound: (id, vol = 1) => {
+        // في هدايا الفيديو: الصوت الحقيقي يُشغَّل مرة عند البداية → لا نكرّره من السيناريو
+        if (st.silentScenario) return;
         // يفضّل ملف صوت حقيقياً إن عرّفته الهدية لهذا الحدث (gift.sounds[id])، وإلا مؤثّر synth.
         const url = st.gift.sounds && st.gift.sounds[id];
         playSound(url || id, clamp01(vol * (st.gift.volume ?? 0.8)), id);
@@ -242,12 +267,19 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
     if (!sizeRef.current.w || !sizeRef.current.h) resize();
     const t = clamp01((now - st.start) / st.duration);
     const { w: W, h: H, dpr } = sizeRef.current;
-    const ctx = canvasRef.current.getContext("2d");
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      // المسرح لم يُركّب بعد في DOM (نادر) — أعد الجدولة بدل رمي استثناء يوقف الحلقة
+      rafRef.current = requestAnimationFrame(loop);
+      return;
+    }
+    const ctx = canvas.getContext("2d");
 
     st.shake = 0;
     let frameOut = { hero: null, beam: null, bgName: null, textVal: "", textStyle: null };
 
-    if (!st.mediaMode && st.scenario) {
+    // شغّل السيناريو كقاعدة مرئية ما لم يحلّ الفيديو محلّه بعد أن أصبح جاهزاً
+    if (!st.swapped && st.scenario) {
       const built = buildApi(st, t);
       st.scenario(built.api, t);
       frameOut = built.get();
@@ -352,28 +384,27 @@ const GiftStage = forwardRef(function GiftStage(_props, ref) {
 
   const gift = playing.gift;
   const rar = RARITY[gift.rarity] || RARITY.common;
-  const isMedia = mediaMode;
 
   return (
     <div className="gx-stage" ref={stageRef}>
       <div className="gx-bg" ref={bgRef} />
 
-      {/* البطل: سيناريو emoji */}
-      {!isMedia && (
+      {/* قاعدة السيناريو (emoji) — تظهر فوراً وتبقى حتى يصبح الفيديو جاهزاً (فلا شاشة فارغة) */}
+      {!videoReady && (
         <div className="gx-hero" ref={heroRef}>
           {gift.emoji}
         </div>
       )}
 
-      {/* هدايا الوسائط */}
-      {isMedia && (
-        <div className="gx-media-wrap">
-          <MediaRenderer key={playing.id} gift={gift} onError={onMediaError} />
+      {/* وسائط حقيقية: تُحمّل في الخلفية (مخفية) ثم تظهر لحظة جهوزية أول إطار */}
+      {showVideo && (
+        <div className="gx-media-wrap" style={{ opacity: videoReady ? 1 : 0 }}>
+          <MediaRenderer key={playing.id} gift={gift} onReady={onMediaReady} onError={onMediaError} />
         </div>
       )}
 
-      {/* كانفاس الجسيمات/الإضاءة فوق البطل */}
-      <canvas className="gx-canvas" ref={canvasRef} />
+      {/* كانفاس الجسيمات/الإضاءة — يُخفى عند عرض الفيديو */}
+      <canvas className="gx-canvas" ref={canvasRef} style={{ opacity: videoReady ? 0 : 1 }} />
 
       {/* نص العدّ التنازلي */}
       <div className="gx-bigtext" ref={textRef} />

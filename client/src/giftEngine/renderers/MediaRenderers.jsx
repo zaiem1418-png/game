@@ -25,7 +25,7 @@ const LOTTIE_CDN = "https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lot
 const RIVE_CDN = "https://unpkg.com/@rive-app/canvas@2.21.6/rive.js";
 
 // ── Lottie ──────────────────────────────────────────────
-export function LottieRenderer({ gift, onError }) {
+export function LottieRenderer({ gift, onError, onReady }) {
   const box = useRef(null);
   useEffect(() => {
     let anim = null,
@@ -40,6 +40,7 @@ export function LottieRenderer({ gift, onError }) {
           autoplay: true,
           path: gift.asset,
         });
+        anim.addEventListener("DOMLoaded", () => onReady && onReady());
         // إن فشل تحميل ملف الـJSON → تراجع للسيناريو
         anim.addEventListener("data_failed", () => onError && onError());
       })
@@ -57,7 +58,7 @@ export function LottieRenderer({ gift, onError }) {
 }
 
 // ── Rive ────────────────────────────────────────────────
-export function RiveRenderer({ gift, onError }) {
+export function RiveRenderer({ gift, onError, onReady }) {
   const canvas = useRef(null);
   useEffect(() => {
     let r = null,
@@ -70,7 +71,10 @@ export function RiveRenderer({ gift, onError }) {
           canvas: canvas.current,
           autoplay: true,
           layout: new rive.Layout({ fit: rive.Fit.Contain, alignment: rive.Alignment.Center }),
-          onLoad: () => r.resizeDrawingSurfaceToCanvas(),
+          onLoad: () => {
+            r.resizeDrawingSurfaceToCanvas();
+            onReady && onReady();
+          },
           onLoadError: () => onError && onError(),
         });
       })
@@ -90,7 +94,7 @@ export function RiveRenderer({ gift, onError }) {
 }
 
 // ── Video (MP4/WebM) ────────────────────────────────────
-export function VideoRenderer({ gift, onError }) {
+export function VideoRenderer({ gift, onError, onReady }) {
   const ref = useRef(null);
   // لقطة واقعية بلا صوت مفيد (assetAudio=false) → اكتم الفيديو ودع المحرك يشغّل الصوت الحقيقي المنفصل
   const silent = gift.assetAudio === false;
@@ -104,6 +108,8 @@ export function VideoRenderer({ gift, onError }) {
       v.muted = true;
       v.play().catch(() => {});
     });
+    // لو كان الإطار الأول جاهزاً فعلاً قبل ربط المستمعات
+    if (v.readyState >= 2 && onReady) onReady();
   }, [gift.asset, gift.volume, silent]);
 
   return (
@@ -116,33 +122,36 @@ export function VideoRenderer({ gift, onError }) {
       muted={silent}
       loop={!!gift.loopAsset}
       preload="auto"
+      onLoadedData={() => onReady && onReady()}
+      onCanPlay={() => onReady && onReady()}
       onError={() => onError && onError()}
     />
   );
 }
 
 // ── GIF ─────────────────────────────────────────────────
-export function GifRenderer({ gift, onError }) {
+export function GifRenderer({ gift, onError, onReady }) {
   return (
     <img
       className="gx-media gx-gif"
       src={gift.asset}
       alt={gift.name}
+      onLoad={() => onReady && onReady()}
       onError={() => onError && onError()}
     />
   );
 }
 
-export function MediaRenderer({ gift, onError }) {
+export function MediaRenderer({ gift, onError, onReady }) {
   switch (gift.renderer) {
     case "lottie":
-      return <LottieRenderer gift={gift} onError={onError} />;
+      return <LottieRenderer gift={gift} onError={onError} onReady={onReady} />;
     case "rive":
-      return <RiveRenderer gift={gift} onError={onError} />;
+      return <RiveRenderer gift={gift} onError={onError} onReady={onReady} />;
     case "video":
-      return <VideoRenderer gift={gift} onError={onError} />;
+      return <VideoRenderer gift={gift} onError={onError} onReady={onReady} />;
     case "gif":
-      return <GifRenderer gift={gift} onError={onError} />;
+      return <GifRenderer gift={gift} onError={onError} onReady={onReady} />;
     default:
       return null;
   }
