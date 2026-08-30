@@ -18,16 +18,18 @@ const SND = {
   baymax: require("../../assets/sounds/chime.wav"), crown: require("../../assets/sounds/fanfare.wav"),
   heart: require("../../assets/sounds/chime.wav"), loveletter: require("../../assets/sounds/chime.wav"),
   kissyou: require("../../assets/sounds/chime.wav"), steak: require("../../assets/sounds/pop.wav"),
-  fireworks: require("../../assets/sounds/fireworks_long.wav"), oud: require("../../assets/sounds/oud.wav"),
+  fireworks: require("../../assets/sounds/fireworks.mp3"), oud: require("../../assets/sounds/oud.mp3"),
   moneybouquet: require("../../assets/sounds/cash.wav"), balloons: require("../../assets/sounds/party.wav"),
   rocket: require("../../assets/sounds/rocket.mp3"), plane: require("../../assets/sounds/jet.mp3"),
-  helicopter: require("../../assets/sounds/helicopter.mp3"), lion: require("../../assets/sounds/roar_big.wav"),
+  helicopter: require("../../assets/sounds/helicopter.mp3"), lion: require("../../assets/sounds/lion_roar.mp3"),
   tiger: require("../../assets/sounds/tiger_roar.mp3"), ferrari: require("../../assets/sounds/supercar_engine.mp3"),
-  goldencar: require("../../assets/sounds/supercar_engine.mp3"), castle: require("../../assets/sounds/build.wav"),
-  diamond: require("../../assets/sounds/sparkle.wav"), dragon: require("../../assets/sounds/dragon_roar.mp3"),
-  phoenix: require("../../assets/sounds/phoenix.wav"), yacht: require("../../assets/sounds/yacht_horn.wav"),
-  whale: require("../../assets/sounds/whale.wav"), galaxy: require("../../assets/sounds/cosmic.wav"),
+  goldencar: require("../../assets/sounds/supercar_engine.mp3"), castle: require("../../assets/sounds/sparkle.mp3"),
+  diamond: require("../../assets/sounds/sparkle.mp3"), dragon: require("../../assets/sounds/dragon_roar.mp3"),
+  phoenix: require("../../assets/sounds/phoenix.mp3"), yacht: require("../../assets/sounds/yacht_horn.mp3"),
+  whale: require("../../assets/sounds/whale.mp3"), galaxy: require("../../assets/sounds/cosmic.wav"),
 };
+// هدايا بصوت ممتدّ يُكرَّر طوال العرض (طائرات/محرّكات/نار)
+const LOOP_SND = new Set(["fireworks", "helicopter", "ferrari", "goldencar", "plane", "galaxy", "rocket"]);
 
 const PALETTE = {
   legendary: ["#2a1150", "#7b2ff7", "#ffb300"],
@@ -46,7 +48,8 @@ function sceneFor(def) {
   if (id === "fireworks" || s === "fireworksShow") return "fireworks";
   if (id === "moneybouquet" || s === "moneyRain") return "rain";
   if (["heart", "kiss", "loveletter", "kissyou"].includes(id) || s.indexOf("heart") >= 0) return "hearts";
-  if (["crown", "diamond", "castle", "galaxy", "balloons", "oud"].includes(id)) return "sparkle";
+  if (id === "galaxy") return "galaxy";
+  if (["crown", "diamond", "castle", "balloons", "oud"].includes(id)) return "sparkle";
   return "burst";
 }
 
@@ -78,7 +81,12 @@ export default function GiftOverlay({ event, onDone }) {
       try {
         await setAudioModeAsync({ playsInSilentMode: true });
         const src = SND[def.id];
-        if (src) { ap = createAudioPlayer(src); ap.volume = def.volume == null ? 0.9 : Number(def.volume); ap.play(); }
+        if (src) {
+          ap = createAudioPlayer(src);
+          ap.volume = def.volume == null ? 0.9 : Number(def.volume);
+          if (LOOP_SND.has(def.id)) ap.loop = true; // صوت ممتدّ يُكرَّر
+          ap.play();
+        }
       } catch {}
     })();
     return () => { try { ap?.remove?.(); } catch {} };
@@ -223,7 +231,80 @@ function GiftScene({ scene, def }) {
   if (scene === "fireworks") return <FireworksScene emoji={emoji} />;
   if (scene === "rain") return <RainScene emoji="💵" mid={emoji} />;
   if (scene === "hearts") return <RainScene emoji="❤️" up mid={emoji} />;
+  if (scene === "galaxy") return <GalaxyScene />;
   return <BurstScene emoji={emoji} />;
+}
+
+// مجرّة حلزونية حقيقية: نواة متوهّجة + ذراعان حلزونيان من النجوم + كواكب تدور + نجوم متساقطة
+function GalaxyScene() {
+  const spin = useRef(new Animated.Value(0)).current;
+  const core = useRef(new Animated.Value(0)).current;
+  const shots = useMemo(() => Array.from({ length: 4 }, (_, i) => ({ delay: i * 900 + rnd(0, 400), y: rnd(-SH * 0.28, SH * 0.1), dir: Math.random() > 0.5 ? 1 : -1, v: new Animated.Value(0) })), []);
+  const stars = useMemo(() => {
+    const arr = [];
+    for (let arm = 0; arm < 2; arm++) {
+      for (let i = 0; i < 60; i++) {
+        const t = i / 60;
+        const r = 26 + t * 160;
+        const ang = arm * Math.PI + t * 4.6 * Math.PI;
+        arr.push({ x: Math.cos(ang) * r, y: Math.sin(ang) * r * 0.46, s: (1 - t * 0.5) * rnd(1.6, 3.4) + 0.8, o: 0.35 + 0.6 * (1 - t), c: t < 0.3 ? "#fff7e0" : t < 0.6 ? "#bcd4ff" : "#8aa0ff" });
+      }
+    }
+    return arr;
+  }, []);
+  // كواكب على مدارات (كل كوكب داخل غلاف يدور بسرعته)
+  const planets = useMemo(() => [
+    { r: 66, c: "#5ad1ff", s: 13, dur: 9000, ph: 0, v: new Animated.Value(0) },
+    { r: 118, c: "#ff9f43", s: 18, dur: 15000, ph: 2, v: new Animated.Value(0) },
+    { r: 160, c: "#c88bff", s: 10, dur: 22000, ph: 4, v: new Animated.Value(0) },
+  ], []);
+
+  useEffect(() => {
+    Animated.loop(Animated.timing(spin, { toValue: 1, duration: 26000, easing: Easing.linear, useNativeDriver: true })).start();
+    Animated.loop(Animated.sequence([
+      Animated.timing(core, { toValue: 1, duration: 1300, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      Animated.timing(core, { toValue: 0, duration: 1300, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+    ])).start();
+    planets.forEach((p) => Animated.loop(Animated.timing(p.v, { toValue: 1, duration: p.dur, easing: Easing.linear, useNativeDriver: true })).start());
+    shots.forEach((s) => Animated.loop(Animated.sequence([
+      Animated.delay(s.delay), Animated.timing(s.v, { toValue: 1, duration: 800, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+      Animated.timing(s.v, { toValue: 0, duration: 0, useNativeDriver: true }), Animated.delay(2400),
+    ])).start());
+  }, []);
+
+  const rot = spin.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] });
+  const coreSc = core.interpolate({ inputRange: [0, 1], outputRange: [1, 1.35] });
+  const coreOp = core.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] });
+
+  return (
+    <View style={styles.center}>
+      {/* النجوم المتساقطة */}
+      {shots.map((s, i) => {
+        const tx = s.v.interpolate({ inputRange: [0, 1], outputRange: [s.dir * -SW * 0.5, s.dir * SW * 0.5] });
+        const ty = s.v.interpolate({ inputRange: [0, 1], outputRange: [s.y, s.y + 80] });
+        const op = s.v.interpolate({ inputRange: [0, 0.2, 0.8, 1], outputRange: [0, 1, 1, 0] });
+        return <Animated.View key={"sh" + i} style={{ position: "absolute", width: 60, height: 2.5, borderRadius: 2, backgroundColor: "#fff", opacity: op, transform: [{ translateX: tx }, { translateY: ty }, { rotate: s.dir > 0 ? "18deg" : "-18deg" }] }} />;
+      })}
+      {/* قرص المجرّة الدوّار (النجوم الحلزونية) */}
+      <Animated.View style={[styles.center, { transform: [{ rotate: rot }] }]}>
+        {stars.map((st, i) => (
+          <View key={i} style={{ position: "absolute", width: st.s, height: st.s, borderRadius: st.s, backgroundColor: st.c, opacity: st.o, transform: [{ translateX: st.x }, { translateY: st.y }] }} />
+        ))}
+      </Animated.View>
+      {/* النواة المتوهّجة */}
+      <Animated.View style={{ position: "absolute", width: 70, height: 70, borderRadius: 35, backgroundColor: "#fff3c4", opacity: coreOp, transform: [{ scale: coreSc }] }} />
+      <Animated.View style={{ position: "absolute", width: 130, height: 130, borderRadius: 65, backgroundColor: "#ffd76a", opacity: 0.18, transform: [{ scale: coreSc }] }} />
+      {/* الكواكب على مداراتها */}
+      {planets.map((p, i) => {
+        const rr = p.v.interpolate({ inputRange: [0, 1], outputRange: [`${p.ph}rad`, `${p.ph + Math.PI * 2}rad`] });
+        return (
+          <Animated.View key={"pl" + i} style={[styles.center, StyleSheet.absoluteFill, { transform: [{ rotate: rr }] }]}>
+            <View style={{ position: "absolute", left: SW / 2 + p.r, width: p.s, height: p.s, borderRadius: p.s / 2, backgroundColor: p.c, borderWidth: 1, borderColor: "rgba(255,255,255,0.5)" }} />
+          </Animated.View>
+        );
+      })}
+    </View>
+  );
 }
 
 function bigStyle() { return { fontSize: 118 }; }
