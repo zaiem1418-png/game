@@ -14,6 +14,7 @@ import {
 import { socket } from "../socket";
 import { theme } from "../theme";
 import GiftSheet from "../components/GiftSheet";
+import GiftOverlay from "../components/GiftOverlay";
 import { VoiceManager } from "../voice";
 
 // شبكة المقاعد: مقعد واحد يعرض الأفاتار أو رقم المايك.
@@ -70,6 +71,7 @@ export default function RoomScreen({ identity, room, onLeave }) {
   const [text, setText] = useState("");
   const [connecting, setConnecting] = useState(true);
   const [giftOpen, setGiftOpen] = useState(false);
+  const [giftQueue, setGiftQueue] = useState([]); // طابور عرض الهدايا الواردة (واحدة تلو الأخرى)
   const chatRef = useRef(null);
   const voiceRef = useRef(null);
 
@@ -101,6 +103,10 @@ export default function RoomScreen({ identity, room, onLeave }) {
     function onWallet(w) {
       setWallet(w);
     }
+    // هدية واردة → أضِفها لطابور العرض (فيديو سينمائي أو سيناريو إيموجي)
+    function onGiftNew(payload) {
+      if (payload && payload.gift) setGiftQueue((q) => [...q, payload].slice(-6));
+    }
     function onInsufficient({ need, kind }) {
       Alert.alert("رصيد غير كافٍ", `تحتاج ${need} ${kind === "diamonds" ? "💎" : "🪙"}`);
     }
@@ -118,6 +124,7 @@ export default function RoomScreen({ identity, room, onLeave }) {
     socket.on("chat:new", onChatNew);
     socket.on("seat:speaking", onSpeaking);
     socket.on("wallet:update", onWallet);
+    socket.on("gift:new", onGiftNew);
     socket.on("wallet:insufficient", onInsufficient);
     socket.on("room:join:error", onJoinError);
     socket.on("room:closed", onRoomClosed);
@@ -147,6 +154,7 @@ export default function RoomScreen({ identity, room, onLeave }) {
       socket.off("chat:new", onChatNew);
       socket.off("seat:speaking", onSpeaking);
       socket.off("wallet:update", onWallet);
+      socket.off("gift:new", onGiftNew);
       socket.off("wallet:insufficient", onInsufficient);
       socket.off("room:join:error", onJoinError);
       socket.off("room:closed", onRoomClosed);
@@ -300,6 +308,15 @@ export default function RoomScreen({ identity, room, onLeave }) {
         onClose={() => setGiftOpen(false)}
         onSend={sendGift}
       />
+
+      {/* عرض الهدية الواردة (فيديو سينمائي أو سيناريو إيموجي) فوق كل شيء */}
+      {giftQueue[0] && (
+        <GiftOverlay
+          key={giftQueue[0].id}
+          event={giftQueue[0]}
+          onDone={() => setGiftQueue((q) => q.slice(1))}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 }

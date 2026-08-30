@@ -119,8 +119,8 @@
     "rarity": "rare",
     "priority": 2,
     "duration": 4000,
-    "renderer": "video",
-    "asset": "https://github.com/zaiem1418-png/game/releases/download/gift-assets-v1/crown.mp4",
+    "renderer": "scenario",
+    "asset": null,
     "scenario": "crown",
     "sound": "fanfare",
     "sounds": {
@@ -528,8 +528,8 @@
     "rarity": "legendary",
     "priority": 9,
     "duration": 7000,
-    "renderer": "video",
-    "asset": "https://github.com/zaiem1418-png/game/releases/download/gift-assets-v1/whale.mp4",
+    "renderer": "scenario",
+    "asset": null,
     "scenario": "whale",
     "sound": "whale",
     "sounds": {
