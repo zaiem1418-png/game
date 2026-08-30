@@ -124,7 +124,7 @@
     "scenario": "crown",
     "sound": "fanfare",
     "sounds": {
-      "fanfare": "/sounds/fanfare.mp3"
+      "fanfare": "/sounds/fanfare.wav"
     },
     "volume": 0.7,
     "shake": false,
@@ -209,7 +209,7 @@
     "scenario": "fireworksShow",
     "sound": "fireworks",
     "sounds": {
-      "fireworks": "/sounds/fireworks.mp3"
+      "fireworks": "/sounds/fireworks_long.wav"
     },
     "volume": 0.85,
     "shake": true,
@@ -279,8 +279,8 @@
     "sound": "rocket",
     "sounds": {
       "rocket": "/sounds/rocket.mp3",
-      "fireworks": "/sounds/fireworks.mp3",
-      "countdown": "/sounds/beep.mp3"
+      "fireworks": "/sounds/fireworks_long.wav",
+      "countdown": "/sounds/pop.wav"
     },
     "volume": 0.85,
     "shake": true,
@@ -343,8 +343,8 @@
     "scenario": "lion",
     "sound": "roar",
     "sounds": {
-      "roar": "/sounds/lion_roar.mp3",
-      "whoosh": "/sounds/whoosh.mp3"
+      "roar": "/sounds/roar_big.wav",
+      "whoosh": "/sounds/whoosh.wav"
     },
     "volume": 0.9,
     "shake": true,
@@ -366,7 +366,7 @@
     "sound": "roar",
     "sounds": {
       "roar": "/sounds/tiger_roar.mp3",
-      "whoosh": "/sounds/whoosh.mp3"
+      "whoosh": "/sounds/whoosh.wav"
     },
     "volume": 0.9,
     "shake": true,
@@ -387,7 +387,7 @@
     "scenario": "sportscar",
     "sound": "engine",
     "sounds": {
-      "engine": "/sounds/ferrari_engine.mp3"
+      "engine": "/sounds/supercar_engine.mp3"
     },
     "volume": 0.9,
     "shake": true,
@@ -429,7 +429,7 @@
     "scenario": "castle",
     "sound": "build",
     "sounds": {
-      "build": "/sounds/build.mp3"
+      "build": "/sounds/build.wav"
     },
     "volume": 0.85,
     "shake": true,
@@ -450,7 +450,7 @@
     "scenario": "diamond",
     "sound": "sparkle",
     "sounds": {
-      "sparkle": "/sounds/sparkle.mp3"
+      "sparkle": "/sounds/sparkle.wav"
     },
     "volume": 0.85,
     "shake": true,
@@ -492,7 +492,7 @@
     "scenario": "phoenix",
     "sound": "whoosh",
     "sounds": {
-      "whoosh": "/sounds/phoenix.mp3"
+      "whoosh": "/sounds/phoenix.wav"
     },
     "volume": 0.9,
     "shake": true,
@@ -513,7 +513,7 @@
     "scenario": "yacht",
     "sound": "horn",
     "sounds": {
-      "horn": "/sounds/yacht_horn.mp3"
+      "horn": "/sounds/yacht_horn.wav"
     },
     "volume": 0.85,
     "shake": true,
@@ -533,7 +533,7 @@
     "scenario": "whale",
     "sound": "whale",
     "sounds": {
-      "whale": "/sounds/whale.mp3"
+      "whale": "/sounds/whale.wav"
     },
     "volume": 0.9,
     "shake": true,
@@ -554,7 +554,7 @@
     "scenario": "galaxy",
     "sound": "cosmic",
     "sounds": {
-      "cosmic": "/sounds/cosmic.mp3"
+      "cosmic": "/sounds/cosmic.wav"
     },
     "volume": 0.9,
     "shake": true,
