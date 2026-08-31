@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<style>
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+  #sv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+</style>
+<script src="svga.min.js"></script>
+</head>
+<body>
+<canvas id="sv"></canvas>
+<script>
+(function () {
+  var name = (new URLSearchParams(location.search).get("g") || "rose").replace(/[^A-Za-z0-9_-]/g, "");
+  var canvas = document.getElementById("sv");
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function resize() { canvas.width = Math.floor(innerWidth * dpr); canvas.height = Math.floor(innerHeight * dpr); }
+  resize();
+  window.addEventListener("resize", resize);
+  try {
+    var parser = new SVGA.Parser("#sv");
+    parser.load(name + ".svga", function (videoItem) {
+      var player = new SVGA.Player("#sv");
+      try { player.setContentMode("AspectFit"); } catch (e) {}
+      player.loops = 0; // تكرار لانهائي
+      player.setVideoItem(videoItem);
+      player.startAnimation();
+    }, function () { /* فشل التحميل — تُبقى الشاشة شفافة والخلفية أسفلها تظهر */ });
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>

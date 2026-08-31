@@ -3,12 +3,23 @@ import { View, Text, StyleSheet, Animated, Dimensions, Easing, Pressable } from 
 import { LinearGradient } from "expo-linear-gradient";
 import { createAudioPlayer, setAudioModeAsync } from "expo-audio";
 import { useVideoPlayer, VideoView } from "expo-video";
+import { WebView } from "react-native-webview";
 
 const { width: SW, height: SH } = Dimensions.get("window");
 const rnd = (a, b) => a + Math.random() * (b - a);
 
+const CLIENT_ORIGIN = "https://game-hcsc.vercel.app";
 const BROKEN = new Set(["crown.mp4", "whale.mp4"]);
 const assetOk = (url) => !!url && !BROKEN.has(String(url).split("/").pop());
+
+// رسوم SVGA احترافية (نفس صيغة هدايا تيك توك/بيقو) — تُعرض عبر WebView.
+// نضيف ملفات .svga في client/public/gifts ونربطها هنا لتغطية مزيد من الهدايا.
+const SVGA_MAP = {
+  rose: "rose",
+  kiss: "heartbeat", heart: "heartbeat", loveletter: "heartbeat", kissyou: "heartbeat",
+  rocket: "Rocket",
+  ferrari: "posche", goldencar: "posche",
+};
 
 // أصوات مضمّنة محلياً (تعمل فوراً وبلا إنترنت)
 const SND = {
@@ -118,7 +129,8 @@ export default function GiftOverlay({ event, onDone }) {
   }, [wantVideo, player, videoOp, finish]);
 
   const shakeTx = shakeX.interpolate({ inputRange: [-1, 1], outputRange: [-8, 8] });
-  const showVideo = wantVideo && !videoFailed;
+  const svga = SVGA_MAP[def.id];
+  const showVideo = wantVideo && !videoFailed && !svga; // SVGA له الأولوية على الفيديو
 
   return (
     <Animated.View style={[styles.overlay, { opacity: fade }]}>
@@ -130,10 +142,25 @@ export default function GiftOverlay({ event, onDone }) {
       <LightRays tint={pal[2]} />
       <Confetti />
 
-      <Animated.View style={[StyleSheet.absoluteFill, styles.center, { transform: [{ translateX: shakeTx }] }]} pointerEvents="none">
-        <Halo color={pal[2]} />
-        <GiftScene scene={scene} def={def} />
-      </Animated.View>
+      {svga ? (
+        // رسم SVGA احترافي فوق الخلفية (شفاف)
+        <WebView
+          source={{ uri: CLIENT_ORIGIN + "/gifts/svga.html?g=" + svga }}
+          style={styles.webview}
+          containerStyle={styles.webview}
+          opaque={false}
+          scrollEnabled={false}
+          javaScriptEnabled
+          domStorageEnabled
+          androidLayerType="hardware"
+          pointerEvents="none"
+        />
+      ) : (
+        <Animated.View style={[StyleSheet.absoluteFill, styles.center, { transform: [{ translateX: shakeTx }] }]} pointerEvents="none">
+          <Halo color={pal[2]} />
+          <GiftScene scene={scene} def={def} />
+        </Animated.View>
+      )}
 
       {showVideo && (
         <Animated.View style={[StyleSheet.absoluteFill, { opacity: videoOp }]} pointerEvents="none">
@@ -464,6 +491,7 @@ function BurstScene({ emoji }) {
 const styles = StyleSheet.create({
   overlay: { ...StyleSheet.absoluteFillObject, zIndex: 999, alignItems: "center", justifyContent: "center" },
   center: { alignItems: "center", justifyContent: "center" },
+  webview: { ...StyleSheet.absoluteFillObject, backgroundColor: "transparent" },
   video: { width: SW, height: SH },
   rotor: { position: "absolute", top: 14, alignSelf: "center", width: 155, height: 12, borderRadius: 6, backgroundColor: "rgba(255,255,255,0.32)" },
   rotorV: { width: 12, height: 155, top: -56 },
