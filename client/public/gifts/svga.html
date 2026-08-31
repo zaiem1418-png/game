@@ -7,7 +7,6 @@
   html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
   #sv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 </style>
-<script src="svga.min.js"></script>
 </head>
 <body>
 <canvas id="sv"></canvas>
@@ -19,16 +18,46 @@
   function resize() { canvas.width = Math.floor(innerWidth * dpr); canvas.height = Math.floor(innerHeight * dpr); }
   resize();
   window.addEventListener("resize", resize);
-  try {
-    var parser = new SVGA.Parser("#sv");
-    parser.load(name + ".svga", function (videoItem) {
-      var player = new SVGA.Player("#sv");
-      try { player.setContentMode("AspectFit"); } catch (e) {}
-      player.loops = 0; // تكرار لانهائي
-      player.setVideoItem(videoItem);
-      player.startAnimation();
-    }, function () { /* فشل التحميل — تُبقى الشاشة شفافة والخلفية أسفلها تظهر */ });
-  } catch (e) {}
+
+  // احتياطي عبر CDN (نفس ملفات المستودعات العامة) إن تعذّر التحميل من نفس الأصل
+  var GH = "https://cdn.jsdelivr.net/gh/";
+  var FB = {
+    rose: GH + "svga/SVGA-Samples@master/rose.svga",
+    Rocket: GH + "svga/SVGA-Samples@master/Rocket.svga",
+    heartbeat: GH + "svga/SVGA-Samples@master/heartbeat.svga",
+    kingset: GH + "svga/SVGA-Samples@master/kingset.svga",
+    posche: GH + "svga/SVGA-Samples@master/posche.svga",
+    angel: GH + "svga/SVGA-Samples@master/angel.svga",
+    halloween: GH + "svga/SVGA-Samples@master/halloween.svga",
+    great: GH + "alhemora2727/giftSVGA@main/great.svga",
+    perfect: GH + "alhemora2727/giftSVGA@main/perfect.svga",
+    amazing: GH + "alhemora2727/giftSVGA@main/amazing.svga",
+    excellent: GH + "alhemora2727/giftSVGA@main/excellent.svga",
+  };
+  function start(videoItem) {
+    var player = new SVGA.Player("#sv");
+    try { player.setContentMode("AspectFit"); } catch (e) {}
+    player.loops = 0;
+    player.setVideoItem(videoItem);
+    player.startAnimation();
+  }
+  function tryLoad(url, onFail) {
+    try { new SVGA.Parser("#sv").load(url, start, onFail); } catch (e) { onFail && onFail(); }
+  }
+  function play() {
+    tryLoad(name + ".svga", function () { if (FB[name]) tryLoad(FB[name], function () {}); });
+  }
+
+  // حمّل مكتبة SVGA: نسخة محلية أولاً ثم CDN كاحتياط، وشغّل عند الجهوزية.
+  function loadLib(src, next) {
+    var s = document.createElement("script");
+    s.src = src; s.onload = function () { if (typeof SVGA !== "undefined") play(); else next && next(); };
+    s.onerror = function () { next && next(); };
+    document.head.appendChild(s);
+  }
+  loadLib("svga.min.js", function () {
+    loadLib("https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.2/build/svga.min.js", null);
+  });
 })();
 </script>
 </body>
