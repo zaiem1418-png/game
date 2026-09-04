@@ -19,6 +19,8 @@ const SVGA_MAP = {
   kiss: "heartbeat", heart: "heartbeat", loveletter: "heartbeat", kissyou: "heartbeat",
   rocket: "Rocket",
   ferrari: "posche", goldencar: "posche",
+  crown: "kingset",
+  baymax: "angel",
 };
 
 // أصوات مضمّنة محلياً (تعمل فوراً وبلا إنترنت)
